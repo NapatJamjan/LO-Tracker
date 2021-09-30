@@ -1,10 +1,10 @@
-import axios from "axios";
-import React, { useState, useEffect } from "react";
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Modal } from "react-bootstrap";
-import Layout from "../../components/layout";
-import Seo from "../../components/seo";
-import { Link } from "gatsby";
+import { Modal } from 'react-bootstrap';
+import Layout from '../../components/layout';
+import Seo from '../../components/seo';
+import { Link } from 'gatsby';
 
 interface ProgramResponse {
   programID: string;
@@ -19,11 +19,19 @@ const Programs = () => {
     const api = axios.create({
       baseURL: 'http://localhost:5000/api'
     });
-    api.get<ProgramResponse[]>('/programs').then(res => res.data).then(setPrograms);
+    api
+      .get<ProgramResponse[]>('/programs')
+      .then((res) => res.data)
+      .then(setPrograms);
   }, []);
   return (
     <Layout>
-      <Seo title="LO tracker" />
+      <Seo title="Programs" />
+      <p>
+        <Link to="/">Home</Link>
+        &nbsp;&#12297;&nbsp;
+        <span>Programs</span>
+      </p>
       {programs.map((program) => (
         <div key={program.programID} className="rounded shadow-lg p-3">
           <Link to={`./${program.programID}/courses`}>{program.programName}</Link>
@@ -37,7 +45,7 @@ const Programs = () => {
 
 const CreateProgramForm = () => {
   const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, setValue } = useForm<{name: string}>();
+  const { register, handleSubmit, setValue } = useForm<{ name: string }>();
   return (
     <div>
       <button onClick={() => setShow(true)}>Create a new program.</button>
@@ -54,20 +62,21 @@ const CreateProgramForm = () => {
                 window.location.reload();
               });
             }
-          })}>
-            <Modal.Header>
-              <Modal.Title>Create a new program</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <input type="text" {...register('name')}/>
-            </Modal.Body>
-            <Modal.Footer>
-              <input type="submit" value="save" />
-            </Modal.Footer>
-          </form>
+          })}
+        >
+          <Modal.Header>
+            <Modal.Title>Create a new program</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <input type="text" {...register('name')} />
+          </Modal.Body>
+          <Modal.Footer>
+            <input type="submit" value="save" />
+          </Modal.Footer>
+        </form>
       </Modal>
     </div>
   );
-}
+};
 
 export default Programs;
