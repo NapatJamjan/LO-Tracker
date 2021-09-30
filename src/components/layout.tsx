@@ -24,27 +24,19 @@ const Layout = ({ children }) => {
   `);
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col w-100">
       <Header siteTitle={data.site.siteMetadata?.title || `Title`} />
-      <div
+      <main
         style={{
-          margin: `0 auto`,
           maxWidth: 960,
-          padding: `0 1.0875rem 1.45rem`
+          padding: `0.5rem 1.0875rem 1.45rem`
         }}
+        className="mx-auto flex-grow w-screen"
       >
-        <main>{children}</main>
-        <footer
-          style={{
-            marginTop: `2rem`
-          }}
-        >
-          © {new Date().getFullYear()}, Built with
-          {` `}
-          <a href="https://www.gatsbyjs.com">Gatsby</a>
-        </footer>
-      </div>
-    </>
+        {children}
+      </main>
+      <footer className="mx-auto py-3">Footer 😎</footer>
+    </div>
   );
 };
 
