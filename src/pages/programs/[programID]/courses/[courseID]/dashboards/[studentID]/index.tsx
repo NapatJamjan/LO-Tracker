@@ -7,18 +7,16 @@ import { ExportOutcome } from '../../dashboard';
 import { quizscore, ScoreTable, PLOscore } from '../Table';
 
 
-export const IndividualScore:React.FC<{studentID: string}> = ({studentID}) =>{
+export const IndividualScore:React.FC<{programID:string, courseID: string, studentID: string}> = ({programID, courseID, studentID}) =>{
   const [student, setStudent] = useState<Array<studentResponse>>([])
   useEffect(() => {
     const api = axios.create({baseURL: `http://localhost:5000/api`}); 
-      ( async () => {
-        let res1 = await api.get<programResponse[]>('/programs');
-        let res2 = await api.get<courseResponse[]>('/courses', {params: {programID: res1.data[0].programID}});
-        let res3 = await api.get<studentResponse[]>('/students', {params: {courseID: res2.data[0].courseID}});
-        setStudent(res3.data)
-      }) ()
+        api.get<studentResponse[]>('/students', {params: {courseID: courseID}})
+        .then((res) => res.data)
+        .then(setStudent);
   },[])
   const thisStd:studentResponse = student.find(e => e.studentID == studentID);
+  console.log(thisStd)
   const [state, setState] = useState("Quiz");
   return (<MainDiv>
     <BackButton onClick={() => navigate(-1)}>
@@ -63,6 +61,8 @@ function OutcomeScore() {
     <ScoreTable score={PLOs} tablehead={PLOHead} isIndividual={true} dataType="plo" />
   )
 }
+
+export default IndividualScore;
 
 // function ExportOutcome() {
 //   return (

@@ -4,14 +4,15 @@ import { Modal, ModalBody, ModalFooter, ModalTitle } from 'react-bootstrap';
 import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
+import Layout from '../../../../../components/layout';
 import { studentResponse, programResponse, courseResponse } from '../../../../../shared/initialData';
 import { exportExcel } from '../../../../../utils';
-import { quizscore, ScoreTable, PLOscore } from './Dashboard/Table';
+import { quizscore, ScoreTable, PLOscore } from './dashboards/Table';
 import { students } from './Student';
 
 const Dashboard: React.FC<{courseID: string}> = ({courseID}) => {
   const [state, setState] = useState("Quiz");
-  return (
+  return (<Layout>
     <DashboardDiv>
       <h2 style={{textAlign: "center"}}>Summary</h2>
       <ButtonTab>
@@ -22,7 +23,7 @@ const Dashboard: React.FC<{courseID: string}> = ({courseID}) => {
       {state === "Quiz" && <QuizScore/>}
       {state === "Outcome" && <OutcomeScore/>}
     </DashboardDiv>
-  );
+  </Layout>);
 }
 
 function QuizScore(){

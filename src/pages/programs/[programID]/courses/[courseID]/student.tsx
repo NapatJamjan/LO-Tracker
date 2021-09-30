@@ -3,6 +3,7 @@ import { Link } from 'gatsby';
 import React, { useEffect, useState } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, ModalTitle, Table } from 'react-bootstrap';
 import ModalHeader from 'react-bootstrap/esm/ModalHeader';
+import { CourseNav } from '.';
 import Layout from '../../../../../components/layout';
 import { studentResponse, programResponse, courseResponse, studentRequest } from '../../../../../shared/initialData';
 import { StudentData, clearExcel, StudentArray, interpretExcel } from '../../../../../utils';
@@ -23,15 +24,13 @@ export const students: Array<student> = [{id: 0, mail: "mail@mail.com", name: "S
 const Student: React.FC<{courseID: string}> = ({courseID}) => {
   const [student, setStudent] = useState<Array<studentResponse>>([{studentID: "000", studentName: "Loading..."}])
   useEffect(() => {
-      ( async () => {
-        let res1 = await api.get<programResponse[]>('/programs');
-        let res2 = await api.get<courseResponse[]>('/courses', {params: {programID: res1.data[0].programID}});
-        let res3 = await api.get<studentResponse[]>('/students', {params: {courseID: res2.data[0].courseID}});
-        setStudent(res3.data)
-      }) ()
+    const api = axios.create({baseURL: `http://localhost:5000/api`}); 
+        api.get<studentResponse[]>('/students', {params: {courseID: courseID}})
+        .then((res) => res.data)
+        .then(setStudent);
   },[])
   return (
-    <Layout >
+    <Layout><CourseNav />
       <h2>Student</h2>
       <div style={{margin: "auto"}}>
         <Table striped bordered className="table" responsive="sm">
@@ -48,7 +47,7 @@ const Student: React.FC<{courseID: string}> = ({courseID}) => {
                 <td>{std.studentID}</td>
                 <td>{std.studentName}</td>
                 <td>
-                  <Link to={`dashboard/${std.studentID}`} style={{marginRight: 20}}><button>Result</button></Link>
+                  <Link to={`./dashboards/${std.studentID}`} style={{marginRight: 20}}><button>Result</button></Link>
                   <button style={{position:"absolute"}}>Kick</button>
                 </td>
               </tr>

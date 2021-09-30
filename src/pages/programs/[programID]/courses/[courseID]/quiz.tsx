@@ -3,9 +3,11 @@ import { Button, Collapse, Modal, ModalBody, ModalFooter, ModalTitle } from 'rea
 import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
+import Layout from '../../../../../components/layout';
+import Seo from '../../../../../components/seo';
 import { LOContext } from '../../../../../shared/lo';
 import { QuizContext, QuestionDetail, LinkedLO } from '../../../../../shared/quiz';
-// import { QuestionArray, clearExcel, interpretExcel } from '../../../../../utils';
+import { QuestionArray, clearExcel, interpretExcel } from '../../../../../utils';
 
 const Quiz: React.FC<{courseID: string}> = ({courseID}) => {
   const { quizzes } = useContext(QuizContext)
@@ -19,7 +21,8 @@ const Quiz: React.FC<{courseID: string}> = ({courseID}) => {
     open[row][col] = !open[row][col];
     _setOpen(open.slice());
   }
-  return (
+  return (<Layout>
+    <Seo title="Quiz" />
     <div style={{marginLeft: 10}}>
       <h3>Quiz List</h3>
       {
@@ -59,66 +62,67 @@ const Quiz: React.FC<{courseID: string}> = ({courseID}) => {
           </Quizcard>
         ))
       }
-      {/* <ImportExcelToCourse name="CSC100 Tutorial Course"/> */}
+      <ImportExcelToCourse name="CSC100 Tutorial Course"/>
+    </div>
+    </Layout>
+  );
+}
+
+function ImportExcelToCourse(props: any){
+  const { addQuiz } = useContext(QuizContext)
+  const [show, setShow] = useState(false);
+  const { register, handleSubmit, setValue } = useForm<{name: string, question: Array<QuestionDetail>}>();
+  useEffect(() => {
+    if (!show) setValue('name', '');
+  }, [show]);
+  return(
+    <div>
+      <button className="floatbutton" onClick={() => setShow(true)} style={{position: "absolute", right: 25, bottom: 25}}>
+        <i className="fa fa-download"></i>Import
+      </button>
+      <Modal show={show} onHide={() => setShow(false)}>
+        <form onSubmit={handleSubmit((data) => {
+          if (QuestionArray.length === 0) {
+            QuestionArray.push({name: "No question imported", maxscore: 0, linkedLO: []});
+          }
+          data.question = QuestionArray;
+          addQuiz(data);
+          setShow(false);
+          clearExcel();
+        })}>
+          <ModalHeader>
+            <ModalTitle>Import quiz result</ModalTitle>
+          </ModalHeader>
+          <ModalBody>
+            <p style={{margin: 0}}>Please import an excel file of the quiz result (.xlsx)</p>
+            <label><b>Course</b></label><br/>
+            <input list="courselist" name="course" value={props.name} readOnly /><br/>
+            <label>Quiz Name</label><br/>
+            <input type="text" {...register('name')} required /><br/>
+            <ImportExcel/>
+          </ModalBody>
+          <ModalFooter>
+            <input type="submit" value="Import"/>
+          </ModalFooter>
+        </form>
+      </Modal>
     </div>
   );
 }
 
-// function ImportExcelToCourse(props: any){
-//   const { addQuiz } = useContext(QuizContext)
-//   const [show, setShow] = useState(false);
-//   const { register, handleSubmit, setValue } = useForm<{name: string, question: Array<QuestionDetail>}>();
-//   useEffect(() => {
-//     if (!show) setValue('name', '');
-//   }, [show]);
-//   return(
-//     <div>
-//       <button className="floatbutton" onClick={() => setShow(true)} style={{position: "absolute", right: 25, bottom: 25}}>
-//         <i className="fa fa-download"></i>Import
-//       </button>
-//       <Modal show={show} onHide={() => setShow(false)}>
-//         <form onSubmit={handleSubmit((data) => {
-//           if (QuestionArray.length === 0) {
-//             QuestionArray.push({name: "No question imported", maxscore: 0, linkedLO: []});
-//           }
-//           data.question = QuestionArray;
-//           addQuiz(data);
-//           setShow(false);
-//           clearExcel();
-//         })}>
-//           <ModalHeader>
-//             <ModalTitle>Import quiz result</ModalTitle>
-//           </ModalHeader>
-//           <ModalBody>
-//             <p style={{margin: 0}}>Please import an excel file of the quiz result (.xlsx)</p>
-//             <label><b>Course</b></label><br/>
-//             <input list="courselist" name="course" value={props.name} readOnly /><br/>
-//             <label>Quiz Name</label><br/>
-//             <input type="text" {...register('name')} required /><br/>
-//             <ImportExcel/>
-//           </ModalBody>
-//           <ModalFooter>
-//             <input type="submit" value="Import"/>
-//           </ModalFooter>
-//         </form>
-//       </Modal>
-//     </div>
-//   );
-// }
+function ImportExcel(props: any) {
+  return (
+    <div>
+      <label>Choose a file to import</label><br/>
+      <input type="file" id="fileUpload" onChange={Upload}/>
+    </div>
+  );   
+}
 
-// function ImportExcel(props: any) {
-//   return (
-//     <div>
-//       <label>Choose a file to import</label><br/>
-//       <input type="file" id="fileUpload" onChange={Upload}/>
-//     </div>
-//   );   
-// }
-
-// function Upload(){
-//   const fileUpload = (document.getElementById('fileUpload') as HTMLInputElement);
-//   interpretExcel(fileUpload, 'quiz');
-// }
+function Upload(){
+  const fileUpload = (document.getElementById('fileUpload') as HTMLInputElement);
+  interpretExcel(fileUpload, 'quiz');
+}
 
 function LinkLOButton(props: any){
   const [show, setShow] = useState(false);

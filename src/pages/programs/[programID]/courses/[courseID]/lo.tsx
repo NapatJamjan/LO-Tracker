@@ -4,6 +4,8 @@ import { Button, Collapse, Modal, ModalBody, ModalFooter, ModalTitle } from 'rea
 import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
+import { CourseNav } from '.';
+import Layout from '../../../../../components/layout';
 import { loResponse, programResponse, courseResponse, loRequest, loLevelRequest, ploResponse } from '../../../../../shared/initialData';
 import { EditIcon, CardDiv, LeftCheckbox } from './quiz';
 
@@ -13,26 +15,27 @@ const api = axios.create({baseURL: `http://localhost:5000/api`});
 const LO: React.FC<{courseID: string}> = ({courseID}) => {
   const [los, _setLos] = useState<Array<loResponse>>([{loID: "123", info: "Loading LO...", levels: [{level: 1, info: "loading"}]}]);
   const [open, _setOpen] = useState<Array<boolean>>([]);
+  
   useEffect(() => {
       ( async () => {
-        let res1 = await api.get<programResponse[]>('/programs');
-        let res2 = (await api.get<courseResponse[]>('/courses', {params: {programID: res1.data[0].programID}}));
-        let res3 = await api.get<loResponse[]>('/los', {params: {courseID: res2.data[0].courseID} });
-        cID = res2.data[0].courseID
+        let res3 = await api.get<loResponse[]>('/los', {params: {courseID: courseID} });
+        if(res3.data.length === 0){res3.data = [{loID: "000", info: "No LO", levels: [{level: 1, info: "no lo level"}]}];}
+        cID = courseID;
         _setLos(res3.data);
         _setOpen(Array.from({length:res3.data.length}, () => false))
       }) ()
   },[])
-  console.log("h",los[0]?.levels.length)
+
   function toggle(i: number) {
     open[i] = !open[i];
     _setOpen(open.slice());
   }
   return (
-    <div>
+    <Layout>
+      <CourseNav />
       <h3>Learning Outcome</h3>
-      <div style={{width: 700, marginLeft: 10}}>
-        {los.map((lo, row) => (
+      <div style={{width: 700, marginLeft: 10}}> <AddLO/>
+        {los?.map((lo, row) => (
           <LOcard>
             <EditLO target={lo}/>
             <LinkLOtoPLO target={lo}/>
@@ -50,14 +53,13 @@ const LO: React.FC<{courseID: string}> = ({courseID}) => {
                 <AddLevel target={lo}/>
               </div>
             }</Collapse>
-            <AddLO/>
+           
           </LOcard>
         ))}
       </div>
-    </div>
+    </Layout>
   );
 }
-
 
 function AddLO(){
   const [show, setShow] = useState(false);

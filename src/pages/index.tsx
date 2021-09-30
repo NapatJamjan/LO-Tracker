@@ -19,7 +19,7 @@ const Home = () => {
     <Layout>
       <Seo title="Home" />
       <h1>Welcome</h1>
-      <Link to="/programs"> Go to my document </Link>
+      <Link to="/programs"><h4> Go to my document </h4></Link>
       <p className="underline">A Capstone project about tracking learning outcome of each and all students in your course.</p>
     </Layout>
   );

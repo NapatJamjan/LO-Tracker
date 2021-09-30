@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Legend, Bar,Area, AreaChart, ComposedChart, Line, Tooltip } 
 from "recharts";
 
