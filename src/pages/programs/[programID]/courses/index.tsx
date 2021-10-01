@@ -54,7 +54,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
           let courseList: CourseResponse[] = group[1];
           return (
             <div key={`group-${group[0]}`}>
-              <h3 style={{textAlign:'left'}}>Semester {semester}/{year}</h3>
+              <h3 style={{textAlign:'left'}}>Semester {semester === 3 ? 'S' : semester}/{year}</h3>
               <ul className="courselist">
                 {
                   courseList.sort((course1, course2) => {
@@ -64,7 +64,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
                   }).map((course) => (
                     <div key={course.courseID} className="rounded shadow-lg p-3">
                       <Link to={`./${course.courseID}`}>
-                        {course.courseName} - {course.semester == 3 ? 'S' : course.semester}/{course.year}
+                        {course.courseName}
                       </Link>
                     </div>
                   ))
@@ -74,13 +74,6 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
           );
         })
       }
-      {/* {courses.map((course) => (
-        <div key={course.courseID} className="rounded shadow-lg p-3">
-          <Link to={`./${course.courseID}`}>
-            {course.courseName} - {course.semester == 3 ? 'S' : course.semester}/{course.year}
-          </Link>
-        </div>
-      ))} */}
       <div className="py-3"></div>
       <CreateCourseForm programID={programID} />
     </Layout>
