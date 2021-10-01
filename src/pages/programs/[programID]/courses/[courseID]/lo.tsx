@@ -46,12 +46,14 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
           <ul>
           {
             lo.levels.map((level) => (
-              <li key={`${lo.loID}-${level}${level.info}`}>Level {level.level} - {level.info}</li>
+              <li key={`${lo.loID}-${level}${level.info}`}>
+                Level {level.level} - {level.info}
+              </li>
             ))
           }
           </ul>
           <br/>
-          <CreateLOLevelForm loID={lo.loID}/>
+          <div className="flex space-x-2"><CreateLOLevelForm loID={lo.loID}/> <CreatePLOLinkForm programID={programID} loID={lo.loID}/> <ShowPLOlinksModal loID={lo.loID} /></div>
         </div>
       ))}
       <CreateLOForm courseID={courseID}/>
@@ -64,7 +66,7 @@ const CreateLOForm: React.FC<{courseID}> = ({courseID}) => {
   const { register, handleSubmit, setValue } = useForm<{ info: string }>();
   return (
     <div>
-      <button onClick={() => setShow(true)}>Create a new lo.</button>
+      <button onClick={() => setShow(true)}>Create a new lo</button>
       <Modal show={show} onHide={() => setShow(false)}>
         <form
           onSubmit={handleSubmit((form) => {
@@ -99,9 +101,9 @@ const CreateLOLevelForm: React.FC<{loID}> = ({loID}) => {
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, setValue } = useForm<{ info: string, level: number }>();
   return (
-    <div>
-      <button onClick={() => setShow(true)}>Create a new lo level.</button>
-      <Modal show={show} onHide={() => setShow(false)}>
+    <>
+      <button className="underline" onClick={() => setShow(true)}>Create a new lo level.</button>
+      <Modal className="underline" show={show} onHide={() => setShow(false)}>
         <form
           onSubmit={handleSubmit((form) => {
             if (form.info != '') {
@@ -130,9 +132,102 @@ const CreateLOLevelForm: React.FC<{loID}> = ({loID}) => {
           </Modal.Footer>
         </form>
       </Modal>
+    </>
+  );
+}
+
+interface PLOResponse {
+  ploID: string;
+  info: string;
+}
+
+const CreatePLOLinkForm: React.FC<{programID: string, loID: string}> = ({programID, loID}) => {
+  const [show, setShow] = useState<boolean>(false);
+  const { register, handleSubmit, setValue } = useForm<{ ploID: string }>();
+  const [plos, setPLOs] = useState<PLOResponse[]>([]);
+  useEffect(() => {
+    if (show) {
+      const api = axios.create({
+        baseURL: 'http://localhost:5000/api'
+      });
+      api
+        .get<PLOResponse[]>('/plos', { params: { programID } })
+        .then((res) => res.data)
+        .then(setPLOs);
+    } else {
+      setValue('ploID', '');
+    }
+  }, [show])
+  return (
+    <div>
+      <button className="underline" onClick={() => setShow(true)}>Link to a PLO.</button>
+      <Modal show={show} onHide={() => setShow(false)}>
+        <form
+          onSubmit={handleSubmit((form) => {
+            if (form.ploID != '') {
+              const api = axios.create({
+                baseURL: 'http://localhost:5000/api'
+              });
+              api.post('/plolink', {...form, loID}).then(() => {
+                setShow(false);
+              });
+            }
+          })}
+        >
+          <Modal.Header>
+            <Modal.Title>Create a new LO Link to PLOs</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <span>Select a PLO:</span><br/>
+            <select {...register('ploID')}>
+              {plos.map((plo) => (
+                <option value={plo.ploID} key={plo.ploID}>
+                  {plo.info}
+                </option>
+              ))}
+            </select>
+          </Modal.Body>
+          <Modal.Footer>
+            <input type="submit" value="save" />
+          </Modal.Footer>
+        </form>
+      </Modal>
     </div>
   );
 }
 
+const ShowPLOlinksModal: React.FC<{loID: string}> = ({loID}) => {
+  const [show, setShow] = useState<boolean>(false);
+  const [plos, setPLOs] = useState<PLOResponse[]>([]);
+  useEffect(() => {
+    if (show) {
+      const api = axios.create({
+        baseURL: 'http://localhost:5000/api'
+      });
+      api
+        .get<PLOResponse[]>('/plolinks', { params: { loID } })
+        .then((res) => res.data)
+        .then(setPLOs);
+    }
+  }, [show])
+  return (
+    <div>
+      <button className="ml-3 underline" onClick={() => setShow(true)}>Show linked PLO.</button>
+      <Modal show={show} onHide={() => setShow(false)}>
+          <Modal.Header>
+            <Modal.Title>Linked PLOs</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {plos.map((plo, index) => (
+              <p>{index + 1}) {plo.info}</p>
+            ))}
+          </Modal.Body>
+          <Modal.Footer>
+            <input type="submit" value="save" />
+          </Modal.Footer>
+      </Modal>
+    </div>
+  );
+}
 
 export default LO;
