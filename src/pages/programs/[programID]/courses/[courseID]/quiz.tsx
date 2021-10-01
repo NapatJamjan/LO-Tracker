@@ -78,7 +78,10 @@ const Quiz: React.FC<{programID: string, courseID: string}> = ({programID, cours
           <ul>
           {
             quiz.questions && quiz.questions.map((question, index) => (
+              <div key={question.questionID} style={{borderBottom:"grey 1px solid"}}>
               <li key={question.questionID}>Q {index + 1} - {question.title} (max score: {question.maxScore})</li>
+              <CreateQuestionLinkForm courseID={courseID} question={question.title}/>
+              </div>
             ))
           }
           </ul>
@@ -116,6 +119,79 @@ const CreateQuizForm: React.FC<{courseID: string}> = ({courseID}) => {
           </Modal.Header>
           <Modal.Body>
             <input type="text" {...register('title')} />
+          </Modal.Body>
+          <Modal.Footer>
+            <input type="submit" value="save" />
+          </Modal.Footer>
+        </form>
+      </Modal>
+    </div>
+  );
+};
+
+interface LOResponse {
+  loID: string;
+  info: string;
+  levels: Array<{
+    level: number;
+    info: string;
+  }>
+}
+interface questionlinkRequest {
+  questionID: string;
+  loID: string;
+  level: string;
+}
+const CreateQuestionLinkForm: React.FC<{courseID: string, question: string}> = ({courseID, question}) => {
+  const [show, setShow] = useState<boolean>(false);
+  const { register, handleSubmit, setValue } = useForm<{ title: string }>();
+  const [los, setLOs] = useState<LOResponse[]>([]);
+  useEffect(() => {
+    if (show) {
+      const api = axios.create({
+        baseURL: 'http://localhost:5000/api'
+      });
+      api
+        .get<LOResponse[]>('/los', { params: { courseID } })
+        .then((res) => res.data)
+        .then(setLOs);
+    } else {
+      //setValue('ploID', '');
+    }
+  }, [show])
+  return (
+    <div>
+      <button onClick={() => setShow(true)} style={{fontSize:16}} className="underline" >Link LO</button>
+      <Modal show={show} onHide={() => setShow(false)}>
+        <form
+          onSubmit={handleSubmit((form) => {
+            if (form.title != '') {
+              const api = axios.create({
+                baseURL: 'http://localhost:5000/api'
+              });
+              api.post('/quiz', {...form, courseID}).then(() => {
+                setValue('title', '');
+                setShow(false);
+                window.location.reload();
+              });
+            }
+          })}
+        >
+          <Modal.Header>
+            <Modal.Title>Link a Question to LO Level</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <h5>Target : {question}</h5>
+            {los.map((lo) => (
+              <div style={{borderBottom: "grey 1px solid", marginBottom:5}}>
+                {lo.info}
+                {lo.levels.map((lvl) => (
+                  <div>
+                    <input type="checkbox"/>Level {lvl.level} {lvl.info}
+                  </div>
+                ))}
+              </div>
+            ))}
           </Modal.Body>
           <Modal.Footer>
             <input type="submit" value="save" />

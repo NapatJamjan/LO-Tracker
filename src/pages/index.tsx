@@ -13,7 +13,7 @@ import { initData } from '../shared/initialData';
 
 const Home = () => {
   useEffect(() => {
-    //initData();
+    initData();
   }, [])
   return (
     <Layout>

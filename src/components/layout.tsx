@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
       >
         {children}
       </main>
-      <footer className="mx-auto py-3">Footer 😎</footer>
+      <footer className="mx-auto py-3">Footer</footer>
     </div>
   );
 };
