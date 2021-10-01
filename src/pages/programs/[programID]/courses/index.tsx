@@ -15,6 +15,7 @@ interface CourseResponse {
 
 const Courses: React.FC<{ programID: string }> = ({ programID }) => {
   const [courses, setCourses] = useState<CourseResponse[]>([]);
+  const [filter, setFilter] = useState<string>('');
   useEffect(() => {
     const api = axios.create({
       baseURL: 'http://localhost:5000/api'
@@ -26,6 +27,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
   }, []);
   let courseGroups = new Map<string, CourseResponse[]>();
   for (let i = 0; i < courses.length; ++i) {
+    if (courses[i].courseName.indexOf(filter) === -1) continue;
     courseGroups.set(`${courses[i].semester},${courses[i].year}`, [...(courseGroups.get(`${courses[i].semester},${courses[i].year}`) || []), {...courses[i]}]);
   }
   return (
@@ -43,6 +45,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
         <span className="mx-3"></span>
         <Link to="../plo">PLOs</Link>
       </p>
+      <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter}/>
       {
         Array.from(courseGroups).sort((group1, group2) => {
           let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
