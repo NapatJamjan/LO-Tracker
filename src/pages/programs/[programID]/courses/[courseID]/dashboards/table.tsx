@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import styled from 'styled-components';
 import { TableSort } from '.';
-import { studentResponse, programResponse, courseResponse } from '../../../../../../shared/initialData';
+import { studentResponse } from '../../../../../../shared/initialData';
 import {Chart} from './chart';
 
 export interface quizscore {
@@ -19,63 +19,87 @@ export interface PLOscore {
   detail: string;
 }
 
-interface tablehead {
+interface tableData {
   shortname: string,
   maxscore: number
 }
 
-const Quizinfo: Array<tablehead> = [{shortname: 'Quiz 1', maxscore: 5},
-  {shortname: 'Quiz 2', maxscore: 10}, {shortname: 'Quiz 3', maxscore: 10}]
-const PLOinfo: Array<tablehead> = [{shortname: 'PLO 1', maxscore: 100},
-  {shortname: 'PLO 2', maxscore: 100}, {shortname: 'PLO 3', maxscore: 100}]
+export interface StudentUpload {
+  studentID: string;
+  studentEmail: string;
+  studentName: string;
+  studentSurname: string;
+}
 
-export function ScoreTable (props: {score: Array<any>, tablehead: Array<string>, isIndividual: boolean, dataType: string}) {
-  const [student, setStudent] = useState<Array<studentResponse>>([])
-  useEffect(() => {
-    const api = axios.create({baseURL: `http://localhost:5000/api`}); 
-      ( async () => {
-        let res1 = await api.get<programResponse[]>('/programs');
-        let res2 = await api.get<courseResponse[]>('/courses', {params: {programID: res1.data[0].programID}});
-        let res3 = await api.get<studentResponse[]>('/students', {params: {courseID: res2.data[0].courseID}});
-        setStudent(res3.data)
-      }) ()
-  },[])
+const Quizinfo: Array<tableData> = [{shortname: 'Quiz 1', maxscore: 5},
+  {shortname: 'Quiz 2', maxscore: 10}, {shortname: 'Quiz 3', maxscore: 10}]
+const PLOinfo: Array<tableData> = [{shortname: 'PLO 1', maxscore: 100},
+  {shortname: 'PLO 2', maxscore: 100}, {shortname: 'PLO 3', maxscore: 100}]
   
-  let tableHeadInfo = []
-  if (props.tablehead[0] == 'PLO') { tableHeadInfo = PLOinfo }
-  else { tableHeadInfo = Quizinfo }
+export function ScoreTable (props: {
+  programID: string, courseID: string, score: Array<any>, tablehead: Array<string>, dataType: string}) {
+    const [students, setStudents] = useState<StudentUpload[]>([]);
+    useEffect(() => {
+      const api = axios.create({ baseURL: `http://localhost:5000/api` }); 
+      api
+        .get<StudentUpload[]>('/students', {params: { programID: props.programID, courseID: props.courseID }})
+        .then((res) => res.data).then(setStudents);
+    }, [])
     return(
       <div>
         <Chart dataType = {props.dataType}/>
-        <Table striped bordered hover className="table" style={{margin: 0, width: "55%"}}>
+        <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
           <thead>
             <tr>
               {props.tablehead.map(thdata => (<th>{thdata}<TableSort/></th>))}
             </tr>
           </thead>
           <tbody>
-            {props.isIndividual === false &&  student.map(std => (
+            {students.map(std => (
               <tr>
                 <td><LinkedCol to={`./${std.studentID}`}>{std.studentID}</LinkedCol></td>
                 <td><LinkedCol to={`./${std.studentID}`}>{std.studentName}</LinkedCol></td>
                 {props.score.map(scores =>( // map score of this student's id
                   <Overlay score={scores.score} detail={[scores.detail]}/>
                 ))}
-              </tr>)) || tableHeadInfo.map(qi => ( //individual page
-                <tr>
-                  <td>{qi.shortname}</td>
-                  <td>{qi.maxscore}</td>
-                  <td>{qi.maxscore}</td>
-                  {props.score.map(scores => (
-                  <Overlay score={scores.score} detail={[scores.detail]}/>
-                ))}
-                </tr>
+              </tr>
               ))}
           </tbody>
         </Table>
       </div>
     )
 }
+
+export function ScoreTableIndividual (props: {courseID: string, score: Array<any>, tablehead: Array<string>, dataType: string}) {
+    //set quiz or stuff here    
+    let data = []
+    if (props.tablehead[0] == 'PLO') { data = PLOinfo }
+    else { data = Quizinfo }
+      return(
+        <div>
+          <Chart dataType = {props.dataType}/>
+          <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
+            <thead>
+              <tr>
+                {props.tablehead.map(thdata => (<th>{thdata}<TableSort/></th>))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map(qi => ( //individual page
+                  <tr>
+                    <td>{qi.shortname}</td>
+                    <td>{qi.maxscore}</td>
+                    <td>{qi.maxscore}</td>
+                    {props.score.map(scores => (
+                    <Overlay score={scores.score} detail={[scores.detail]}/>
+                  ))}
+                  </tr>
+                ))}
+            </tbody>
+          </Table>
+        </div>
+      )
+  }
 
 function Overlay(props: any) {
   return(

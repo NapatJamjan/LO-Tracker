@@ -4,10 +4,11 @@ export interface programResponse {
     programID: string;
     userID: string;
     programName: string;
-    description: string;
+    programDescription: string;
 }
 export interface programRequest {
-    name: string;
+    programName: string; 
+    programDescription: string;
 }
 
 interface courseParams {
@@ -31,7 +32,9 @@ interface studentParams {
 }
 export interface studentResponse {
     studentID: string;
+    studentEmail: string;
     studentName: string;
+    studentSurname: string;
 }
 export interface studentRequest {
     courseID: string;
@@ -90,8 +93,10 @@ export async function initData(){ // called on App.tsx
     let res1 = await api.get<programResponse[]>('/programs');
     try {
         if(res1.data.length === 0){
-            await api.post<programRequest[]>('/program', {name: "Computer Science"})
-            await api.post<programRequest[]>('/program', {name: "I.T."})
+            await api.post<programRequest[]>('/program', 
+            {programName: "Computer Science", programDescription: "Computer Science description"})
+            await api.post<programRequest[]>('/program', 
+            {programName: "I.T.", programDescription: "Internet Technologies"})
             let res1 = await api.get<programResponse[]>('/programs');
             console.log(res1);
             
@@ -154,6 +159,7 @@ export async function initData(){ // called on App.tsx
 
             //quiz
         }      
+        alert("Data initialized");
         
     } catch(error) {
       console.log(error)

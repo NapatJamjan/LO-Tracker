@@ -27,15 +27,15 @@ const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, c
       <ButtonTab>
         <button onClick={() => setState("Quiz")} style={{marginRight: 5}}>Quiz Score</button>|
         <button onClick={() => setState("Outcome")}>Outcome Score</button>
-        {state === "Outcome" && <ExportOutcome courseID={courseID} />}
+        {state === "Outcome" && <ExportOutcome programID={programID} courseID={courseID} />}
       </ButtonTab>
-      {state === "Quiz" && <QuizScore/>}
-      {state === "Outcome" && <OutcomeScore/>}
+      {state === "Quiz" && <QuizScore programID = {programID} courseID = {courseID}/>}
+      {state === "Outcome" && <OutcomeScore programID = {programID} courseID = {courseID}/>}
     </DashboardDiv>
   </Layout>);
 }
 
-function QuizScore(){
+function QuizScore(props: {programID: string, courseID: string}){
   const quizs: Array<quizscore> = [{id: 1, score: "5/5", detail: "Part 1 : 2/2 \n Part 1 : 3/3"},
   {id: 2, score: "10/10", detail: "Part 1 : 10/10"}, {id: 3, score: "1/10", detail: "Part 1 : 1/5 \n Part 2 : 0/5"}]
   const QuizHead: Array<string> = ['ID', 'Name']
@@ -43,11 +43,11 @@ function QuizScore(){
     QuizHead.push('Quiz'+(i+1));
   }
   return(
-    <ScoreTable score={quizs} tablehead={QuizHead} isIndividual={false} dataType="quiz"/>
+    <ScoreTable programID = {props.programID} courseID = {props.courseID} score={quizs} tablehead={QuizHead} dataType="quiz"/>
   )
 }
 
-function OutcomeScore(){
+function OutcomeScore(props: {programID: string, courseID: string}){
   const PLOs: Array<PLOscore> = [{id: 1, score: "100%", detail: "LO1 100% \n LO2 100% \n LO3 100%"},
   {id: 2, score: "80%", detail: "LO1 100% \n LO2 100% \n LO3 100%"}, {id: 3, score: "-", detail: "No score"},
   {id: 4, score: "-", detail: "No score"}]
@@ -56,7 +56,7 @@ function OutcomeScore(){
     PLOHead.push('PLO'+(i+1));
   }
   return(
-    <ScoreTable score={PLOs} tablehead={PLOHead} isIndividual={false} dataType="plo"/>
+    <ScoreTable programID = {props.programID} courseID = {props.courseID} score={PLOs} tablehead={PLOHead} dataType="plo"/>
   )
 }
 
