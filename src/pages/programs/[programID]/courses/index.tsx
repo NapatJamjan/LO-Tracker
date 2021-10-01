@@ -24,6 +24,10 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
       .then((res) => res.data)
       .then(setCourses);
   }, []);
+  let courseGroups = new Map<string, CourseResponse[]>();
+  for (let i = 0; i < courses.length; ++i) {
+    courseGroups.set(`${courses[i].semester},${courses[i].year}`, [...(courseGroups.get(`${courses[i].semester},${courses[i].year}`) || []), {...courses[i]}]);
+  }
   return (
     <Layout>
       <Seo title="Courses" />
@@ -39,13 +43,44 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
         <span className="mx-3"></span>
         <Link to="../plo">PLOs</Link>
       </p>
-      {courses.map((course) => (
+      {
+        Array.from(courseGroups).sort((group1, group2) => {
+          let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
+          let [sem2, year2] = group2[0].split(',').map(val => parseInt(val, 10));
+          if (year1 === year2) return sem2 - sem1;
+          return year2 - year1;
+        }).map((group, index) => {
+          let [semester, year] = group[0].split(',').map(val => parseInt(val, 10));
+          let courseList: CourseResponse[] = group[1];
+          return (
+            <div key={`group-${group[0]}`}>
+              <h3 style={{textAlign:'left'}}>Semester {semester}/{year}</h3>
+              <ul className="courselist">
+                {
+                  courseList.sort((course1, course2) => {
+                    if (course1.year !== course2.year) return course2.year - course1.year;
+                    if (course1.semester !== course2.semester) return course2.semester - course1.semester;
+                    return course1.courseName.localeCompare(course2.courseName);
+                  }).map((course) => (
+                    <div key={course.courseID} className="rounded shadow-lg p-3">
+                      <Link to={`./${course.courseID}`}>
+                        {course.courseName} - {course.semester == 3 ? 'S' : course.semester}/{course.year}
+                      </Link>
+                    </div>
+                  ))
+                }
+              </ul>
+            </div>
+          );
+        })
+      }
+      {/* {courses.map((course) => (
         <div key={course.courseID} className="rounded shadow-lg p-3">
           <Link to={`./${course.courseID}`}>
             {course.courseName} - {course.semester == 3 ? 'S' : course.semester}/{course.year}
           </Link>
         </div>
-      ))}
+      ))} */}
       <div className="py-3"></div>
       <CreateCourseForm programID={programID} />
     </Layout>
