@@ -8,7 +8,8 @@ import Seo from '../../../components/seo';
 
 interface PLOResponse {
   ploID: string;
-  info: string;
+  ploName: string;
+  ploDescription: string;
 }
 
 const PLO: React.FC<{ programID: string }> = ({ programID }) => {
@@ -39,7 +40,8 @@ const PLO: React.FC<{ programID: string }> = ({ programID }) => {
       </p>
       {plos.map((plo) => (
         <div key={plo.ploID} className="rounded shadow-lg p-1">
-          <p>{plo.info}</p>
+          <p>{plo.ploName}</p>
+          <span>{plo.ploDescription}</span>
         </div>
       ))}
       <div className="py-3"></div>
@@ -50,19 +52,20 @@ const PLO: React.FC<{ programID: string }> = ({ programID }) => {
 
 const CreatePLOForm: React.FC<{ programID }> = ({ programID }) => {
   const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, setValue } = useForm<{ info: string }>();
+  const { register, handleSubmit, setValue } = useForm<{ ploName: string, ploDescription: string }>();
   return (
     <div>
       <button onClick={() => setShow(true)}>Create a new PLO.</button>
       <Modal show={show} onHide={() => setShow(false)}>
         <form
           onSubmit={handleSubmit((form) => {
-            if (form.info != '') {
+            if (form.ploName != '') {
               const api = axios.create({
                 baseURL: 'http://localhost:5000/api'
               });
               api.post('/plo', { ...form, programID }).then(() => {
-                setValue('info', '');
+                setValue('ploName', '');
+                setValue('ploDescription', '');
                 setShow(false);
                 window.location.reload();
               });
@@ -73,7 +76,9 @@ const CreatePLOForm: React.FC<{ programID }> = ({ programID }) => {
             <Modal.Title>Create a new PLO</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <input type="text" {...register('info')} />
+            <input type="text" {...register('ploName')} placeholder="type PLO's name"/>
+            <p className="my-3"></p>
+            <textarea {...register('ploDescription')} placeholder="PLO's description" cols={30}></textarea>
           </Modal.Body>
           <Modal.Footer>
             <input type="submit" value="save" />

@@ -27,7 +27,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
   }, []);
   let courseGroups = new Map<string, CourseResponse[]>();
   for (let i = 0; i < courses.length; ++i) {
-    if (courses[i].courseName.indexOf(filter) === -1) continue;
+    if (courses[i].courseName.search(new RegExp(filter, 'i')) === -1) continue;
     courseGroups.set(`${courses[i].semester},${courses[i].year}`, [...(courseGroups.get(`${courses[i].semester},${courses[i].year}`) || []), {...courses[i]}]);
   }
   return (
@@ -45,7 +45,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
         <span className="mx-3"></span>
         <Link to="../plo">PLOs</Link>
       </p>
-      <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter}/>
+      <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter} placeholder="search"/>
       {
         Array.from(courseGroups).sort((group1, group2) => {
           let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
@@ -86,7 +86,7 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
 const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, setValue } = useForm<{
-    name: string;
+    courseName: string;
     semester: number;
     year: number;
   }>();
@@ -96,12 +96,12 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
       <Modal show={show} onHide={() => setShow(false)}>
         <form
           onSubmit={handleSubmit((form) => {
-            if (form.name != '') {
+            if (form.courseName != '') {
               const api = axios.create({
                 baseURL: 'http://localhost:5000/api'
               });
               api.post('/course', { ...form, programID }).then(() => {
-                setValue('name', '');
+                setValue('courseName', '');
                 setShow(false);
                 window.location.reload();
               });
@@ -114,7 +114,7 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
           <Modal.Body>
             <span>Course name:</span>
             <br />
-            <input {...register('name')} />
+            <input {...register('courseName')} />
             <br />
 
             <span>Semester:</span>

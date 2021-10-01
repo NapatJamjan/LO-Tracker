@@ -12,15 +12,13 @@ import styled from 'styled-components';
 import { initData } from '../shared/initialData';
 
 const Home = () => {
-  useEffect(() => {
-    initData();
-  }, [])
   return (
     <Layout>
       <Seo title="Home" />
       <h1>Welcome</h1>
-      <Link to="/programs"><h4> Go to my document </h4></Link>
-      <p className="underline">A Capstone project about tracking learning outcome of each and all students in your course.</p>
+      <Link to="/programs" className="underline"><h4> Go to my document </h4></Link>
+      <p>A Capstone project about tracking learning outcome of each and all students in your course.</p>
+      <button onClick={() => initData()} className="text-5xl">Click me to init data</button>
     </Layout>
   );
 };

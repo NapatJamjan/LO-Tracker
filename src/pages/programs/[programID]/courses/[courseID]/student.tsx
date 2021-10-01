@@ -10,7 +10,9 @@ interface StudentUpload {
    * Excel Header Format
    */
   studentID: string;
+  studentEmail: string;
   studentName: string;
+  studentSurname: string;
 }
 
 const Student: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
@@ -20,7 +22,7 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
       baseURL: 'http://localhost:5000/api'
     });
     api
-      .get<StudentUpload[]>('/students', { params: { courseID } })
+      .get<StudentUpload[]>('/students', { params: { programID, courseID } })
       .then((res) => res.data)
       .then(setStudents);
   }, []);
@@ -28,12 +30,14 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
     const api = axios.create({
       baseURL: 'http://localhost:5000/api'
     });
+    console.log(JSON.stringify(students))
     api
-      .post<StudentUpload[]>('/students', { courseID, students: JSON.stringify(students) })
+      .post<StudentUpload[]>('/students', { programID, courseID, students: JSON.stringify(students) })
       .then(() => {
         window.location.reload();
       });
   }
+  
   const excelJSON = (file) => {
     let reader = new FileReader();
     reader.onload = function(e) {
@@ -63,7 +67,9 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
         <thead>
           <tr>
             <td>Student ID</td>
+            <td>Student Email</td>
             <td>Student Name</td>
+            <td>Student Surname</td>
           </tr>
         </thead>
         <tbody>
@@ -71,7 +77,9 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
             students.map((student) => (
               <tr key={student.studentID}>
                 <td>{student.studentID}</td>
+                <td>{student.studentEmail}</td>
                 <td>{student.studentName}</td>
+                <td>{student.studentSurname}</td>
               </tr>
             ))
           }
