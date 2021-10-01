@@ -5,23 +5,13 @@ import Layout from '../../../../../components/layout';
 import Seo from '../../../../../components/seo';
 import xlsx from 'xlsx';
 
-export interface StudentUpload {
+interface StudentUpload {
   /**
    * Excel Header Format
    */
   studentID: string;
   studentName: string;
 }
-
-export interface student {
-  id: number,
-  mail: string,
-  name: string;
-}
-
-export const students: Array<student> = [{id: 0, mail: "mail@mail.com", name: "Student Studying"},
-{id: 1, mail: "mail@moremail.com", name: "Student2 Studying2"}, {id: 2, mail: "std@student.mail", name: "std A"},
-{id: 3, mail: "mail@mail.com", name: "Student Studying"}, {id: 4, mail: "student@mail.com", name: "Studying Student"}]
 
 const Student: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
   const [students, setStudents] = useState<StudentUpload[]>([]);
@@ -74,7 +64,6 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
           <tr>
             <td>Student ID</td>
             <td>Student Name</td>
-            <td>Action</td>
           </tr>
         </thead>
         <tbody>
@@ -83,9 +72,6 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
               <tr key={student.studentID}>
                 <td>{student.studentID}</td>
                 <td>{student.studentName}</td>
-                <td><Link to={`/programs/${programID}/courses/${courseID}/dashboard/${student.studentID}`} style={{marginRight: 20}}>
-                  <button>Result</button></Link>
-                </td>
               </tr>
             ))
           }
@@ -93,12 +79,6 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
       </table>
     </Layout>
   );
-}
-
-export function TableSort(props: any) {
-  return (
-    <i className="fa fa-sort tableSort"></i>
-  )
 }
 
 export default Student;
