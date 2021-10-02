@@ -3,7 +3,7 @@ import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Legend, Bar
 from "recharts";
 
 interface chartdata{
-  name:string,score:number
+  name: string, score: number
 }
 
 export function Chart(props:any){

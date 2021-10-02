@@ -2,25 +2,21 @@ import axios from 'axios';
 import { navigate } from 'gatsby-link';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { quizscore, ScoreTable, PLOscore } from '../table';
+import { quizscore, ScoreTable, PLOscore, ScoreTableIndividual, StudentUpload } from '../table';
 import Layout from '../../../../../../../components/layout';
 import { Link } from 'gatsby';
 import Seo from '../../../../../../../components/seo';
 import { ExportOutcome } from '../exportoutcome';
-
-interface StudentUpload {
-    studentID: string;
-    studentName: string;
-}
   
 const IndividualScore:React.FC<{programID:string, courseID: string, studentID: string}> = ({programID, courseID, studentID}) =>{
-  const [student, setStudent] = useState<StudentUpload>({studentID: "000", studentName: "loading student"});
+  const [student, setStudent] = useState<StudentUpload>(
+    {studentID: "000", studentName: "Loading..", studentSurname: "Loading...", studentEmail: "Loading."});
   useEffect(() => {
     const api = axios.create({
       baseURL: 'http://localhost:5000/api'
     });
     api
-      .get<StudentUpload[]>('/students', { params: { courseID } })
+      .get<StudentUpload[]>('/students', { params: { programID, courseID } })
       .then((res) => res.data.find(e => e.studentID == studentID))
       .then(setStudent);
   }, []);
@@ -52,28 +48,28 @@ const IndividualScore:React.FC<{programID:string, courseID: string, studentID: s
         <ButtonTab>
           <button onClick={() => setState("Quiz")} style={{ marginRight: 5 }}>Quiz Score</button>|
           <button onClick={() => setState("Outcome")}>Outcome Score</button>
-          {state === "Outcome" && <ExportOutcome courseID ={courseID} />}
+          {state === "Outcome" && <ExportOutcome programID={programID} courseID={courseID} />}
         </ButtonTab>
-        {state === "Quiz" && <QuizScore />}
-        {state === "Outcome" && <OutcomeScore />}
+        {state === "Quiz" && <QuizScore courseID = {courseID}/>}
+        {state === "Outcome" && <OutcomeScore courseID = {courseID}/>}
       </DashboardDiv>
     </MainDiv>
   </Layout>)
 }
 
-function QuizScore() {
-  const quizs: Array<quizscore> = [{id: 0, score: "1/1", detail: "How to Java"},
+function QuizScore(props:{courseID: string}) {
+  const quizzes: Array<quizscore> = [{id: 0, score: "1/1", detail: "How to Java"},
   {id: 1, score: "2/2", detail: "Hello World"}, {id: 2, score: "2/2", detail: "Advanced Java"}]
   const QuizHead: Array<string> = ['Quiz', 'Max Score', 'Student Score']
-  for (let i = 0; i < quizs.length; i++) { //count unique quiz id
+  for (let i = 0; i < quizzes.length; i++) { //count unique quiz id
     QuizHead.push('Question' + (i + 1));
   }
   return (
-    <ScoreTable score={quizs} tablehead={QuizHead} isIndividual={true} dataType="quiz" />
+    <ScoreTableIndividual courseID={props.courseID} score={quizzes} tablehead={QuizHead} dataType="quiz" />
   )
 }
   
-function OutcomeScore() {
+function OutcomeScore(props:{courseID: string}) {
   const PLOs: Array<PLOscore> = [{ id: 0, score: "100%", detail: "LO1 100% \n LO2 100% \n LO3 100%" },
   { id: 1, score: "80%", detail: "LO1 100% \n LO2 100% \n LO3 100%" }, { id: 2, score: "-", detail: "No score" }]
   const PLOHead: Array<string> = ['PLO', 'Max Score', 'Student Score']
@@ -81,7 +77,7 @@ function OutcomeScore() {
     PLOHead.push('LO' + (i + 1));
   }
   return (
-    <ScoreTable score={PLOs} tablehead={PLOHead} isIndividual={true} dataType="plo" />
+    <ScoreTableIndividual courseID={props.courseID} score={PLOs} tablehead={PLOHead} dataType="plo" />
   )
 }
 

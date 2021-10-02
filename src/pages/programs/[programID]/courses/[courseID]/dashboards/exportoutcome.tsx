@@ -6,36 +6,40 @@ import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
 import XLSX from 'xlsx';
 import { studentResponse, programResponse, courseResponse } from '../../../../../../shared/initialData';
+import { StudentUpload } from './table';
 
 //still broke
 
-export const ExportOutcome: React.FC<{courseID}> = ({courseID}) => {
-  const [student, setStudent] = useState<Array<studentResponse>>([{studentID: "000", studentName: "Loading..."}])
+export const ExportOutcome: React.FC<{programID, courseID}> = ({programID, courseID}) => {
+  const [students, setStudents] = useState<StudentUpload[]>([
+    {studentID: "000", studentName: "Loading..", studentSurname: "Loading...", studentEmail: "Loading."}
+  ]);
   useEffect(() => {
-    const api = axios.create({baseURL: `http://localhost:5000/api`}); 
-      ( async () => {
-        let res1 = await api.get<programResponse[]>('/programs');
-        let res2 = await api.get<courseResponse[]>('/courses', {params: {programID: res1.data[0].programID}});
-        let res3 = await api.get<studentResponse[]>('/students', {params: {courseID: res2.data[0].courseID}});
-        setStudent(res3.data)
-      }) ()
-  },[])
+    const api = axios.create({ baseURL: `http://localhost:5000/api` }); 
+    api
+      .get<studentResponse[]>('/students', {params: { programID, courseID }})
+      .then((res) => res.data).then(setStudents);   
+  }, [])
+  useEffect(() => {
+    console.log("student change", students)
+    _setCheck(Array.from({ length: students.length + 1 }, () => false))
+  }, [students])
   
   const [show, setShow] = useState(false);
   const { register, handleSubmit, setValue } = useForm<{fileName: string, fileType: string}>();
-  const [ check, _setCheck ] = useState<Array<boolean>>(
-    Array.from({length: student.length+1}, () => false)
-  );
+  const [ check, _setCheck ] = useState<Array<boolean>>([false]);
   
   useEffect(() => {
     if (!show) {
-      _setCheck(Array.from({ length: student.length + 1 }, () => false));
+      _setCheck(Array.from({ length: students.length + 1 }, () => false));
+      setValue('fileName', '');
       setValue('fileType', 'xlsx');
     }
   }, [show]);
   function handleCheck(id:number){
     check[id] = !check[id];
     _setCheck(check.slice());
+    console.log(check)
   }
   function handleCheckAll(){
     check[check.length - 1] = !check[check.length - 1];
@@ -43,16 +47,16 @@ export const ExportOutcome: React.FC<{courseID}> = ({courseID}) => {
       if (check[i] != check[check.length - 1]) {check[i] = !check[i]};
     }
     _setCheck(check.slice());
+    console.log(check)
   }
 
   return(
     <div style={{display: "inline", position: "absolute", right: 50}}>
       <button onClick={() => setShow(true)}>Export Outcome</button>
-
-      <Modal show={show} onHide={() => setShow(false)}>
+      <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w"> 
         <form onSubmit={handleSubmit((data) => {
           setShow(false);
-          exportExcel(check, data.fileName, data.fileType);
+          exportExcel(students ,check, data.fileName, data.fileType);
         })}>
           <ModalHeader >
             <ModalTitle>Export Outcome</ModalTitle>
@@ -75,11 +79,11 @@ export const ExportOutcome: React.FC<{courseID}> = ({courseID}) => {
 
               <p style={{float: "right", paddingRight: 10}}>File Type</p>
             </OptionDiv>
-            {student.map((std, row) => (
+            {students.map((std, row) => (
               <CheckBoxDiv>
-                <input type="checkbox" name={"std" + std.studentID.toString()} value={check[ row].toString()}
-                  checked={check[ row]} onClick={() => handleCheck( row)} readOnly />
-                <label>{std.studentName}</label><br/>
+                <input type="checkbox" name={"std" + std.studentID.toString()} value={check.toString()}
+                  checked={check[row]} onChange={() => handleCheck(row)} />
+                <label>{std.studentID} &nbsp;&nbsp; {std.studentName} {std.studentSurname}</label><br/>
               </CheckBoxDiv>
             ))}
           </ModalBody>
@@ -91,15 +95,14 @@ export const ExportOutcome: React.FC<{courseID}> = ({courseID}) => {
     </div>)
 }
 
-function exportExcel(selectedStudent: Array<boolean>, fileName: string,fileType: string) {
-
+function exportExcel(students: Array<StudentUpload>, selectedStudent: Array<boolean>, fileName: string, fileType: string) {
     const wb = XLSX.utils.book_new();
-    let data:string[][] = [['Student Mail', 'Student Name', 'Score'],]
+    let data:string[][] = [['Student ID','Student Mail', 'Student Name', 'Score'],]
     if(fileName === ''){fileName = 'Outcome Result'}
     for (let i = 0; i < selectedStudent.length-1; i++) {
       if(selectedStudent[i] === true) {
         console.log('adding student' + i);
-        //data.push([students[i].mail, students[i].name, '100'])
+        data.push([students[i].studentID, students[i].studentEmail, students[i].studentName, '100'])
       }
     }
     if(data.length !== 1){
