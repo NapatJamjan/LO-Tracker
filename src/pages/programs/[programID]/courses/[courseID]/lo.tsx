@@ -5,6 +5,7 @@ import Seo from "../../../../../components/seo";
 import { useForm } from 'react-hook-form';
 import { Modal } from 'react-bootstrap';
 import axios from 'axios';
+import { CourseNameLink, ProgramNameLink } from '../../../../../components/namebar';
 
 interface LOResponse {
   loID: string;
@@ -38,9 +39,9 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
         &nbsp;&#12297;&nbsp;
         <Link to="/programs">Programs</Link>
         &nbsp;&#12297;&nbsp;
-        <Link to={`/programs/${programID}/courses`}>{programID}</Link>
+        <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <Link to="../">{courseID}</Link>
+        <CourseNameLink programID={programID} courseID={courseID} to="../" />
         &nbsp;&#12297;&nbsp;
         <span>LO</span>
       </p>

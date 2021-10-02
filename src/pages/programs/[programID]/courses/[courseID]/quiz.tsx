@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import Layout from '../../../../../components/layout';
 import Seo from '../../../../../components/seo';
 import xlsx from 'xlsx';
+import { CourseNameLink, ProgramNameLink } from '../../../../../components/namebar';
 
 interface QuizResponse {
   quizID: string;
@@ -71,9 +72,9 @@ const Quiz: React.FC<{programID: string, courseID: string}> = ({programID, cours
         &nbsp;&#12297;&nbsp;
         <Link to="/programs">Programs</Link>
         &nbsp;&#12297;&nbsp;
-        <Link to={`/programs/${programID}/courses`}>{programID}</Link>
+        <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <Link to="../">{courseID}</Link>
+        <CourseNameLink programID={programID} courseID={courseID} to="../" />
         &nbsp;&#12297;&nbsp;
         <span>Quiz</span>
       </p>

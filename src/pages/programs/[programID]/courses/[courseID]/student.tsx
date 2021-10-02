@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Layout from '../../../../../components/layout';
 import Seo from '../../../../../components/seo';
 import xlsx from 'xlsx';
+import { CourseNameLink, ProgramNameLink } from '../../../../../components/namebar';
 
 interface StudentUpload {
   /**
@@ -56,9 +57,9 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
         &nbsp;&#12297;&nbsp;
         <Link to="/programs">Programs</Link>
         &nbsp;&#12297;&nbsp;
-        <Link to={`/programs/${programID}/courses`}>{programID}</Link>
+        <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <Link to="../">{courseID}</Link>
+        <CourseNameLink programID={programID} courseID={courseID} to="../" />
         &nbsp;&#12297;&nbsp;
         <span>Student</span>
       </p>

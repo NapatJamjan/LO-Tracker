@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import Layout from '../../../components/layout';
+import { ProgramNameLink } from '../../../components/namebar';
 import Seo from '../../../components/seo';
 
 interface PLOResponse {
@@ -31,7 +32,7 @@ const PLO: React.FC<{ programID: string }> = ({ programID }) => {
         &nbsp;&#12297;&nbsp;
         <Link to="/programs">Programs</Link>
         &nbsp;&#12297;&nbsp;
-        <span>{programID}</span>
+        <ProgramNameLink programID={programID} to=""/>
       </p>
       <p className="my-3">
         <Link to="../courses">Courses</Link>

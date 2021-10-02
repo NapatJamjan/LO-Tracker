@@ -1,6 +1,7 @@
 import { Link } from "gatsby";
 import React from "react";
 import Layout from "../../../../../components/layout";
+import { CourseNameLink, ProgramNameLink } from "../../../../../components/namebar";
 import Seo from "../../../../../components/seo";
 
 const Course: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
@@ -12,9 +13,9 @@ const Course: React.FC<{programID: string, courseID: string}> = ({programID, cou
         &nbsp;&#12297;&nbsp;
         <Link to="/programs">Programs</Link>
         &nbsp;&#12297;&nbsp;
-        <Link to={`/programs/${programID}/courses`}>{programID}</Link>
+        <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <span>{courseID}</span>
+        <CourseNameLink programID={programID} courseID={courseID} to="" />
       </p>
       <Link to="./quiz">Manage quiz</Link><br />
       <Link to="./lo">Manage lo</Link><br />
