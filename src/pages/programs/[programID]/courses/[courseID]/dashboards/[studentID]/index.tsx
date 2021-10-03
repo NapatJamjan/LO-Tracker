@@ -6,9 +6,23 @@ import { quizscore, ScoreTable, PLOscore, ScoreTableIndividual, StudentUpload } 
 import Layout from '../../../../../../../components/layout';
 import { Link } from 'gatsby';
 import Seo from '../../../../../../../components/seo';
-import { ExportOutcome } from '../exportoutcome';
+import { ExportOutcome } from '../export';
   
-const IndividualScore:React.FC<{programID:string, courseID: string, studentID: string}> = ({programID, courseID, studentID}) =>{
+const quizzes: Array<quizscore> = [{id: 0, score: "1/1", detail: "How to Java"},
+  {id: 1, score: "2/2", detail: "Hello World"}, {id: 2, score: "2/2", detail: "Advanced Java"}]
+  const QuizHead: Array<string> = ['Quiz', 'Max Score', 'Student Score']
+  for (let i = 0; i < quizzes.length; i++) { //count unique quiz id
+    QuizHead.push('Question' + (i + 1));
+}
+
+const PLOs: Array<PLOscore> = [{ id: 0, score: "100%", detail: "LO1 100% \n LO2 100% \n LO3 100%" },
+  { id: 1, score: "80%", detail: "LO1 100% \n LO2 100% \n LO3 100%" }, { id: 2, score: "-", detail: "No score" }]
+  const PLOHead: Array<string> = ['PLO', 'Max Score', 'Student Score']
+  for (let i = 0; i < PLOs.length; i++) { //count unique plo id
+    PLOHead.push('LO' + (i + 1));
+}
+
+const IndividualScore:React.FC<{programID: string, courseID: string, studentID: string}> = ({programID, courseID, studentID}) =>{
   const [student, setStudent] = useState<StudentUpload>(
     {studentID: "000", studentName: "Loading..", studentSurname: "Loading...", studentEmail: "Loading."});
   useEffect(() => {
@@ -39,7 +53,7 @@ const IndividualScore:React.FC<{programID:string, courseID: string, studentID: s
     </p>
     <MainDiv>
       <BackButton onClick={() => navigate(-1)}>
-        <i className="fa fa-arrow-left"></i>Back
+        &#12296;Back
       </BackButton>
       <h4 style={{position: "absolute", left: 0, right: 0, textAlign: "center"}}>Individual Summary</h4>
       <h6>Student ID: {student.studentID}</h6>
@@ -50,35 +64,13 @@ const IndividualScore:React.FC<{programID:string, courseID: string, studentID: s
           <button onClick={() => setState("Outcome")}>Outcome Score</button>
           {state === "Outcome" && <ExportOutcome programID={programID} courseID={courseID} />}
         </ButtonTab>
-        {state === "Quiz" && <QuizScore courseID = {courseID}/>}
-        {state === "Outcome" && <OutcomeScore courseID = {courseID}/>}
+        {state === "Quiz" && <ScoreTableIndividual programID={programID} courseID={courseID} studentID={studentID} 
+          score={quizzes} tablehead={QuizHead} dataType="quiz" />}
+        {state === "Outcome" && <ScoreTableIndividual programID={programID} courseID={courseID} studentID={studentID} 
+          score={PLOs} tablehead={PLOHead} dataType="plo" />}
       </DashboardDiv>
     </MainDiv>
   </Layout>)
-}
-
-function QuizScore(props:{courseID: string}) {
-  const quizzes: Array<quizscore> = [{id: 0, score: "1/1", detail: "How to Java"},
-  {id: 1, score: "2/2", detail: "Hello World"}, {id: 2, score: "2/2", detail: "Advanced Java"}]
-  const QuizHead: Array<string> = ['Quiz', 'Max Score', 'Student Score']
-  for (let i = 0; i < quizzes.length; i++) { //count unique quiz id
-    QuizHead.push('Question' + (i + 1));
-  }
-  return (
-    <ScoreTableIndividual courseID={props.courseID} score={quizzes} tablehead={QuizHead} dataType="quiz" />
-  )
-}
-  
-function OutcomeScore(props:{courseID: string}) {
-  const PLOs: Array<PLOscore> = [{ id: 0, score: "100%", detail: "LO1 100% \n LO2 100% \n LO3 100%" },
-  { id: 1, score: "80%", detail: "LO1 100% \n LO2 100% \n LO3 100%" }, { id: 2, score: "-", detail: "No score" }]
-  const PLOHead: Array<string> = ['PLO', 'Max Score', 'Student Score']
-  for (let i = 0; i < PLOs.length; i++) { //count unique plo id
-    PLOHead.push('LO' + (i + 1));
-  }
-  return (
-    <ScoreTableIndividual courseID={props.courseID} score={PLOs} tablehead={PLOHead} dataType="plo" />
-  )
 }
 
 export default IndividualScore;

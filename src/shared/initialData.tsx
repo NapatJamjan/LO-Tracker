@@ -22,7 +22,7 @@ export interface courseResponse {
 }
 export interface courseRequest {
     programID: string;
-    name: string;
+    courseName: string;
     semester: number;
     year: number;
 }
@@ -97,16 +97,16 @@ export async function initData(){ // called on App.tsx
             {programName: "Computer Science", programDescription: "Computer Science description"})
             await api.post<programRequest[]>('/program', 
             {programName: "I.T.", programDescription: "Internet Technologies"})
-            let res1 = await api.get<programResponse[]>('/programs');
+            let res1 = await (await api.get<programResponse[]>('/programs'));
             console.log(res1);
             
             //course
             await api.post<courseRequest[]>('/course', {programID: res1.data[0].programID, 
-                name: "CSC209: Data Structures", semester: 1, year: 2021});
+                courseName: "CSC209: Data Structures", semester: 1, year: 2021});
             await api.post<courseRequest[]>('/course', {programID: res1.data[0].programID, 
-                name: "CSC218: Database Systems", semester: 1, year: 2021});
+                courseName: "CSC218: Database Systems", semester: 1, year: 2021});
             await api.post<courseRequest[]>('/course', {programID: res1.data[0].programID, 
-                name: "CSC340: Artificial Intelligence", semester: 1, year: 2020});
+                courseName: "CSC340: Artificial Intelligence", semester: 1, year: 2020});
             let res2 = await api.get<courseResponse[]>('/courses', {params: {programID: res1.data[0].programID} });
             console.log(res2);
             
