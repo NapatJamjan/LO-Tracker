@@ -39,50 +39,52 @@ const PLO: React.FC<{ programID: string }> = ({ programID }) => {
         <span className="mx-3"></span>
         <span className="underline">PLOs</span>
       </p>
-      {plos.map((plo) => (
-        <div key={plo.ploID} className="rounded shadow-lg p-1">
-          <p>{plo.ploName}</p>
+      <div className="flex flex-row-reverse mt-4 mb-3">
+        <CreatePLOForm programID={programID} />
+      </div>
+      {plos.sort((p1, p2) => p1.ploName.localeCompare(p2.ploName)).map((plo) => (
+        <div key={plo.ploID} className="flex flex-column rounded shadow-lg p-3 mb-3 -space-y-4">
+          <p className="text-xl text-bold">{plo.ploName}</p>
           <span>{plo.ploDescription}</span>
         </div>
       ))}
-      <div className="py-3"></div>
-      <CreatePLOForm programID={programID} />
     </Layout>
   );
 };
 
 const CreatePLOForm: React.FC<{ programID }> = ({ programID }) => {
   const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, setValue } = useForm<{ ploName: string, ploDescription: string }>();
+  const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<{ ploName: string, ploDescription: string }>();
+  const resetForm = () => reset({ploName: '', ploDescription: ''});
   return (
     <div>
-      <button onClick={() => setShow(true)}>Create a new PLO.</button>
-      <Modal show={show} onHide={() => setShow(false)}>
+      <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+        Create a new PLO <span className="text-xl text-green-800">+</span>
+      </button>
+      <Modal show={show} onHide={() => {resetForm();setShow(false)}}>
         <form
           onSubmit={handleSubmit((form) => {
-            if (form.ploName != '') {
-              const api = axios.create({
-                baseURL: 'http://localhost:5000/api'
-              });
-              api.post('/plo', { ...form, programID }).then(() => {
-                setValue('ploName', '');
-                setValue('ploDescription', '');
-                setShow(false);
-                window.location.reload();
-              });
-            }
+            const api = axios.create({
+              baseURL: 'http://localhost:5000/api'
+            });
+            api.post('/plo', { ...form, programID }).then(() => {
+              resetForm();
+              setShow(false);
+              window.location.reload();
+            });
           })}
         >
           <Modal.Header>
             <Modal.Title>Create a new PLO</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <input type="text" {...register('ploName')} placeholder="type PLO's name"/>
+            <input type="text" {...register('ploName', {required: true})} placeholder="type PLO's name" className="border-4 rounded-md p-1 mx-2 text-sm"/>
+            <br/><span className="text-red-500 text-sm italic pl-3">{touchedFields.ploName && errors.ploName && 'PLO name is required.'}</span>
             <p className="my-3"></p>
-            <textarea {...register('ploDescription')} placeholder="PLO's description" cols={30}></textarea>
+            <textarea {...register('ploDescription')} placeholder="PLO's description" cols={40} rows={4} className="border-4 rounded-md p-1 mx-2 text-sm"></textarea>
           </Modal.Body>
           <Modal.Footer>
-            <input type="submit" value="save" />
+            <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
           </Modal.Footer>
         </form>
       </Modal>

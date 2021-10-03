@@ -46,14 +46,17 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
         <span className="mx-3"></span>
         <Link to="../plo">PLOs</Link>
       </p>
-      <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter} placeholder="search"/>
+      <div className="flex justify-between items-end mt-4 mb-3">
+        <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter} placeholder="search for a program" className="border-4 rounded-md p-1 mx-2 text-sm"/>
+        <CreateCourseForm programID={programID} />
+      </div>
       {
         Array.from(courseGroups).sort((group1, group2) => {
           let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
           let [sem2, year2] = group2[0].split(',').map(val => parseInt(val, 10));
           if (year1 === year2) return sem2 - sem1;
           return year2 - year1;
-        }).map((group, index) => {
+        }).map((group) => {
           let [semester, year] = group[0].split(',').map(val => parseInt(val, 10));
           let courseList: CourseResponse[] = group[1];
           return (
@@ -66,11 +69,11 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
                     if (course1.semester !== course2.semester) return course2.semester - course1.semester;
                     return course1.courseName.localeCompare(course2.courseName);
                   }).map((course) => (
-                    <div key={course.courseID} className="rounded shadow-lg p-3">
+                    <li key={course.courseID} className="rounded shadow-lg p-3">
                       <Link to={`./${course.courseID}`}>
                         {course.courseName}
                       </Link>
-                    </div>
+                    </li>
                   ))
                 }
               </ul>
@@ -78,23 +81,24 @@ const Courses: React.FC<{ programID: string }> = ({ programID }) => {
           );
         })
       }
-      <div className="py-3"></div>
-      <CreateCourseForm programID={programID} />
     </Layout>
   );
 };
 
 const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
   const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, setValue } = useForm<{
+  const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<{
     courseName: string;
     semester: number;
     year: number;
   }>();
+  const resetForm = () => reset({courseName: ''});
   return (
     <div>
-      <button onClick={() => setShow(true)}>Create a new course.</button>
-      <Modal show={show} onHide={() => setShow(false)}>
+      <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+        Create a new course <span className="text-xl text-green-800">+</span>
+      </button>
+      <Modal show={show} onHide={() => {resetForm();setShow(false)}}>
         <form
           onSubmit={handleSubmit((form) => {
             if (form.courseName != '') {
@@ -102,7 +106,7 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
                 baseURL: 'http://localhost:5000/api'
               });
               api.post('/course', { ...form, programID }).then(() => {
-                setValue('courseName', '');
+                resetForm();
                 setShow(false);
                 window.location.reload();
               });
@@ -115,12 +119,13 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
           <Modal.Body>
             <span>Course name:</span>
             <br />
-            <input {...register('courseName')} />
+            <input {...register('courseName', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/>
             <br />
+            <span className="text-red-500 text-sm italic pl-3">{touchedFields.courseName && errors.courseName && 'Course name is required.'}</span><br/>
 
             <span>Semester:</span>
             <br />
-            <select {...register('semester')}>
+            <select {...register('semester')} className="border-4 rounded-md p-1 mx-2 text-sm">
               <option value={1}>1</option>
               <option value={2}>2</option>
               <option value={3}>S</option>
@@ -129,7 +134,7 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
 
             <span>Year:</span>
             <br />
-            <select {...register('year')}>
+            <select {...register('year')} className="border-4 rounded-md p-1 mx-2 text-sm">
               {Array.from({ length: 10 }, (_, i) => 2021 - i).map((year) => (
                 <option value={year} key={`year-${year}`}>
                   {year}
@@ -139,7 +144,7 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
             <br />
           </Modal.Body>
           <Modal.Footer>
-            <input type="submit" value="save" />
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
           </Modal.Footer>
         </form>
       </Modal>
