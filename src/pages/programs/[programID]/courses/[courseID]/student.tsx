@@ -61,13 +61,16 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
         &nbsp;&#12297;&nbsp;
         <CourseNameLink programID={programID} courseID={courseID} to="../" />
         &nbsp;&#12297;&nbsp;
-        <span>Student</span>
+        <span>Students</span>
       </p>
-      <input type="file" onChange={e => excelJSON(e.target.files[0])}/>
-      <table className="table-auto">
+      <label htmlFor="uploadExcel" className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm cursor-pointer">
+        Upload student list <span className="text-xl text-green-800">+</span>
+      </label>
+      <input id="uploadExcel" type="file" onChange={e => excelJSON(e.target.files[0])} className="hidden"/>
+      <table className="table-auto mt-4">
         <thead>
-          <tr>
-            <td>Student ID</td>
+          <tr className="bg-gray-100">
+            <td className="text-center">Student ID</td>
             <td>Student Email</td>
             <td>Student Name</td>
             <td>Student Surname</td>
@@ -75,9 +78,9 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
         </thead>
         <tbody>
           {
-            students.map((student) => (
+            students.sort((s1, s2) => s1.studentID.localeCompare(s2.studentID)).map((student) => (
               <tr key={student.studentID}>
-                <td>{student.studentID}</td>
+                <td className="text-center">{student.studentID}</td>
                 <td>{student.studentEmail}</td>
                 <td>{student.studentName}</td>
                 <td>{student.studentSurname}</td>
