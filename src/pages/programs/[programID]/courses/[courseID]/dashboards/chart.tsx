@@ -6,13 +6,23 @@ interface chartdata{
   name: string, score: number
 }
 
-export function Chart(props:any){
+export function Chart(props:any) {
     return(
       <div>
         {props.dataType === "plo" && <PloChart/>}
         {props.dataType === "quiz" && <QuizChart/>}
       </div>
     );
+}
+
+export function Charts(props:any) {
+  return (
+    <div>
+      {props.chartType === "bar" && <ChartBar dataArray={props.data}/>}
+      {props.chartType === "line" && <ChartLine dataArray={props.data}/>}
+      {props.chartType === "mix" && <ChartMix dataArray={props.data}/>}
+    </div>
+  )
 }
 
 function PloChart(props:any){
@@ -29,7 +39,7 @@ function PloChart(props:any){
       </select><br/>
       {chartType === "TPLO" && <ChartBar dataArray={data}/>}
       {chartType === "TLO" && <ChartLine/>}
-      {chartType === "Test" && <ChartTest/>}
+      {chartType === "Test" && <ChartMix/>}
       </div>
   )
 }
@@ -44,7 +54,7 @@ function QuizChart(props: any) {
       <select value={chartType} style={{float: "right"}} onChange={handleChange}>
         <option value="Score">Score</option>
         <option value="Average">Average Score</option>
-      </select><br />
+      </select><br/>
       {chartType === "Score" && <ChartBar dataArray={data}/>}
       {chartType === "Average" && <ChartLine/>}
     </div>
@@ -84,7 +94,7 @@ function ChartLine(props: any) {
   )
 }
 
-function ChartTest(props:any){
+function ChartMix(props:any){
   const data = [{name: 'PLO1', score: 75},{name: 'PLO2', score: 100},{name: 'PLO3', score: 30},
   {name: 'PLO4', score: 60}];
   return(

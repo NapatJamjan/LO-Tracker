@@ -2,10 +2,16 @@ import axios from 'axios';
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import Layout from '../../../../../../components/layout';
-import { quizscore, ScoreTable, PLOscore } from './table';
+import { quizscore, ScoreTable, PLOscore, ScoreTablePLO } from './table';
 import { Link } from 'gatsby';
 import Seo from '../../../../../../components/seo';
-import { ExportOutcome } from './exportoutcome';
+import { ExportOutcome } from './export';
+
+interface scoreData {
+  name: string,
+  header: Array<string>,
+  score: Array<any>
+}
 
 const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, courseID}) => {
   const [state, setState] = useState("Quiz");
@@ -36,15 +42,17 @@ const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, c
 }
 
 function QuizScore(props: {programID: string, courseID: string}){
-  const quizs: Array<quizscore> = [{id: 1, score: "5/5", detail: "Part 1 : 2/2 \n Part 1 : 3/3"},
+  const quizzes: Array<quizscore> = [{id: 1, score: "5/5", detail: "Part 1 : 2/2 \n Part 1 : 3/3"},
   {id: 2, score: "10/10", detail: "Part 1 : 10/10"}, {id: 3, score: "1/10", detail: "Part 1 : 1/5 \n Part 2 : 0/5"}]
   const QuizHead: Array<string> = ['ID', 'Name']
-  for (let i = 0; i < quizs.length; i++) { //count unique quiz id
+  for (let i = 0; i < quizzes.length; i++) { //count unique quiz id
     QuizHead.push('Quiz'+(i+1));
   }
+  //const scores:scoreData = [{name: "All quiz", header: QuizHead, score: quizzes }];
   return(
-    <ScoreTable programID = {props.programID} courseID = {props.courseID} score={quizs} tablehead={QuizHead} dataType="quiz"/>
-  )
+    <div>
+      <ScoreTable programID={props.programID} courseID={props.courseID} score={quizzes} tablehead={QuizHead} dataType="quiz" />
+    </div>)
 }
 
 function OutcomeScore(props: {programID: string, courseID: string}){
@@ -56,7 +64,7 @@ function OutcomeScore(props: {programID: string, courseID: string}){
     PLOHead.push('PLO'+(i+1));
   }
   return(
-    <ScoreTable programID = {props.programID} courseID = {props.courseID} score={PLOs} tablehead={PLOHead} dataType="plo"/>
+    <ScoreTablePLO programID = {props.programID} courseID = {props.courseID} />
   )
 }
 
