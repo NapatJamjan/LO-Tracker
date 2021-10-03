@@ -171,7 +171,7 @@ const CreateLOForm: React.FC<{programID: string, courseID: string}> = ({programI
             <span>LO Title:</span><br/>
             <input type="text" {...register('loTitle', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
             <span>Initial LO Level:</span><br/>
-            <input type="text" {...register('initLevel')} className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200" readOnly/><br/>
+            <input type="text" {...register('initLevel')} className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 pointer-events-none  " readOnly/><br/>
             <span>Level Description:</span><br/>
             <input type="text" {...register('description', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
           </Modal.Body>
@@ -217,7 +217,7 @@ const CreateLOLevelForm: React.FC<{programID: string, courseID: string, loID: st
           </Modal.Header>
           <Modal.Body>
             <span>LO Level:</span><br/>
-            <input type="text" {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200" readOnly/><br/>
+            <input type="text" {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 pointer-events-none" readOnly/><br/>
             <span>Description:</span><br/>
             <input type="text" {...register('description')} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
           </Modal.Body>
