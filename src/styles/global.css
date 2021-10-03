@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 @import 'bootstrap/dist/css/bootstrap.min.css';
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300&display=swap');
 
 .modal-open {
   padding-right: 0 !important;
 }
 
-input[type="text"] {
-  outline: 2px solid black;
+body {
+  font-family: 'Source Sans Pro', sans-serif !important;
 }
