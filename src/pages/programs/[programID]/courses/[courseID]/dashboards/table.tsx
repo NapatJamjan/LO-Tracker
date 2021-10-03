@@ -4,26 +4,22 @@ import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import styled from 'styled-components';
 import { TableSort } from '.';
-import { studentResponse } from '../../../../../../shared/initialData';
-import {Chart} from './chart';
+import {Chart, ChartBarr} from './chart';
 
 export interface quizscore {
   id: number,
   score: string,
   detail: string;
 }
-
 export interface PLOscore {
   id: number,
   score: string,
   detail: string;
 }
-
 interface tableData {
   shortname: string,
   maxscore: number
 }
-
 export interface StudentUpload {
   studentID: string;
   studentEmail: string;
@@ -47,6 +43,12 @@ interface DashboardResponse {
   }[];
 }
 
+export interface studentResult {
+  studentID: string,
+  studentName: string,
+  scores: Array<Number>
+}
+
 const Quizinfo: Array<tableData> = [{shortname: 'Quiz 1', maxscore: 5},
   {shortname: 'Quiz 2', maxscore: 10}, {shortname: 'Quiz 3', maxscore: 10}]
 const PLOinfo: Array<tableData> = [{shortname: 'PLO 1', maxscore: 100},
@@ -56,13 +58,9 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
   const [dscore, setDscore] = useState<DashboardResponse>({
     students: new Map<string, string>(), plos: new Map<string, string>(),
     los: new Map<string, string>(), questions:[],} );
-  interface studentResult {
-    studentID: string,
-    studentName: string,
-    scores: Array<Number>
-  }
   const [tableHead, setHead] = useState<string[]>([])
   const [tableData, setData] = useState<studentResult[]>([]);
+
   useEffect(() => {
     const api = axios.create({ baseURL: `http://localhost:5000/api` });
     ( async () => {
@@ -74,25 +72,27 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
     calculatePLO(res1.data,res2.data);
     }) ()
   },[])
-  console.log(dscore);
 
   const [studentLOScore, setLOS] = useState<studentResult[]>([]);  
-  const [studentLOHead, setLOH] = useState<string[]>(['Student ID','Student Email']); 
+  const [studentLOHead, setLOH] = useState<string[]>(['Student ID','Student Name']); 
   const [studentPLOScore, setPLOS] = useState<studentResult[]>([]); 
-  const [studentPLOHead, setPLOH] = useState<string[]>(['Student ID','Student Email']); 
+  const [studentPLOHead, setPLOH] = useState<string[]>(['Student ID','Student Name']); 
+
   function calculatePLO(score:DashboardResponse, plolink:Array<Map<string,string[]>>) {
-    
+    console.log("calculate",score)
+    console.log("plolink", plolink)
     const std = []; // score index will be based on student in this response
     const stdname = []; // name for the table
     Object.entries(score.students).map(([k,v]) => { std.push(k); stdname.push(v); })
     let loScore = []; let loScoreC = []; // for counting purpose, plo score go down
     let questions = score.questions;
-    let loArr:Array<number[]> =[];
+    let loArr:Array<number[]> = [];
     let loName: Array<string> = []; let loID: Array<string> = [];
     let ploID: Array<string> = [];  let ploName: Array<string> = [];
     Object.entries(score.plos).map(([k, v]) => { ploName.push(v); ploID.push(k) })
     Object.entries(score.los).map(([k, v]) => { 
       if(k.split(',').length === 1){ loName.push(v); loID.push(k) } });
+    loName.sort(); loID.sort(); ploName.sort(); ploID.sort();
     let lotemp = 0;
     for (var key in score.los) { // create lo lvl scoring
       let temp = key.split(',')
@@ -109,7 +109,8 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
       loArr.push(Array.from({length:lotemp}, () => 0))
       lotemp = 0;
     } // end lvl scoring creation
-    // console.log("loArrayy", loArr)
+    console.log("loArrayy", loArr)
+    console.log("loArr",loArr); // something wrong with loArr
     for (var i in std) {
       loScore.push([]); loScoreC.push([]);
       for(var j in loArr) {
@@ -117,6 +118,7 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
         loScoreC[i].push(Array.from({length:loArr[j].length}, () => 0));
       }
     }
+    console.log(loID);
     // console.log("LOScore", loScore); //loScore[0][0][1] to get 1 value 
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
@@ -124,8 +126,15 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
         let lvlidx = parseInt(questions[i].linkedLOs[k].split(',')[1])-1;
         // index of level, all combined will be [student][lo][level]
         for (let j = 0; j < questions[i].results.length; j++) { // might have to loop after link check
-          let currentScore = (questions[i].results[j].studentScore / questions[i].maxScore) * 100;
+          let currentScore = 0;
+          try{//prevent null
+            currentScore = (questions[i].results[j].studentScore / questions[i].maxScore) * 100;
+          }
+          catch{
+            currentScore = 0;
+          }
           let stdidx = std.indexOf(std.find(e => e == questions[i].results[j].studentID));
+          // if(loidx > )
           loScore[stdidx][loidx][lvlidx] += currentScore;
           loScoreC[stdidx][loidx][lvlidx] += 1;
         }
@@ -160,8 +169,8 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
         }
       }
     }// end of lo score calculation
-    for (let i = 0; i < loRes[0].length; i++) {
-      studentLOHead.push("LO"+(i+1))
+    for (let i = 0; i < loName.length; i++) {
+      studentLOHead.push(loName[i].substring(0,4)+" (%)");
     }
     setLOH(studentLOHead.slice());
     for (let i = 0; i < loRes.length; i++) {
@@ -196,22 +205,21 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
       }
     } // calculation end
     console.log("PLO SCORE", ploScore)
-    for (let i = 0; i < ploID.length; i++) {
-      studentPLOHead.push("PLO"+(i+1));
+    for (let i = 0; i < ploName.length; i++) {
+      studentPLOHead.push(ploName[i]+" (%)");
     }
-    setHead(studentPLOHead.slice());
     setPLOH(studentPLOHead.slice());
+    setHead(studentPLOHead.slice()); // set as start
     for (let i = 0; i < ploScore.length; i++) {
       studentPLOScore.push({studentID: std[i], studentName: stdname[i] ,scores: [...ploScore[i]]})
     }
-    setData(studentPLOScore.slice());
     setPLOS(studentPLOScore.slice());
+    setData(studentPLOScore.slice());// set as start
   }  
 
   const [dataType, setType] = useState("PLO");
   function handleChange(e: any){ setType(e.target.value) }
   useEffect(() => {
-    console.log("state change",dataType)
     if(dataType == "PLO"){
       setHead(studentPLOHead.slice()); setData(studentPLOScore.slice());
     }else{
@@ -248,6 +256,7 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
   )
 }
 
+// Quiz Table
 interface quizScoreResponse {
   quizName: string;
   maxScore: number;
@@ -260,39 +269,81 @@ interface quizScoreResponse {
 
 export function ScoreTable (props: {
   programID: string, courseID: string, score: Array<any>, tablehead: Array<string>, dataType: string}) {
-  const [scores, setScores] = useState<quizScoreResponse>();
-  // useEffect(() => {
-  //   const api = axios.create({ baseURL: `http://localhost:5000/api` });
-  //   api
-  //     .get<StudentUpload[]>('/students', { params: { programID: props.programID, courseID: props.courseID } })
-  //     .then((res) => res.data).then(setStudents);
-  // }, [])
+  const [scores, setScores] = useState<quizScoreResponse[]>();
+  
   useEffect(() => {
     const api = axios.create({ baseURL: `http://localhost:5000/api` });
-    api
-      .get<quizScoreResponse>('/dashboard-result', { params: { programID: props.programID, courseID: props.courseID } })
-      .then((res) => res.data).then(setScores);
-      console.log('da quiz',scores)
-  }, [])
+    ( async () => {
+      const [res1,res2] = await Promise.all([
+      api.get<StudentUpload[]>('/students', { params: { programID: props.programID, courseID: props.courseID } }),
+      api.get<quizScoreResponse[]>('/dashboard-result', { params: { programID: props.programID, courseID: props.courseID } })
+    ])
+    setScores(res2.data);
+    displayScore(res1.data, res2.data);
+    }) ()
+  },[])
+
+  const [tableData, setData] = useState<studentResult[]>([]); // use this name since there only one type of table shown
+  const [tableHead, setHead] = useState<string[]>(['Student ID','Student Name']); 
+
+  function displayScore(student: StudentUpload[], score: quizScoreResponse[]) {
+    console.log("Quizzes score", score)
+    let quizScore:Array<Number[]> = [];
+    let sID:Array<string> = [];
+    for (var i in student) {
+      quizScore.push([]); sID.push(student[i].studentID);;
+    }
+    console.log(sID);
+    for (let i = 0; i < score.length; i++) { // adding to new array
+      for (let j = 0; j < sID.length; j++) {
+        try{ // check if NaN
+          let stdScore = score[i].results.find(e => e.studentID == sID[j]).studentScore;
+          stdScore = parseInt(((stdScore/score[i].maxScore)*100).toFixed(0)); // find percentage
+          console.log(stdScore)
+          quizScore[j].push(stdScore);
+        }
+        catch{ quizScore[j].push(NaN); }
+      }
+    } 
+    for (let i = 0; i < score.length; i++) {
+      // tableHead.push(score[i].quizName + "(" + score[i].maxScore + ")");
+      tableHead.push(score[i].quizName + " (%)");
+    }
+    setHead(tableHead.slice());
+    for (let i = 0; i < quizScore.length; i++) {
+      tableData.push({studentID: sID[i], 
+      studentName: student.find(e => e.studentID == sID[i]).studentName, 
+      scores: quizScore[i]})
+    }
+    setData(tableData.slice());
+    console.log(tableData);
+    let hh: Map<string,number> = (new Map<string, number>());
+    hh.set('a',1)
+    console.log("map test",hh)
+    console.log("mapt2",hh.get('a'))
+  }
+
   return (
     <div>
-      <Chart dataType={props.dataType} />
+      {/* <Chart dataType={props.dataType} /> */}
+      <ChartBarr data={tableData}/>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
-            {props.tablehead.map(thdata => (<th>{thdata}<TableSort /></th>))}
+            {tableHead.map(head => (<th>{head}<TableSort /></th>))}
           </tr>
         </thead>
         <tbody>
-          {/* {students.map(std => (
+          {tableData.map(data => (
             <tr>
-              <td><LinkedCol to={`./${std.studentID}`}>{std.studentID}</LinkedCol></td>
-              <td><LinkedCol to={`./${std.studentID}`}>{std.studentName}</LinkedCol></td>
-              {props.score.map(scores => ( // map score of this student's id
-                <Overlay score={scores.score} detail={[scores.detail]} />
+              <td><LinkedCol to={`./${data.studentID}`}>{data.studentID}</LinkedCol></td>
+              <td><LinkedCol to={`./${data.studentID}`}>{data.studentName}</LinkedCol></td>
+              {data.scores.map(scores => ( // map score of this student's id
+                // <Overlay score={scores.score} detail={[scores.detail]} />
+                <td>{scores}</td>
               ))}
             </tr>
-          ))} */}
+          ))}
         </tbody>
       </Table>
     </div>
