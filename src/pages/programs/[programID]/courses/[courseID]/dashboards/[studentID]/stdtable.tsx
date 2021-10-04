@@ -70,7 +70,6 @@ export function IndividualPLO(props: { programID: string, courseID: string, stud
         loScoreC[i].push(Array.from({length:loArr[j].length}, () => 0));
       }
     }
-    console.log(loID);
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loID.indexOf(loID.find(e => e == questions[i].linkedLOs[k].split(',')[0]))
@@ -182,12 +181,14 @@ export function IndividualPLO(props: { programID: string, courseID: string, stud
 
   return (
     <div>
+     
+      {/* <Chart dataType={props.dataType} /> */}
+      <ChartBarCompare stdData={tableData} data={allData} />
+      <br/>
       <select value={dataType} onChange={handleChange} className="border rounded-md border-2 ">
         <option value="PLO">PLO</option>
         <option value="LO">LO</option>
       </select><br />
-      {/* <Chart dataType={props.dataType} /> */}
-      <ChartBarCompare stdData={tableData} data={allData} />
       <Table striped bordered hover className="table" style={{ margin: 0, width: "65%" }}>
         <thead>
           <tr>
@@ -197,9 +198,9 @@ export function IndividualPLO(props: { programID: string, courseID: string, stud
         <tbody>
           {tableData.map(data => (
             <tr>
-              <td><LinkedCol to={`./${data.studentID}`}>{data.studentID}</LinkedCol></td>
-              <td><LinkedCol to={`./${data.studentID}`}>{data.studentName}</LinkedCol></td>
-              {data.scores.map(scores => ( // map score of this student's id
+              <td>{data.studentID}</td>
+              <td>{data.studentName}</td>
+              {data.scores.map(scores => (
                 // <Overlay score={scores.score} detail={[scores.detail]} />
                 <td>{scores}</td>
               ))}
@@ -276,8 +277,8 @@ export function IndividualQuiz (props: { programID: string, courseID: string, st
         <tbody>
           {tableData.map(data => (
             <tr>
-              <td><LinkedCol to={`./${data.studentID}`}>{data.studentID}</LinkedCol></td>
-              <td><LinkedCol to={`./${data.studentID}`}>{data.studentName}</LinkedCol></td>
+              <td>{data.studentID}</td>
+              <td>{data.studentName}</td>
               {data.scores.map(scores => ( // map score of this student's id
                 // <Overlay score={scores.score} detail={[scores.detail]} />
                 <td>{scores}</td>
