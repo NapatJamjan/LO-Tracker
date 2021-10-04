@@ -49,7 +49,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
   const [selectedLOID, setSelectedLOID] = useState<string>('');
   const { register, handleSubmit, setValue } = useForm<{ loID: string, level: number }>({defaultValues: {loID: '', level: 0}});
   const [quizzes, setQuizzes] = useState<QuizResponse[]>([]);
-  useEffect(() => {
+  const fetchQuiz = () => {
     const api = axios.create({
       baseURL: 'http://localhost:5000/api'
     });
@@ -57,6 +57,12 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
       .get<QuizResponse[]>('/quizzes', { params: { programID, courseID } })
       .then((res) => res.data)
       .then(setQuizzes);
+  }
+  useEffect(() => {
+    fetchQuiz();
+    const api = axios.create({
+      baseURL: 'http://localhost:5000/api'
+    });
     api
       .get<LOResponse[]>('/los', { params: { programID, courseID } })
       .then((res) => res.data)
@@ -122,12 +128,12 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
                 api.post('/questionlink', {...form, questionID: selectedQuestionID, programID, courseID, quizID: selectedQuizID}).then(() => {
                   setValue('loID', '');
                   setValue('level', 0);
-                  window.location.reload();
+                  fetchQuiz();
                 });
               }
             })}>
               <span>Select LO:</span><br/>
-              <select {...register('loID')} className="border-4 rounded-md p-1 mx-2 text-sm" defaultValue="" onChange={e => {setSelectedLOID(e.target.value);setValue('level', 0);}}>
+              <select {...register('loID')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue="" onChange={e => {setSelectedLOID(e.target.value);setValue('level', 0);}}>
                 <option disabled value="">--Select LO--</option>
                 {los.sort((l1, l2) => l1.loTitle.localeCompare(l2.loTitle)).map((lo) => (
                   <option value={lo.loID} key={lo.loID}>
@@ -137,7 +143,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
               </select><br/>
               {selectedLOID !== '' && <div>
                 <span>Select Level:</span><br/>
-                <select {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm" defaultValue={0}>
+                <select {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue={0}>
                   <option disabled value={0}>--Select Level--</option>
                   {los[los.findIndex((lo) => lo.loID == selectedLOID)].levels.map((level) => (
                     <option value={level.level} key={level.levelDescription}>
@@ -152,8 +158,8 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
               <span>Linked LOs: </span><br/>
               <ul>
               {
-                linkedLOs.map((lo) => (
-                  <li>{lo.levelDescription}</li>
+                linkedLOs.sort((l1, l2) => l1.levelDescription.localeCompare(l2.levelDescription)).map((lo) => (
+                  <li key={lo.loID}>{lo.levelDescription}</li>
                 ))
               }
               {linkedLOs.length === 0 && <span>No linked LOs</span>}

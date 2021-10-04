@@ -31,7 +31,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
   const [plos, setPLOs] = useState<PLOResponse[]>([]);
   const [selectedLOID, setSelectedLOID] = useState<string>('');
   const { register, handleSubmit, setValue } = useForm<{ ploID: string }>({defaultValues: {ploID: ''}});
-  useEffect(() => {
+  const fetchLO = () => {
     const api = axios.create({
       baseURL: 'http://localhost:5000/api'
     });
@@ -39,6 +39,12 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
       .get<LOResponse[]>('/los', { params: { programID, courseID } })
       .then((res) => res.data)
       .then(setLOs);
+  }
+  useEffect(() => {
+    fetchLO();
+    const api = axios.create({
+      baseURL: 'http://localhost:5000/api'
+    });
     api
       .get<PLOResponse[]>('/plos', { params: { programID } })
       .then((res) => res.data)
@@ -95,7 +101,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
               });
               api.post('/plolink', {...form, loID: selectedLOID, programID, courseID}).then(() => {
                 setValue('ploID', '');
-                window.location.reload();
+                fetchLO();
               });
             })}>
               <select {...register('ploID')} className="border-4 rounded-md p-1 mx-2 text-sm" defaultValue="">
