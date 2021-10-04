@@ -40,6 +40,14 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
       .then((res) => res.data)
       .then(setLOs);
   }
+  const deleteLinkedPLO = (ploID: string) => {
+    const api = axios.create({
+      baseURL: 'http://localhost:5000/api'
+    });
+    api
+      .delete('/plolink', { data: { programID, courseID, ploID, loID: selectedLOID } })
+      .then(() => fetchLO());
+  }
   useEffect(() => {
     fetchLO();
     const api = axios.create({
@@ -124,7 +132,8 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
                   .map((p) => (
                     <li key={p.ploID}>
                       <span>{p.ploName}</span><br/>
-                      <span>{p.ploDescription}</span>
+                      <span>{p.ploDescription}</span>&nbsp;
+                      <span className="cursor-pointer text-red-600" onClick={() => deleteLinkedPLO(p.ploID)}>&#9747;</span>
                     </li>
                   ))
               }

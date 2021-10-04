@@ -58,6 +58,14 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
       .then((res) => res.data)
       .then(setQuizzes);
   }
+  const deleteLinkedLO = (loID: string) => {
+    const api = axios.create({
+      baseURL: 'http://localhost:5000/api'
+    });
+    api
+      .delete('/questionlink', { data: { programID, courseID, quizID: selectedQuizID, questionID: selectedQuestionID, loID } })
+      .then(() => fetchQuiz());
+  }
   useEffect(() => {
     fetchQuiz();
     const api = axios.create({
@@ -159,7 +167,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
               <ul>
               {
                 linkedLOs.sort((l1, l2) => l1.levelDescription.localeCompare(l2.levelDescription)).map((lo) => (
-                  <li key={lo.loID}>{lo.levelDescription}</li>
+                  <li key={lo.loID}>{lo.levelDescription}&nbsp;<span className="cursor-pointer text-red-600" onClick={() => deleteLinkedLO(lo.loID)}>&#9747;</span></li>
                 ))
               }
               {linkedLOs.length === 0 && <span>No linked LOs</span>}
