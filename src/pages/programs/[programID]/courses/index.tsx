@@ -89,6 +89,7 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<{
     courseName: string;
+    courseDescription: string;
     semester: number;
     year: number;
   }>();
@@ -122,6 +123,11 @@ const CreateCourseForm: React.FC<{ programID: string }> = ({ programID }) => {
             <input {...register('courseName', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/>
             <br />
             <span className="text-red-500 text-sm italic pl-3">{touchedFields.courseName && errors.courseName && 'Course name is required.'}</span><br/>
+
+            <span>Course description:</span>
+            <br />
+            <textarea {...register('courseDescription')} placeholder="program's description" cols={30} className="border-4 rounded-md p-1 mx-2" rows={4}></textarea>
+            <br />
 
             <span>Semester:</span>
             <br />
