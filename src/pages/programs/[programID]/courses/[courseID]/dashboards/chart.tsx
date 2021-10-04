@@ -115,12 +115,9 @@ export function ChartBarr(props: { data:studentResult[] }) {
 }
 
 export function ChartBarr2(props: { data:studentResult[] }) {
-  interface averageScore {
-    name: string, score: number
-  }
+  interface averageScore { name: string, score: number }
   let datas = props.data;
   let avgScore:averageScore[] = [];
-  console.log(datas)
   let dataLength=0;
   for(var i in datas) { 
     let ltemp = 0;
@@ -137,10 +134,9 @@ export function ChartBarr2(props: { data:studentResult[] }) {
     }
   }
   for (let i = 0; i < avg.length; i++) {
-    avg[i] = parseInt((avg[i]/datas.length).toFixed(0))
-    avgScore.push({name:'Data'+(i+1),score:avg[i]});
+    avg[i] = parseInt((avg[i] / datas.length).toFixed(0))
+    avgScore.push({ name: 'Data' + (i + 1), score: avg[i] });
   }
-  console.log("avaged", avgScore);
   return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
     <h6 style={{float:"right"}}>Average Score Table</h6>
     <ResponsiveContainer>
@@ -151,6 +147,57 @@ export function ChartBarr2(props: { data:studentResult[] }) {
         <Tooltip/>
         {/* <Legend/> */}
         <Bar dataKey="score" fill="green"/>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+  )
+}
+
+export function ChartBarCompare(props: { data:studentResult[], stdData:studentResult[] }) {
+  // const [stdData, setStdData] = useState<studentResult[]>([]);
+  let stdDatas = props.stdData;
+  interface averageScore {
+    name: string, score: number, stdScore: number
+  }
+  let datas = props.data;
+  let avgScore:averageScore[] = [];
+  let dataLength=0;
+  for(var i in datas) { 
+    let ltemp = 0;
+    for (var j in datas[i].scores) { ltemp +=1; } 
+      if(ltemp > dataLength) { dataLength = ltemp;}
+  }
+  let avg = Array.from({length: dataLength}, () => 0);
+  for (let i = 0; i < datas.length; i++) { 
+    for (let j = 0; j < datas[i].scores.length; j++) {
+      let score = datas[i].scores[j] as number;
+      if(!isNaN(score)){ // prevent nan
+        avg[j] += score;
+      }
+    }
+  }
+  for (let i = 0; i < avg.length; i++) {
+    console.log("hhh",i)
+    avg[i] = parseInt((avg[i]/datas.length).toFixed(0))
+    avgScore.push({ name: 'Data'+(i + 1), score: avg[i], stdScore: 20 });
+  }
+  console.log("please work",stdDatas)
+  if(stdDatas.length !== 0) {
+    for (let i = 0; i < avgScore.length; i++) {
+      avgScore[i]['stdScore'] = stdDatas[0].scores[i] as number;
+    }
+  }
+  return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
+    <h6 style={{float:"right"}}>Student Score vs Average Score Table</h6>
+    <ResponsiveContainer>
+      <BarChart data={avgScore} width={600} height={300}>
+        <CartesianGrid strokeDasharray="3 3"/>
+        <XAxis dataKey="name"/>
+        <YAxis type="number" domain={[0,100]}/>
+        <Tooltip/>
+        {/* <Legend/> */}
+        <Bar dataKey="stdScore" fill="green" name="Student Score"/>
+        <Bar dataKey="score" fill="blue" name="Class Average Score"/>
       </BarChart>
     </ResponsiveContainer>
   </div>
