@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Legend, Bar,Area, AreaChart, ComposedChart, Line, Tooltip } 
 from "recharts";
+import { studentResult } from "./table";
 
 interface chartdata{
   name: string, score: number
@@ -58,6 +59,23 @@ function QuizChart(props: any) {
       {chartType === "Score" && <ChartBar dataArray={data}/>}
       {chartType === "Average" && <ChartLine/>}
     </div>
+  )
+}
+
+export function ChartBarr(props: { data:studentResult[] }) {
+  let datas = props.data;
+  return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
+    <ResponsiveContainer>
+      <BarChart data={props.data} width={600} height={300}>
+        <CartesianGrid strokeDasharray="3 3"/>
+        <XAxis dataKey="studentID"/>
+        <YAxis type="number" />
+        <Tooltip/>
+        <Legend/>
+        <Bar dataKey="score" fill="green"/>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
   )
 }
 
