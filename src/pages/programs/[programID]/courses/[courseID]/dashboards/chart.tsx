@@ -64,14 +64,92 @@ function QuizChart(props: any) {
 
 export function ChartBarr(props: { data:studentResult[] }) {
   let datas = props.data;
+  let lengthh=0;
+  let newData = datas.map((val, index) => {
+    let ltemp = 0;
+    let mapFormat = new Map<string, Number>();
+    mapFormat.set('studentID', parseInt(val.studentID));
+    for(let i = 0; i < val.scores.length; ++i) {
+      ltemp+=1;
+      mapFormat.set(`score${i+1}`, val.scores[i]);
+    }
+    if(ltemp > lengthh) {lengthh = ltemp}
+    return mapFormat;
+  });
+  console.log('lll', lengthh);
+  let dataMapArr = Array.from({length:lengthh}, () => 0);
+  // console.log("new Data",newData)
+  //take2
+  const dat = datas.map(v => ({studentID: v.studentID, 
+    score1: v.scores[0]
+  }))
+  let bbb = 'h';
+  const h = {a: '1', b: '1',bbb, $a:'2'}
+  console.log(h)
+  console.log("data take2",dat)
+  let cnt = 0;
+  let getVal = (x) => {
+    console.log('getVal',cnt)
+    cnt = cnt+1;
+    if(cnt == lengthh){
+      cnt = 0;
+    }
+    return x.scores[cnt];
+  }
   return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
     <ResponsiveContainer>
-      <BarChart data={props.data} width={600} height={300}>
+      <BarChart data={datas} width={600} height={300}>
         <CartesianGrid strokeDasharray="3 3"/>
         <XAxis dataKey="studentID"/>
-        <YAxis type="number" />
+        <YAxis type="number" domain={[0,100]}/>
         <Tooltip/>
         <Legend/>
+          {dataMapArr.map((v,i) => (
+            <Bar dataKey={getVal} fill="green"/>
+          ))}
+
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+  )
+}
+
+export function ChartBarr2(props: { data:studentResult[] }) {
+  interface averageScore {
+    name: string, score: number
+  }
+  let datas = props.data;
+  let avgScore:averageScore[] = [];
+  console.log(datas)
+  let dataLength=0;
+  for(var i in datas) { 
+    let ltemp = 0;
+    for (var j in datas[i].scores) { ltemp +=1; } 
+      if(ltemp > dataLength) { dataLength = ltemp;}
+  }
+  let avg = Array.from({length: dataLength}, () => 0);
+  for (let i = 0; i < datas.length; i++) { 
+    for (let j = 0; j < datas[i].scores.length; j++) {
+      let score = datas[i].scores[j] as number;
+      if(!isNaN(score)){ // prevent nan
+        avg[j] += score;
+      }
+    }
+  }
+  for (let i = 0; i < avg.length; i++) {
+    avg[i] = parseInt((avg[i]/datas.length).toFixed(0))
+    avgScore.push({name:'Data'+(i+1),score:avg[i]});
+  }
+  console.log("avaged", avgScore);
+  return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
+    <h6 style={{float:"right"}}>Average Score Table</h6>
+    <ResponsiveContainer>
+      <BarChart data={avgScore} width={600} height={300}>
+        <CartesianGrid strokeDasharray="3 3"/>
+        <XAxis dataKey="name"/>
+        <YAxis type="number" domain={[0,100]}/>
+        <Tooltip/>
+        {/* <Legend/> */}
         <Bar dataKey="score" fill="green"/>
       </BarChart>
     </ResponsiveContainer>

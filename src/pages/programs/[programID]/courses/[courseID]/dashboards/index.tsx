@@ -31,7 +31,7 @@ const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, c
     <DashboardDiv>
       <h2 style={{textAlign: "center"}}>Summary</h2>
       <ButtonTab>
-        <button onClick={() => setState("Quiz")} style={{marginRight: 5}}>Quiz Score</button>|
+        <button onClick={() => setState("Quiz")} style={{marginRight: 1}}>Quiz Score</button>|
         <button onClick={() => setState("Outcome")}>Outcome Score</button>
         {state === "Outcome" && <ExportOutcome programID={programID} courseID={courseID} />}
       </ButtonTab>

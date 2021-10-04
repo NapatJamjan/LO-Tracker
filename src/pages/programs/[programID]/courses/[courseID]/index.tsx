@@ -18,7 +18,7 @@ const Course: React.FC<{programID: string, courseID: string}> = ({programID, cou
         <CourseNameLink programID={programID} courseID={courseID} to="" />
       </p>
       <Link to="./quiz">Manage quiz</Link><br />
-      <Link to="./lo">Manage lo</Link><br />
+      <Link to="./lo">Manage LO</Link><br />
       <Link to="./student">Manage student</Link><br />
       <Link to="./dashboards">Dashboard</Link><br />
     </Layout>

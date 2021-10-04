@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import styled from 'styled-components';
 import { TableSort } from '.';
-import {Chart, ChartBarr} from './chart';
+import {Chart, ChartBarr, ChartBarr2} from './chart';
 
 export interface quizscore {
   id: number,
@@ -233,6 +233,7 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
         <option value="LO">LO</option>
       </select><br />
       {/* <Chart dataType={props.dataType} /> */}
+      <ChartBarr2 data={tableData}/>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
@@ -317,16 +318,11 @@ export function ScoreTable (props: {
     }
     setData(tableData.slice());
     console.log(tableData);
-    let hh: Map<string,number> = (new Map<string, number>());
-    hh.set('a',1)
-    console.log("map test",hh)
-    console.log("mapt2",hh.get('a'))
   }
 
   return (
     <div>
-      {/* <Chart dataType={props.dataType} /> */}
-      <ChartBarr data={tableData}/>
+      <ChartBarr2 data={tableData}/>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
