@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
 import XLSX from 'xlsx';
 import { studentResponse, programResponse, courseResponse } from '../../../../../../shared/initialData';
-import { StudentUpload } from './table';
+import { studentResult, StudentUpload } from './table';
 
 //still broke
 
@@ -52,7 +52,7 @@ export const ExportOutcome: React.FC<{programID, courseID}> = ({programID, cours
 
   return(
     <div style={{display: "inline", position: "absolute", right: 50}}>
-      <button onClick={() => setShow(true)}>Export Outcome</button>
+      <button onClick={() => setShow(true)} className="underline ">Export Outcome</button>
       <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w"> 
         <form onSubmit={handleSubmit((data) => {
           setShow(false);
@@ -66,12 +66,13 @@ export const ExportOutcome: React.FC<{programID, courseID}> = ({programID, cours
             <OptionDiv>
 
               <label>File Name:</label>
-              <input type="text" {...register('fileName')} style={{transform: "scale(0.9)"}} placeholder="Outcome Result" /><br/>
+              <input type="text" {...register('fileName')} style={{transform: "scale(0.9)"}} 
+              placeholder="Outcome Result" className="border rounded-md border-2 "/><br/>
 
               <input type="checkbox" checked={check[check.length - 1]} onClick={() => handleCheckAll()}/>
               <label>Select All</label>
 
-              <select style={{float: "right"}} {...register('fileType')}>
+              <select style={{float: "right"}} {...register('fileType')} className="border rounded-md border-2 ">
                 <option value={"xlsx"}>Excel</option>
                 <option value={"csv"}>CSV</option>
                 {/* <option value="pdf" onClick={() => setFileType("csv")}>PDF</option> */}
@@ -148,3 +149,80 @@ const CheckBoxDiv = styled.div`
     margin-right: 10px;
   }
 `;
+
+////////////////////////////////////////////////////////////////////////
+export const ExportOutcome2: React.FC<{programID, courseID, datas: studentResult[], head: string[]}> = 
+({programID, courseID, datas, head}) => {
+  const [students, setStudents] = useState<StudentUpload[]>([
+    {studentID: "000", studentName: "Loading..", studentSurname: "Loading...", studentEmail: "Loading."}
+  ]);
+  useEffect(() => {
+    const api = axios.create({ baseURL: `http://localhost:5000/api` }); 
+    api
+      .get<studentResponse[]>('/students', {params: { programID, courseID }})
+      .then((res) => res.data).then(setStudents);   
+  }, [])
+  
+  const [show, setShow] = useState(false);
+  const { register, handleSubmit, setValue } = useForm<{fileName: string, fileType: string}>();
+  
+  useEffect(() => {
+    if (!show) {
+      setValue('fileName', '');
+      setValue('fileType', 'xlsx');
+    }
+  }, [show]);
+
+  return(
+    <div style={{display: "inline", position: "absolute", right: 50}}>
+      <button onClick={() => setShow(true)} className="underline ">Export Outcome</button>
+      <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w"> 
+        <form onSubmit={handleSubmit((data) => {
+          setShow(false);
+          exportExcel2(datas, head, data.fileName, data.fileType);
+        })}>
+          <ModalHeader >
+            <ModalTitle>Export Outcome</ModalTitle>
+          </ModalHeader>
+          <ModalBody>
+            <p style={{ marginBottom: 0 }}>Choose file name and file type.</p>
+            <div>
+              <label>File Name : </label>
+              <input type="text" {...register('fileName')} style={{transform: "scale(0.9)"}} 
+              placeholder="Outcome Result" className="border rounded-md border-2 "/><br/>
+
+              <label style={{paddingRight: 10}}>File Type : </label>
+              <select {...register('fileType')} className="border rounded-md border-2 ">
+                <option value={"xlsx"}>Excel</option>
+                <option value={"csv"}>CSV</option>
+                {/* <option value="pdf" onClick={() => setFileType("csv")}>PDF</option> */}
+              </select>
+
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <input type="submit" value="Export"/>
+          </ModalFooter>
+        </form>
+      </Modal>
+    </div>)
+}
+
+function exportExcel2(datas: studentResult[], head: string[], fileName: string, fileType: string) {
+  const wb = XLSX.utils.book_new();
+  let data:string[][] = [[...head],]
+  if(fileName === ''){fileName = 'Outcome Result'}
+  for (let i = 1; i < datas.length; i++) {
+    data.push([datas[i].studentID, datas[i].studentName]);
+    for (let j = 0; j < datas[i].scores.length; j++) {
+      data[i].push(datas[i].scores[j].toString());
+      
+    }
+  }
+  const sheet = XLSX.utils.json_to_sheet([{}], {});
+  XLSX.utils.sheet_add_json(sheet, data, {origin: 'A3'});
+  //quick fix to the blank row problem
+  delete_row(sheet,0);delete_row(sheet,0);delete_row(sheet,0);
+  XLSX.utils.book_append_sheet(wb, sheet);
+  XLSX.writeFile(wb, fileName + '.' + fileType, {bookType: fileType as XLSX.BookType });
+}

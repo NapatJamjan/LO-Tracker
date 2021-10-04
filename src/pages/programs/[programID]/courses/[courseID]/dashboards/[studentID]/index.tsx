@@ -2,26 +2,13 @@ import axios from 'axios';
 import { navigate } from 'gatsby-link';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { quizscore, ScoreTable, PLOscore, ScoreTableIndividual, StudentUpload } from '../table';
+import { quizscore, PLOscore, StudentUpload } from '../table';
 import Layout from '../../../../../../../components/layout';
 import { Link } from 'gatsby';
 import Seo from '../../../../../../../components/seo';
-import { ExportOutcome } from '../export';
+import { IndividualPLO, IndividualQuiz } from './stdtable';
+import { ProgramNameLink, CourseNameLink } from '../../../../../../../components/namebar';
   
-const quizzes: Array<quizscore> = [{id: 0, score: "1/1", detail: "How to Java"},
-  {id: 1, score: "2/2", detail: "Hello World"}, {id: 2, score: "2/2", detail: "Advanced Java"}]
-  const QuizHead: Array<string> = ['Quiz', 'Max Score', 'Student Score']
-  for (let i = 0; i < quizzes.length; i++) { //count unique quiz id
-    QuizHead.push('Question' + (i + 1));
-}
-
-const PLOs: Array<PLOscore> = [{ id: 0, score: "100%", detail: "LO1 100% \n LO2 100% \n LO3 100%" },
-  { id: 1, score: "80%", detail: "LO1 100% \n LO2 100% \n LO3 100%" }, { id: 2, score: "-", detail: "No score" }]
-  const PLOHead: Array<string> = ['PLO', 'Max Score', 'Student Score']
-  for (let i = 0; i < PLOs.length; i++) { //count unique plo id
-    PLOHead.push('LO' + (i + 1));
-}
-
 const IndividualScore:React.FC<{programID: string, courseID: string, studentID: string}> = ({programID, courseID, studentID}) =>{
   const [student, setStudent] = useState<StudentUpload>(
     {studentID: "000", studentName: "Loading..", studentSurname: "Loading...", studentEmail: "Loading."});
@@ -43,9 +30,9 @@ const IndividualScore:React.FC<{programID: string, courseID: string, studentID: 
       &nbsp;&#12297;&nbsp;
       <Link to="/programs">Programs</Link>
       &nbsp;&#12297;&nbsp;
-      <Link to={`/programs/${programID}/courses`}>{programID}</Link>
+      <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
       &nbsp;&#12297;&nbsp;
-      <Link to="../../">{courseID}</Link>
+      <CourseNameLink programID={programID} courseID={courseID} to="../" />
       &nbsp;&#12297;&nbsp;
       <Link to="../">Dashboard</Link>
       &nbsp;&#12297;&nbsp;
@@ -60,14 +47,13 @@ const IndividualScore:React.FC<{programID: string, courseID: string, studentID: 
       <h6>Name : {student.studentName}</h6>
       <DashboardDiv>
         <ButtonTab>
-          <button onClick={() => setState("Quiz")} style={{ marginRight: 5 }}>Quiz Score</button>|
-          <button onClick={() => setState("Outcome")}>Outcome Score</button>
-          {state === "Outcome" && <ExportOutcome programID={programID} courseID={courseID} />}
+          <button onClick={() => setState("Quiz")} style={{ marginRight: 5 }}
+          className="border border-blue-500 rounded-md border-2">Quiz Score</button>
+          <button onClick={() => setState("Outcome")}
+          className="border border-blue-500 rounded-md border-2">Outcome Score</button>
         </ButtonTab>
-        {state === "Quiz" && <ScoreTableIndividual programID={programID} courseID={courseID} studentID={studentID} 
-          score={quizzes} tablehead={QuizHead} dataType="quiz" />}
-        {state === "Outcome" && <ScoreTableIndividual programID={programID} courseID={courseID} studentID={studentID} 
-          score={PLOs} tablehead={PLOHead} dataType="plo" />}
+        {state === "Quiz" && <IndividualQuiz programID={programID} courseID={courseID} studentID={studentID}/>}
+        {state === "Outcome" && <IndividualPLO programID={programID} courseID={courseID} studentID={studentID} />}
       </DashboardDiv>
     </MainDiv>
   </Layout>)
@@ -75,12 +61,6 @@ const IndividualScore:React.FC<{programID: string, courseID: string, studentID: 
 
 export default IndividualScore;
 
-// function ExportOutcome() {
-//   return (
-//     <button style={{ position: "absolute", right: 50 }}>Export Outcome</button>
-//   )
-// }
-  
 const MainDiv = styled.div`
   margin: 1.5%;
   text-align: start;
