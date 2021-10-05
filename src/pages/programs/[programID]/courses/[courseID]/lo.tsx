@@ -72,7 +72,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
         &nbsp;&#12297;&nbsp;
         <span>LO</span>
       </p>
-      <CreateLOForm programID={programID} courseID={courseID} />
+      <CreateLOForm programID={programID} courseID={courseID} callback={fetchLO}/>
       <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
         <div className="flex flex-column space-y-2">
           {los.sort((l1, l2) => l1.loTitle.localeCompare(l2.loTitle)).map((lo) => (
@@ -152,7 +152,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
   );
 }
 
-const CreateLOForm: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
+const CreateLOForm: React.FC<{programID: string, courseID: string, callback: () => any}> = ({programID, courseID, callback}) => {
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, reset } = useForm<{ loTitle: string, initLevel: number, description: string }>({
     defaultValues: {
@@ -173,6 +173,7 @@ const CreateLOForm: React.FC<{programID: string, courseID: string}> = ({programI
               });
               api.post('/lo', {...form, programID, courseID}).then(() => {
                 reset({loTitle: '', initLevel: 1, description: ''});
+                callback();
                 setShow(false);
               });
             } else {
