@@ -105,14 +105,16 @@ export function IndividualPLO(props: { programID: string, courseID: string, stud
       for (let j = 0; j < lvlRes[i].length; j++) {
         lvlRes[i][j].map((sc,k) => {
          if(k == 0 && scs !== 0) { // check for start of level
-            let score = (scs/c).toFixed(0);
-            loRes[i].push(parseInt(score));
+          let score = scs/c;
+          if(isNaN(score)) { score = 0; }
+          loRes[i].push(parseInt(score.toFixed(0)));
             scs = sc; c = 1;
           } else { scs += sc;  c += 1; }
         })
         if(scs !== 0) { 
-          let score = (scs/c).toFixed(0);
-          loRes[i].push(parseInt(score));
+          let score = scs/c;
+          if(isNaN(score)) { score = 0; }
+          loRes[i].push(parseInt(score.toFixed(0)));
           scs = 0;  c = 0;
         }
       }
@@ -247,7 +249,7 @@ export function IndividualQuiz (props: { programID: string, courseID: string, st
           console.log(stdScore)
           quizScore[j].push(stdScore);
         }
-        catch{ quizScore[j].push(NaN); }
+        catch{ quizScore[j].push(0); }
       }
     } 
     for (let i = 0; i < score.length; i++) {

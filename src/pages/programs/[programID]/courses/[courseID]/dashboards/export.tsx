@@ -177,7 +177,7 @@ export const ExportOutcome2: React.FC<{programID, courseID, datas: studentResult
             </div>
           </ModalBody>
           <ModalFooter>
-            <input type="submit" value="Export"/>
+            <input type="submit" value="Export" className="border rounded-md border-2 "/>
           </ModalFooter>
         </form>
       </Modal>
