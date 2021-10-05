@@ -2,7 +2,7 @@ import axios from 'axios';
 import { navigate } from 'gatsby-link';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { quizscore, PLOscore, StudentUpload } from '../table';
+import { StudentUpload } from '../table';
 import Layout from '../../../../../../../components/layout';
 import { Link } from 'gatsby';
 import Seo from '../../../../../../../components/seo';

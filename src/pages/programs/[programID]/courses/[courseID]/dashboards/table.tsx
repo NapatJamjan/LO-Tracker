@@ -179,6 +179,7 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
       for (let j = 0; j < ploScore[i].length; j++) { // select plo of this student
         let psc:any = 0;
         for (let k = 0; k < linkIndex[j].length; k++) {
+          if(isNaN(loRes[i][linkIndex[j][k]] as number)) { loRes[i][linkIndex[j][k]] = 0; }
           psc += loRes[i][linkIndex[j][k]];
         }
         let res = parseInt((psc/linkIndex[j].length+1).toFixed(0))-1
