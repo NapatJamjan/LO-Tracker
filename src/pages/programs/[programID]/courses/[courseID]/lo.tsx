@@ -72,7 +72,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
         &nbsp;&#12297;&nbsp;
         <span>LO</span>
       </p>
-      <CreateLOForm programID={programID} courseID={courseID}/>
+      <CreateLOForm programID={programID} courseID={courseID} />
       <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
         <div className="flex flex-column space-y-2">
           {los.sort((l1, l2) => l1.loTitle.localeCompare(l2.loTitle)).map((lo) => (
@@ -95,7 +95,7 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
               Manage PLOs <span className="text-xl text-green-800">&#9874;</span>
             </button>
               <span className="px-2"></span>
-              <CreateLOLevelForm programID={programID} courseID={courseID} loID={lo.loID} initLevel={lo.levels.length + 1}/>
+              <CreateLOLevelForm programID={programID} courseID={courseID} loID={lo.loID} initLevel={lo.levels.length + 1} callback={fetchLO}/>
             </div>
           </div>
         ))}
@@ -104,13 +104,15 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
           {selectedLOID !== '' && 
           <div className="flex flex-column divide-y-4">
             <form onSubmit={handleSubmit((form) => {
-              const api = axios.create({
-                baseURL: 'http://localhost:5000/api'
-              });
-              api.post('/plolink', {...form, loID: selectedLOID, programID, courseID}).then(() => {
-                setValue('ploID', '');
-                fetchLO();
-              });
+              if (form.ploID !== '') {
+                const api = axios.create({
+                  baseURL: 'http://localhost:5000/api'
+                });
+                api.post('/plolink', {...form, loID: selectedLOID, programID, courseID}).then(() => {
+                  setValue('ploID', '');
+                  fetchLO();
+                });
+              }
             })}>
               <select {...register('ploID')} className="border-4 rounded-md p-1 mx-2 text-sm" defaultValue="">
                 <option disabled value="">--Select PLO--</option>
@@ -172,7 +174,6 @@ const CreateLOForm: React.FC<{programID: string, courseID: string}> = ({programI
               api.post('/lo', {...form, programID, courseID}).then(() => {
                 reset({loTitle: '', initLevel: 1, description: ''});
                 setShow(false);
-                window.location.reload();
               });
             } else {
               alert('fill everything before submit')
@@ -186,9 +187,9 @@ const CreateLOForm: React.FC<{programID: string, courseID: string}> = ({programI
             <span>LO Title:</span><br/>
             <input type="text" {...register('loTitle', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
             <span>Initial LO Level:</span><br/>
-            <input type="text" {...register('initLevel')} className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 pointer-events-none  " readOnly/><br/>
+            <span className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 inline-block w-1/3">{1}</span><br/>
             <span>Level Description:</span><br/>
-            <input type="text" {...register('description', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+            <textarea {...register('description', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm" cols={40} rows={4}/><br/>
           </Modal.Body>
           <Modal.Footer>
             <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
@@ -199,7 +200,7 @@ const CreateLOForm: React.FC<{programID: string, courseID: string}> = ({programI
   );
 }
 
-const CreateLOLevelForm: React.FC<{programID: string, courseID: string, loID: string, initLevel: number}> = ({programID, courseID, loID, initLevel}) => {
+const CreateLOLevelForm: React.FC<{programID: string, courseID: string, loID: string, initLevel: number, callback: () => any}> = ({programID, courseID, loID, initLevel, callback}) => {
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, setValue } = useForm<{ level: number, description: string }>({
     defaultValues: {
@@ -222,7 +223,7 @@ const CreateLOLevelForm: React.FC<{programID: string, courseID: string, loID: st
               api.post('/lolevel', {...form, loID, programID, courseID}).then(() => {
                 setValue('description', '');
                 setShow(false);
-                window.location.reload();
+                callback();
               });
             }
           })}
@@ -232,9 +233,9 @@ const CreateLOLevelForm: React.FC<{programID: string, courseID: string, loID: st
           </Modal.Header>
           <Modal.Body>
             <span>LO Level:</span><br/>
-            <input type="text" {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 pointer-events-none" readOnly/><br/>
+            <span className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 pointer-events-none inline-block w-1/3" >{initLevel}</span><br/>
             <span>Description:</span><br/>
-            <input type="text" {...register('description')} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+            <textarea {...register('description')} className="border-4 rounded-md p-1 mx-2 text-sm" cols={40} rows={4}></textarea><br/>
           </Modal.Body>
           <Modal.Footer>
             <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>

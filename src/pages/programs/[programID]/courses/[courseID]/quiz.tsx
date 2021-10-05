@@ -104,7 +104,9 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
         <div className="flex flex-column space-y-2">
           {quizzes.sort((q1, q2) => q1.quizName.localeCompare(q2.quizName)).map((quiz) => (
           <div key={quiz.quizID} className="rounded shadow-lg p-3">
-            {quiz.quizName}
+            <div className="flex justify-between items-center">
+              <span className="font-bold">{quiz.quizName}</span>
+            </div>
             <ul>
             {
               quiz.questions.sort((q1, q2) => q1.questionTitle.localeCompare(q2.questionTitle)).map((question, index) => (
