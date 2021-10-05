@@ -5,11 +5,10 @@ import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
 import XLSX from 'xlsx';
-import { studentResponse, programResponse, courseResponse } from '../../../../../../shared/initialData';
+import { studentResponse } from '../../../../../../shared/initialData';
 import { studentResult, StudentUpload } from './table';
 
-//still broke
-
+//with checkbox, not used yet
 export const ExportOutcome: React.FC<{programID, courseID}> = ({programID, courseID}) => {
   const [students, setStudents] = useState<StudentUpload[]>([
     {studentID: "000", studentName: "Loading..", studentSurname: "Loading...", studentEmail: "Loading."}
@@ -118,30 +117,7 @@ function exportExcel(students: Array<StudentUpload>, selectedStudent: Array<bool
       alert("Please select student.")
     }
   }
-  function ec(r: any, c: any) {
-    return XLSX.utils.encode_cell({r: r, c: c});
-  }
-  function delete_row(ws: any, row_index: any) {
-    var variable = XLSX.utils.decode_range(ws["!ref"])
-    for (var R = row_index; R < variable.e.r; ++R) {
-      for (var C = variable.s.c; C <= variable.e.c; ++C) {
-        ws[ec(R, C)] = ws[ec(R + 1, C)];
-      }
-    }
-    variable.e.r--
-    ws['!ref'] = XLSX.utils.encode_range(variable.s, variable.e);
-}
-
-const OptionDiv = styled.div`
-  border-bottom: lightgrey 0.5px solid;
-  padding-bottom:5px;
-  margin-bottom:10px;
-  input{
-    transform: scale(1.25);
-    margin-right: 10px;
-  }
-`;
-
+  
 const CheckBoxDiv = styled.div`
   font-size: 18px;
   input{
@@ -174,7 +150,7 @@ export const ExportOutcome2: React.FC<{programID, courseID, datas: studentResult
   }, [show]);
 
   return(
-    <div style={{display: "inline", position: "absolute", right: 50}}>
+    <div style={{display: "inline", position: "absolute", right: 50, top: 200}}>
       <button onClick={() => setShow(true)} className="underline ">Export Outcome</button>
       <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w"> 
         <form onSubmit={handleSubmit((data) => {
@@ -226,3 +202,27 @@ function exportExcel2(datas: studentResult[], head: string[], fileName: string, 
   XLSX.utils.book_append_sheet(wb, sheet);
   XLSX.writeFile(wb, fileName + '.' + fileType, {bookType: fileType as XLSX.BookType });
 }
+
+function ec(r: any, c: any) {
+  return XLSX.utils.encode_cell({r: r, c: c});
+}
+function delete_row(ws: any, row_index: any) {
+  var variable = XLSX.utils.decode_range(ws["!ref"])
+  for (var R = row_index; R < variable.e.r; ++R) {
+    for (var C = variable.s.c; C <= variable.e.c; ++C) {
+      ws[ec(R, C)] = ws[ec(R + 1, C)];
+    }
+  }
+  variable.e.r--
+  ws['!ref'] = XLSX.utils.encode_range(variable.s, variable.e);
+}
+
+const OptionDiv = styled.div`
+border-bottom: lightgrey 0.5px solid;
+padding-bottom:5px;
+margin-bottom:10px;
+input{
+  transform: scale(1.25);
+  margin-right: 10px;
+}
+`;

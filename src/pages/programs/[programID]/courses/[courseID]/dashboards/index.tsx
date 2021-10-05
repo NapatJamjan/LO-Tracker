@@ -2,17 +2,10 @@ import axios from 'axios';
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import Layout from '../../../../../../components/layout';
-import { quizscore, ScoreTable, PLOscore, ScoreTablePLO } from './table';
+import { ScoreTable, ScoreTablePLO } from './table';
 import { Link } from 'gatsby';
 import Seo from '../../../../../../components/seo';
-import { ExportOutcome } from './export';
 import { CourseNameLink, ProgramNameLink } from '../../../../../../components/namebar';
-
-interface scoreData {
-  name: string,
-  header: Array<string>,
-  score: Array<any>
-}
 
 const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, courseID}) => {
   const [state, setState] = useState("Quiz");
@@ -37,14 +30,13 @@ const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, c
         <button onClick={() => setState("Outcome")}
         className="border border-blue-500 rounded-md border-2">Outcome Score</button>
       </ButtonTab>
-      {state === "Quiz" && <QuizScore programID = {programID} courseID = {courseID}/>}
-      {state === "Outcome" && <OutcomeScore programID = {programID} courseID = {courseID}/>}
+      {state === "Quiz" && <div> <ScoreTable programID={programID} courseID={courseID}/> </div>}
+      {state === "Outcome" && <div> <ScoreTablePLO programID={programID} courseID={courseID}/> </div>}
     </DashboardDiv>
   </Layout>);
 }
 
 function QuizScore(props: {programID: string, courseID: string}){
-  //const scores:scoreData = [{name: "All quiz", header: QuizHead, score: quizzes }];
   return(
     <div>
       <ScoreTable programID={props.programID} courseID={props.courseID}/>

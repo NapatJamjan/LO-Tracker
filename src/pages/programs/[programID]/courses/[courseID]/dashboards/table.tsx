@@ -4,23 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import styled from 'styled-components';
 import { TableSort } from '.';
-import {Chart, ChartBarr, ChartBarr2} from './chart';
-import { ExportOutcome, ExportOutcome2 } from './export';
+import { ChartBarr2 } from './chart';
+import { ExportOutcome2 } from './export';
 
-export interface quizscore {
-  id: number,
-  score: string,
-  detail: string;
-}
-export interface PLOscore {
-  id: number,
-  score: string,
-  detail: string;
-}
-interface tableData {
-  shortname: string,
-  maxscore: number
-}
 export interface StudentUpload {
   studentID: string;
   studentEmail: string;
@@ -49,11 +35,6 @@ export interface studentResult {
   studentName: string,
   scores: Array<Number>
 }
-
-const Quizinfo: Array<tableData> = [{shortname: 'Quiz 1', maxscore: 5},
-  {shortname: 'Quiz 2', maxscore: 10}, {shortname: 'Quiz 3', maxscore: 10}]
-const PLOinfo: Array<tableData> = [{shortname: 'PLO 1', maxscore: 100},
-  {shortname: 'PLO 2', maxscore: 100}, {shortname: 'PLO 3', maxscore: 100}]
   
 export function ScoreTablePLO (props: { programID: string, courseID: string }) {
   const [dscore, setDscore] = useState<DashboardResponse>({
@@ -119,8 +100,6 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
         loScoreC[i].push(Array.from({length:loArr[j].length}, () => 0));
       }
     }
-    console.log(loID);
-    // console.log("LOScore", loScore); //loScore[0][0][1] to get 1 value 
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loID.indexOf(loID.find(e => e == questions[i].linkedLOs[k].split(',')[0]))
@@ -210,7 +189,7 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
     for (let i = 0; i < ploName.length; i++) {
       studentPLOHead.push(ploName[i]+" (%)");
     }
-    setPLOH(studentPLOHead.slice());
+    setPLOH(studentPLOHead.slice()); 
     setHead(studentPLOHead.slice()); // set as start
     for (let i = 0; i < ploScore.length; i++) {
       studentPLOScore.push({studentID: std[i], studentName: stdname[i] ,scores: [...ploScore[i]]})
@@ -233,12 +212,12 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
   return (
     <div>
       <ExportOutcome2 programID={props.programID} courseID={props.courseID} datas={tableData} head={tableHead}/>
+      <ChartBarr2 data={tableData}/>
+      <br/>
       <select value={dataType} onChange={handleChange} className="border rounded-md border-2 ">
         <option value="PLO">PLO</option>
         <option value="LO">LO</option>
-      </select><br />
-      {/* <Chart dataType={props.dataType} /> */}
-      <ChartBarr2 data={tableData}/>
+      </select>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
@@ -326,6 +305,7 @@ export function ScoreTable (props: { programID: string, courseID: string }) {
   return (
     <div>
       <ChartBarr2 data={tableData}/>
+      <br/><br/>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
