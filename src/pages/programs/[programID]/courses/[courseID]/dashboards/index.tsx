@@ -36,19 +36,6 @@ const Dashboard: React.FC<{programID:string, courseID: string}> = ({programID, c
   </Layout>);
 }
 
-function QuizScore(props: {programID: string, courseID: string}){
-  return(
-    <div>
-      <ScoreTable programID={props.programID} courseID={props.courseID}/>
-    </div>)
-}
-
-function OutcomeScore(props: {programID: string, courseID: string}){
-  return(
-    <ScoreTablePLO programID = {props.programID} courseID = {props.courseID} />
-  )
-}
-
 export default Dashboard;
 
 const DashboardDiv = styled.div`
