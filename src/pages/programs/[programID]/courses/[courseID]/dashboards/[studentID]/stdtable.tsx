@@ -4,10 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Table} from "react-bootstrap";
 import styled from "styled-components";
 import { TableSort } from "..";
-import { ChartBarCompare, ChartBarr2 } from "../chart";
-import { ExportOutcome2 } from "../export";
+import { ChartBarCompare } from "../chart";
 import { DashboardResponse, quizScoreResponse, studentResult, StudentUpload } from "../table";
-
 
 export function IndividualPLO(props: { programID: string, courseID: string, studentID: string }) {
   const [dscore, setDscore] = useState<DashboardResponse>({
@@ -171,27 +169,67 @@ export function IndividualPLO(props: { programID: string, courseID: string, stud
     setData([studentPLOScore[stdidx]].slice()); 
   }  
 
+  const [compareID, setCompare] = useState("---");
   const [dataType, setType] = useState("PLO");
   const [allData, setAllData] = useState<studentResult[]>([]);
-  function handleChange(e: any) { setType(e.target.value) }
+  function handleType(e: any) { setType(e.target.value) }
+  function handleCompare(e: any) { setCompare(e.target.value) }
   useEffect(() => {
     if (dataType == "PLO") {
-      setHead(studentPLOHead.slice()); setData(studentPLOScore.slice()); setAllData(totalPLOScore.slice());
+      let temp = studentPLOScore.slice()
+      if(compareID != "---") { 
+        let stdidx = totalPLOScore.indexOf(totalPLOScore.find(e => e.studentID == compareID));
+        temp.push(totalPLOScore[stdidx]);
+      }
+      setHead(studentPLOHead.slice()); setData(temp.slice()); setAllData(totalPLOScore.slice());
     } else {
-      setHead(studentLOHead.slice()); setData(studentLOScore.slice()); setAllData(totalLOScore.slice());
+      let temp = studentLOScore.slice()
+      if(compareID != "---") { 
+        let stdidx = totalLOScore.indexOf(totalLOScore.find(e => e.studentID == compareID));
+        temp.push(totalLOScore[stdidx]);
+      }
+      setHead(studentLOHead.slice()); setData(temp.slice()); setAllData(totalLOScore.slice());
     }
   }, [dataType])
+  
+  useEffect(() => {
+    if(tableData.length != 0){
+      if (compareID == "---" && tableData.length > 1) {
+        let temp = [tableData[0]]; setData(temp.slice());
+      }
+      else {
+        let temp = [tableData[0]];
+        if(dataType == "PLO") {
+          let stdidx = totalPLOScore.indexOf(totalPLOScore.find(e => e.studentID == compareID));
+          temp.push(totalPLOScore[stdidx]);
+          setData(temp.slice());
+        } else{
+          let stdidx = totalLOScore.indexOf(totalLOScore.find(e => e.studentID == compareID));
+          temp.push(totalLOScore[stdidx]);
+          setData(temp.slice());
+        }
+      }
+    }
+  }, [compareID])
 
   return (
     <div>
-     
-      {/* <Chart dataType={props.dataType} /> */}
       <ChartBarCompare stdData={tableData} data={allData} />
       <br/>
-      <select value={dataType} onChange={handleChange} className="border rounded-md border-2 ">
-        <option value="PLO">PLO</option>
-        <option value="LO">LO</option>
-      </select><br />
+      <div style={{display:"inline-block"}}>
+        <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
+          <option value="PLO">PLO</option>
+          <option value="LO">LO</option>
+        </select>
+        <span>Compare to</span>
+        <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
+        <option value="---">---</option>
+        {allData.map(std => (
+          <option value={std.studentID}>{std.studentID}</option>
+        ))}
+        </select>
+      </div>
+      <br />
       <Table striped bordered hover className="table" style={{ margin: 0, width: "65%" }}>
         <thead>
           <tr>
@@ -227,8 +265,8 @@ export function IndividualQuiz (props: { programID: string, courseID: string, st
     }) ()
   },[])
   const [totalData, setTotalData] = useState<studentResult[]>([]);
-  const [tableData, setData] = useState<studentResult[]>([]); // use this name since there only one type of table shown
-  const [tableHead, setHead] = useState<string[]>(['Student ID','Student Name']); 
+  const [tableData, setData] = useState<studentResult[]>([]);
+  const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name']); 
 
   function displayScore(student: StudentUpload[], score: quizScoreResponse[], thisStudent: string) {
     console.log("Quizzes score", score)
@@ -267,10 +305,32 @@ export function IndividualQuiz (props: { programID: string, courseID: string, st
     console.log(tableData);
   }
 
+  const [compareID, setCompare] = useState("---");
+  function handleCompare(e: any) { setCompare(e.target.value) }
+  useEffect(() => {
+    if(tableData.length != 0) {
+      if (compareID == "---" && tableData.length > 1) {
+        let temp = [tableData[0]]; setData(temp.slice());
+      }else{
+        let temp = [tableData[0]];
+        let stdidx = totalData.indexOf(totalData.find(e => e.studentID == compareID));
+        temp.push(totalData[stdidx]);
+        setData(temp.slice());
+      }
+    }
+  }, [compareID])
+
   return (
     <div>
-      <ChartBarCompare stdData={tableData} data={totalData} />
-      <br/><br/>
+      <ChartBarCompare stdData={tableData} data={totalData} /> <br/> 
+      <span>Compare to</span>
+      <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
+        <option value="---">---</option>
+        {totalData.map(std => (
+          <option value={std.studentID}>{std.studentID}</option>
+        ))}
+        </select>
+      <br/>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
@@ -282,7 +342,7 @@ export function IndividualQuiz (props: { programID: string, courseID: string, st
             <tr>
               <td>{data.studentID}</td>
               <td>{data.studentName}</td>
-              {data.scores.map(scores => ( // map score of this student's id
+              {data.scores.map(scores => (
                 // <Overlay score={scores.score} detail={[scores.detail]} />
                 <td>{scores}</td>
               ))}

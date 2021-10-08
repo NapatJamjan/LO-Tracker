@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import styled from 'styled-components';
 import { TableSort } from '.';
-import { ChartBarr2 } from './chart';
+import { ChartBarAverage } from './chart';
 import { ExportOutcome2 } from './export';
 
 export interface StudentUpload {
@@ -115,7 +115,6 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
             currentScore = 0;
           }
           let stdidx = std.indexOf(std.find(e => e == questions[i].results[j].studentID));
-          // if(loidx > )
           loScore[stdidx][loidx][lvlidx] += currentScore;
           loScoreC[stdidx][loidx][lvlidx] += 1;
         }
@@ -201,7 +200,7 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
   }  
 
   const [dataType, setType] = useState("PLO");
-  function handleChange(e: any){ setType(e.target.value) }
+  function handleData(e: any){ setType(e.target.value) }
   useEffect(() => {
     if(dataType == "PLO"){
       setHead(studentPLOHead.slice()); setData(studentPLOScore.slice());
@@ -214,12 +213,15 @@ export function ScoreTablePLO (props: { programID: string, courseID: string }) {
   return (
     <div>
       <ExportOutcome2 programID={props.programID} courseID={props.courseID} datas={tableData} head={tableHead}/>
-      <ChartBarr2 data={tableData}/>
+      <ChartBarAverage data={tableData}/>
+      {/* <AllStudentChart data={tableData} chartType={chartType}/> */}
       <br/>
-      <select value={dataType} onChange={handleChange} className="border rounded-md border-2 ">
+      <div style={{display:"inline"}}>
+      <select value={dataType} onChange={handleData} className="border rounded-md border-2 ">
         <option value="PLO">PLO</option>
         <option value="LO">LO</option>
       </select>
+      </div>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>
           <tr>
@@ -303,7 +305,7 @@ export function ScoreTable (props: { programID: string, courseID: string }) {
 
   return (
     <div>
-      <ChartBarr2 data={tableData}/>
+      <ChartBarAverage data={tableData}/>
       <br/><br/>
       <Table striped bordered hover className="table" style={{margin: 0, width: "65%"}}>
         <thead>

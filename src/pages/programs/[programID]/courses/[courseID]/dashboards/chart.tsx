@@ -7,15 +7,6 @@ interface chartdata{
   name: string, score: number
 }
 
-export function Chart(props:any) {
-    return(
-      <div>
-        {props.dataType === "plo" && <PloChart/>}
-        {props.dataType === "quiz" && <QuizChart/>}
-      </div>
-    );
-}
-
 export function Charts(props:any) {
   return (
     <div>
@@ -26,95 +17,41 @@ export function Charts(props:any) {
   )
 }
 
-function PloChart(props:any){
-  const data: Array<chartdata> = [{name: 'PLO1', score: 75}, {name: 'PLO2', score: 100}, {name: 'PLO3', score: 30},
-  {name: 'PLO4', score: 60}];
-  const [chartType,setType] = useState("TPLO");
-  function handleChange(e:any){setType(e.target.value)}
-  return(
-    <div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
-      <select value={chartType} style={{float: "right"}} onChange={handleChange}>
-        <option value="TPLO">Total PLO%</option>
-        <option value="TLO">Total LO%</option>
-        <option value="Test">Test Graph</option>
-      </select><br/>
-      {chartType === "TPLO" && <ChartBar dataArray={data}/>}
-      {chartType === "TLO" && <ChartLine/>}
-      {chartType === "Test" && <ChartMix/>}
-      </div>
-  )
-}
-
-function QuizChart(props: any) {
-  const data = [{name: 'Quiz1', score: 50}, {name: 'Quiz2', score: 10}, {name: 'Quiz3', score: 80},
-  {name: 'Quiz4', score: 30}, {name: 'Quiz5', score: 10}];
-  const [chartType, setType] = useState("Score");
-  function handleChange(e: any) { setType(e.target.value) }
+export function AllStudentChart(props: { data:studentResult[], chartType:string }) {
   return (
-    <div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
-      <select value={chartType} style={{float: "right"}} onChange={handleChange}>
-        <option value="Score">Score</option>
-        <option value="Average">Average Score</option>
-      </select><br/>
-      {chartType === "Score" && <ChartBar dataArray={data}/>}
-      {chartType === "Average" && <ChartLine/>}
+    <div>
+      {props.chartType === "avg" && <ChartBarAverage data={props.data}/>}
+      {props.chartType === "all" && <ChartBarAll data={props.data}/>}
     </div>
   )
 }
 
-export function ChartBarr(props: { data:studentResult[] }) {
+export function ChartBarAll(props: { data:studentResult[] }) {
   let datas = props.data;
-  let lengthh=0;
-  let newData = datas.map((val, index) => {
-    let ltemp = 0;
-    let mapFormat = new Map<string, Number>();
-    mapFormat.set('studentID', parseInt(val.studentID));
-    for(let i = 0; i < val.scores.length; ++i) {
-      ltemp+=1;
-      mapFormat.set(`score${i+1}`, val.scores[i]);
+  let allScore = []; // all student score graph
+  for(var i in datas) {
+    allScore.push({name: datas[i].studentID})
+    for(var j in datas[i].scores) {
+      allScore[i][`score`+(parseInt(j)+1)] = datas[i].scores[j]
     }
-    if(ltemp > lengthh) {lengthh = ltemp}
-    return mapFormat;
-  });
-  console.log('lll', lengthh);
-  let dataMapArr = Array.from({length:lengthh}, () => 0);
-  // console.log("new Data",newData)
-  //take2
-  const dat = datas.map(v => ({studentID: v.studentID, 
-    score1: v.scores[0]
-  }))
-  let bbb = 'h';
-  const h = {a: '1', b: '1',bbb, $a:'2'}
-  console.log(h)
-  console.log("data take2",dat)
-  let cnt = 0;
-  let getVal = (x) => {
-    console.log('getVal',cnt)
-    cnt = cnt+1;
-    if(cnt == lengthh){
-      cnt = 0;
-    }
-    return x.scores[cnt];
   }
+
   return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
+    <h6 style={{float:"right"}}>Average Score Table</h6>
     <ResponsiveContainer>
-      <BarChart data={datas} width={600} height={300}>
+      <BarChart data={allScore} width={600} height={300}>
         <CartesianGrid strokeDasharray="3 3"/>
-        <XAxis dataKey="studentID"/>
+        <XAxis dataKey="name"/>
         <YAxis type="number" domain={[0,100]}/>
         <Tooltip/>
-        <Legend/>
-          {dataMapArr.map((v,i) => (
-            <Bar dataKey={getVal} fill="green"/>
-          ))}
-
+         <Bar dataKey="score" fill="green"/> 
       </BarChart>
     </ResponsiveContainer>
   </div>
   )
 }
 
-export function ChartBarr2(props: { data:studentResult[] }) {
+export function ChartBarAverage(props: { data:studentResult[] }) {
   interface averageScore { name: string, score: number }
   let datas = props.data;
   let avgScore:averageScore[] = [];
@@ -153,12 +90,12 @@ export function ChartBarr2(props: { data:studentResult[] }) {
   )
 }
 
+interface averageScore {
+  name: string, score: number, stdScore: number
+}
+
 export function ChartBarCompare(props: { data:studentResult[], stdData:studentResult[] }) {
-  // const [stdData, setStdData] = useState<studentResult[]>([]);
   let stdDatas = props.stdData;
-  interface averageScore {
-    name: string, score: number, stdScore: number
-  }
   let datas = props.data;
   let avgScore:averageScore[] = [];
   let dataLength=0;
@@ -177,14 +114,17 @@ export function ChartBarCompare(props: { data:studentResult[], stdData:studentRe
     }
   }
   for (let i = 0; i < avg.length; i++) {
-    console.log("hhh",i)
     avg[i] = parseInt((avg[i]/datas.length).toFixed(0))
     avgScore.push({ name: 'Data'+(i + 1), score: avg[i], stdScore: 20 });
   }
-  console.log("please work",stdDatas)
   if(stdDatas.length !== 0) {
     for (let i = 0; i < avgScore.length; i++) {
       avgScore[i]['stdScore'] = stdDatas[0].scores[i] as number;
+    }
+  }
+  if(stdDatas.length == 2) { // add compare
+    for (let i = 0; i < avgScore.length; i++) {
+      avgScore[i]['compareScore'] = stdDatas[1].scores[i] as number;
     }
   }
   return (<div style={{position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%"}}>
@@ -197,7 +137,9 @@ export function ChartBarCompare(props: { data:studentResult[], stdData:studentRe
         <Tooltip/>
         {/* <Legend/> */}
         <Bar dataKey="stdScore" fill="green" name="Student Score"/>
-        <Bar dataKey="score" fill="blue" name="Class Average Score"/>
+        {stdDatas.length == 2 && <Bar dataKey="compareScore" fill="darkgreen" name="Compared student score"/>}
+        <Bar dataKey="score" fill="blue" name="Class average score"/>
+        
       </BarChart>
     </ResponsiveContainer>
   </div>
