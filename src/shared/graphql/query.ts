@@ -11,7 +11,7 @@ export const GET_PROGRAMS = gql`
 `;
 
 export const GET_PLOGROUPS = gql`
-  query PLOGroups($programID: String!) {
+  query PLOGroups($programID: ID!) {
     ploGroups(programID: $programID) {
       id
       name
@@ -20,7 +20,7 @@ export const GET_PLOGROUPS = gql`
 `;
 
 export const GET_PLOS = gql`
-  query PLOs($ploGroupID: String!) {
+  query PLOs($ploGroupID: ID!) {
     plos(ploGroupID: $ploGroupID) {
       id
       title
@@ -31,7 +31,7 @@ export const GET_PLOS = gql`
 `;
 
 export const GET_COURSES = gql`
-  query Courses($programID: String!) {
+  query Courses($programID: ID!) {
     courses(programID: $programID) {
       id
       name
@@ -44,7 +44,7 @@ export const GET_COURSES = gql`
 `;
 
 export const GET_COURSE = gql`
-  query Course($courseID: String!) {
+  query Course($courseID: ID!) {
     course(courseID: $courseID) {
       id
       name
@@ -57,7 +57,7 @@ export const GET_COURSE = gql`
 `;
 
 export const GET_LOS = gql`
-  query LOs($courseID: String!) {
+  query LOs($courseID: ID!) {
     los(courseID: $courseID) {
       id
       title
@@ -76,7 +76,7 @@ export const GET_LOS = gql`
 `;
 
 export const GET_QUIZZES = gql`
-  query Quiz($courseID: String!) {
+  query Quiz($courseID: ID!) {
     quiz(courseID: $courseID) {
       id
       name
