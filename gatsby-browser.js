@@ -10,6 +10,6 @@ import './src/styles/global.css';
 import React from 'react';
 import ProviderComposer from './src/contexts';
 
-export const wrapRootElement = ({element}) => {
-  <ProviderComposer>{element}</ProviderComposer>
+export const wrapRootElement = ({ element }) => {
+  return <ProviderComposer>{element}</ProviderComposer>;
 };
