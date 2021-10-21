@@ -1,54 +1,13 @@
-import axios from 'axios';
 import { Link } from 'gatsby';
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import Layout from '../../../../../components/layout';
 import Seo from '../../../../../components/seo';
-import xlsx from 'xlsx';
 import { CourseNameLink, ProgramNameLink } from '../../../../../components/namebar';
-
-interface StudentUpload {
-  /**
-   * Excel Header Format
-   */
-  studentID: string;
-  studentEmail: string;
-  studentName: string;
-  studentSurname: string;
-}
+import { gql, ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject, useQuery } from '@apollo/client';
+import { StudentModel } from '../../../../../shared/graphql/course/query';
 
 const Student: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
-  const [students, setStudents] = useState<StudentUpload[]>([]);
-  useEffect(() => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .get<StudentUpload[]>('/students', { params: { programID, courseID } })
-      .then((res) => res.data)
-      .then(setStudents);
-  }, []);
-  const studentUploader = (students: StudentUpload[]) => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    console.log(JSON.stringify(students))
-    api
-      .post<StudentUpload[]>('/students', { programID, courseID, students: JSON.stringify(students) })
-      .then(() => {
-        window.location.reload();
-      });
-  }
-  
-  const excelJSON = (file) => {
-    let reader = new FileReader();
-    reader.onload = function(e) {
-      let data = e.target.result;
-      let workbook = xlsx.read(data, {type: 'binary'});
-      studentUploader(xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
-    }
-    reader.onerror = console.log;
-    reader.readAsBinaryString(file);
-  }
+  const {data, loading} = useQuery<GetStudetsInCourseData, GetStudetsInCourseVars>(GET_STUDENTS_IN_COURSE, {variables: {courseID}});
   return (
     <Layout>
       <Seo title="Student" />
@@ -59,14 +18,10 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
         &nbsp;&#12297;&nbsp;
         <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <CourseNameLink programID={programID} courseID={courseID} to="../" />
+        <CourseNameLink courseID={courseID} to="../" />
         &nbsp;&#12297;&nbsp;
         <span>Students</span>
       </p>
-      <label htmlFor="uploadExcel" className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm cursor-pointer">
-        Upload student list <span className="text-xl text-green-800">+</span>
-      </label>
-      <input id="uploadExcel" type="file" onChange={e => excelJSON(e.target.files[0])} className="hidden"/>
       <table className="table-auto mt-4">
         <thead>
           <tr className="bg-gray-100">
@@ -77,13 +32,14 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
           </tr>
         </thead>
         <tbody>
+          {loading && <tr><td className="text-center"></td><td>Loading...</td><td>Loading...</td><td>Loading...</td></tr>}
           {
-            students.sort((s1, s2) => s1.studentID.localeCompare(s2.studentID)).map((student) => (
-              <tr key={student.studentID}>
-                <td className="text-center">{student.studentID}</td>
-                <td>{student.studentEmail}</td>
-                <td>{student.studentName}</td>
-                <td>{student.studentSurname}</td>
+            data && [...data.studentsInCourse].sort((s1, s2) => s1.id.localeCompare(s2.id)).map((student) => (
+              <tr key={student.id}>
+                <td className="text-center">{student.id}</td>
+                <td>{student.email}</td>
+                <td>{student.name}</td>
+                <td>{student.surname}</td>
               </tr>
             ))
           }
@@ -93,4 +49,31 @@ const Student: React.FC<{programID: string, courseID: string}> = ({programID, co
   );
 }
 
-export default Student;
+const ApolloStudent: React.FC<{programID: string, courseID: string}> = (props) => {
+  const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
+    uri: 'http://localhost:8080/query',
+    cache: new InMemoryCache()
+  });
+  return <ApolloProvider client={client}><Student programID={props.programID} courseID={props.courseID}/></ApolloProvider>
+};
+
+const GET_STUDENTS_IN_COURSE = gql`
+  query StudentsInCourse($courseID: ID!) {
+    studentsInCourse(courseID: $courseID) {
+      id
+      email
+      name
+      surname
+    }
+  }
+`;
+
+interface GetStudetsInCourseData {
+  studentsInCourse: StudentModel[];
+};
+
+interface GetStudetsInCourseVars {
+  courseID: string;
+};
+
+export default ApolloStudent;

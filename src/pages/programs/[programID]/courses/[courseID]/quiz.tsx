@@ -7,30 +7,10 @@ import { Modal } from 'react-bootstrap';
 import axios from 'axios';
 import { CourseNameLink, ProgramNameLink } from '../../../../../components/namebar';
 import xlsx from 'xlsx';
-
-interface QuizResponse {
-  quizID: string;
-  quizName: string;
-  questions: {
-    questionID: string;
-    questionTitle: string;
-    maxScore: number;
-    linkedLOs: {
-      loID: string;
-      level: number;
-      levelDescription: string;
-    }[]
-  }[]
-}
-
-interface LOResponse {
-  loID: string;
-  loTitle: string;
-  levels: {
-    level: number;
-    levelDescription: string;
-  }[];
-}
+import { QuestionLinkModel, QuizModel } from '../../../../../shared/graphql/quiz/query';
+import { gql, ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject, useMutation, useQuery } from '@apollo/client';
+import { CreateQuestionLinkModel, CreateQuestionLinkResponse, CreateQuestionModel, CreateQuizModel, CreateQuizResponse, DeleteQuestionLinkModel, DeleteQuestionLinkResponse } from '../../../../../shared/graphql/quiz/mutation';
+import { LOModel } from '../../../../../shared/graphql/course/query';
 
 interface QuestionUpload { 
   /**
@@ -42,49 +22,34 @@ interface QuestionUpload {
   studentScore: number;
 }
 
-const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
-  const [los, setLOs] = useState<LOResponse[]>([]);
+const Quiz: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
+  const los = useQuery<GetLOsData, GetLOsVars>(GET_LOS, {variables: {courseID}});
   const [selectedQuestionID, setSelectedQuestionID] = useState<string>('');
-  const [selectedQuizID, setSelectedQuizID] = useState<string>('');
-  const [selectedLOID, setSelectedLOID] = useState<string>('');
-  const { register, handleSubmit, setValue } = useForm<{ loID: string, level: number }>({defaultValues: {loID: '', level: 0}});
-  const [quizzes, setQuizzes] = useState<QuizResponse[]>([]);
-  const fetchQuiz = () => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .get<QuizResponse[]>('/quizzes', { params: { programID, courseID } })
-      .then((res) => res.data)
-      .then(setQuizzes);
+  const { data, loading, refetch } = useQuery<GetQuizzesData, GetQuizzesVars>(GET_QUIZZES, { variables: { courseID } });
+  const [deleteQuestionLink, {loading: submitting}] = useMutation<DeleteQuestionLinkData, DeleteQuestionLinkVars>(DELETE_QUESTIONLINK);
+  let quizzes: QuizModel[] =  [];
+  if (data) {
+    quizzes = [...data.quizzes];
   }
-  const deleteLinkedLO = (loID: string) => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .delete('/questionlink', { data: { programID, courseID, quizID: selectedQuizID, questionID: selectedQuestionID, loID } })
-      .then(() => fetchQuiz());
+  let questionLinks: QuestionLinkModel[] = [];
+  if (selectedQuestionID !== '' && data) {
+    questionLinks = quizzes.filter((quiz) => quiz.questions.findIndex((question) => question.id === selectedQuestionID) !== -1)[0]
+      .questions.filter((question) => question.id === selectedQuestionID)[0].loLinks;
   }
-  useEffect(() => {
-    fetchQuiz();
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .get<LOResponse[]>('/los', { params: { programID, courseID } })
-      .then((res) => res.data)
-      .then(setLOs);
-  }, []);
-  let linkedLOs: {
-    loID: string;
-    level: number;
-    levelDescription: string;
-  }[] = [];
-  if (selectedQuizID !== '' && selectedQuestionID !== '') {
-    let quiz = quizzes[quizzes.findIndex((quiz) => quiz.quizID == selectedQuizID)].questions;
-    linkedLOs = quiz[quiz.findIndex((question) => question.questionID == selectedQuestionID)].linkedLOs;
-  }
+  const removeQuestionLink = (loID: string, level: number) => {
+    if (submitting) {
+      return;
+    }
+    deleteQuestionLink({
+      variables: {
+        input: {
+          questionID: selectedQuestionID,
+          loID,
+          level
+        }
+      }
+    }).then(() => refetch());
+  };
   return (
     <Layout>
       <Seo title="LO" />
@@ -95,27 +60,28 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
         &nbsp;&#12297;&nbsp;
         <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <CourseNameLink programID={programID} courseID={courseID} to="../" />
+        <CourseNameLink courseID={courseID} to="../" />
         &nbsp;&#12297;&nbsp;
         <span>LO</span>
       </p>
-      <CreateQuizForm programID={programID} courseID={courseID}/>
+      <CreateQuizForm programID={programID} courseID={courseID} callback={refetch}/>
       <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
         <div className="flex flex-column space-y-2">
-          {quizzes.sort((q1, q2) => q1.quizName.localeCompare(q2.quizName)).map((quiz) => (
-          <div key={quiz.quizID} className="rounded shadow-lg p-3">
+          {loading && <p>Loading...</p>}
+          {quizzes.sort((q1, q2) => q1.name.localeCompare(q2.name)).map((quiz) => (
+          <div key={quiz.id} className="rounded shadow-lg p-3">
             <div className="flex justify-between items-center">
-              <span className="font-bold">{quiz.quizName}</span>
+              <span className="font-bold">{quiz.name}</span>
             </div>
             <ul>
             {
-              quiz.questions.sort((q1, q2) => q1.questionTitle.localeCompare(q2.questionTitle)).map((question, index) => (
-                <li key={question.questionID}>
-                  Q{index + 1}) {question.questionTitle} (max score: {question.maxScore})
+              [...quiz.questions].sort((q1, q2) => q1.title.localeCompare(q2.title)).map((question, index) => (
+                <li key={question.id}>
+                  Q{index + 1}) {question.title} (max score: {question.maxScore})
                   <div className="flex flex-row-reverse space-x-2">
                     <button
-                      onClick={() => {setSelectedQuizID(quiz.quizID);setSelectedQuestionID(question.questionID)}}
-                      className={`bg-gray-200 hover:bg-gray-400 py-1 px-2 rounded text-sm ${selectedQuestionID===question.questionID?'bg-blue-400 hover:bg-blue-300':''}`}>
+                      onClick={() => {setSelectedQuestionID(question.id)}}
+                      className={`bg-gray-200 hover:bg-gray-400 py-1 px-2 rounded text-sm ${selectedQuestionID===question.id?'bg-blue-400 hover:bg-blue-300':''}`}>
                       Manage LOs <span className="text-xl text-green-800">&#9874;</span>
                     </button>
                   </div>
@@ -125,54 +91,24 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
             </ul>
             <br/>
           </div>
-        ))}
+          ))}
         </div>
         <div>
           {selectedQuestionID !== '' && 
           <div className="flex flex-column divide-y-4">
-            <form onSubmit={handleSubmit((form) => {
-              if (form.loID !== '' && form.level !== 0) {
-                const api = axios.create({
-                  baseURL: 'http://localhost:5000/api'
-                });
-                api.post('/questionlink', {...form, questionID: selectedQuestionID, programID, courseID, quizID: selectedQuizID}).then(() => {
-                  setValue('loID', '');
-                  setValue('level', 0);
-                  fetchQuiz();
-                });
-              }
-            })}>
-              <span>Select LO:</span><br/>
-              <select {...register('loID')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue="" onChange={e => {setSelectedLOID(e.target.value);setValue('level', 0);}}>
-                <option disabled value="">--Select LO--</option>
-                {los.sort((l1, l2) => l1.loTitle.localeCompare(l2.loTitle)).map((lo) => (
-                  <option value={lo.loID} key={lo.loID}>
-                    {lo.loTitle}
-                  </option>
-                ))}
-              </select><br/>
-              {selectedLOID !== '' && <div>
-                <span>Select Level:</span><br/>
-                <select {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue={0}>
-                  <option disabled value={0}>--Select Level--</option>
-                  {los[los.findIndex((lo) => lo.loID == selectedLOID)].levels.map((level) => (
-                    <option value={level.level} key={level.levelDescription}>
-                      {level.levelDescription}
-                    </option>
-                  ))}
-                </select>
-              </div>}<br/>
-              <input type="submit" value="add" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
-            </form>
+            <CreateQuestionLinkForm los={[...los.data.los]} questionID={selectedQuestionID} callback={refetch}/>
             <div className="pt-3">
               <span>Linked LOs: </span><br/>
               <ul>
               {
-                linkedLOs.sort((l1, l2) => l1.levelDescription.localeCompare(l2.levelDescription)).map((lo) => (
-                  <li key={lo.loID}>{lo.levelDescription}&nbsp;<span className="cursor-pointer text-red-600" onClick={() => deleteLinkedLO(lo.loID)}>&#9747;</span></li>
+                [...questionLinks].sort((l1, l2) => l1.description.localeCompare(l2.description)).map((lo) => (
+                  <li key={`${lo.loID}-${lo.level}`}>
+                    {lo.description}&nbsp;
+                    <span className="cursor-pointer text-red-600" onClick={() => removeQuestionLink(lo.loID, lo.level)}>&#9747;</span>
+                  </li>
                 ))
               }
-              {linkedLOs.length === 0 && <span>No linked LOs</span>}
+              {questionLinks.length === 0 && <span>No linked LOs</span>}
               </ul>
             </div>  
           </div>}
@@ -180,11 +116,12 @@ const LO: React.FC<{programID: string, courseID: string}> = ({programID, courseI
       </div>
     </Layout>
   );
-}
+};
 
-const CreateQuizForm: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
+const CreateQuizForm: React.FC<{programID: string, courseID: string, callback: () => any}> = ({programID, courseID, callback}) => {
+  const [createQuiz, {loading: submitting}] = useMutation<CreateQuizData, CreateQuizVars>(CREATE_QUIZ);
   const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, setValue } = useForm<{ quizName: string }>();
+  const { register, handleSubmit, setValue } = useForm<{ name: string }>();
   const [excelFile, setExcelFile] = useState<QuestionUpload[]>([]);
   const excelJSON = (file) => {
     let reader = new FileReader();
@@ -202,17 +139,42 @@ const CreateQuizForm: React.FC<{programID: string, courseID: string}> = ({progra
       <Modal show={show} onHide={() => setShow(false)}>
         <form
           onSubmit={handleSubmit((form) => {
-            if (form.quizName !== '' && excelFile.length !== 0) {
-              const api = axios.create({
-                baseURL: 'http://localhost:5000/api'
-              });
-              api.post('/quiz-upload', {...form, programID, courseID, questions: excelFile}).then(() => {
-                setValue('quizName', '');
-                setExcelFile([]);
-                setShow(false);
-                window.location.reload();
-              });
+            if (form.name === '' || excelFile.length === 0 || submitting) {
+              return
             }
+            let questions = new Map<string, CreateQuestionModel>();
+            for (let i = 0; i < excelFile.length; ++i) {
+              let question: CreateQuestionModel = {
+                title: '',
+                maxScore: 0,
+                results: []
+              };
+              if (questions.has(excelFile[i].questionTitle)) {
+                question = questions.get(excelFile[i].questionTitle);
+              }
+              question.title = excelFile[i].questionTitle;
+              question.maxScore = excelFile[i].maxScore;
+              question.results = [...question.results, {
+                studentID: `${excelFile[i].studentID}`,
+                score: excelFile[i].studentScore
+              }];
+              questions.set(excelFile[i].questionTitle, question);
+            }
+            createQuiz({
+              variables: {
+                courseID,
+                input: {
+                  name: form.name,
+                  createdAt: new Date(),
+                  questions: [...questions.values()]
+                }
+              }
+            }).then(() => {
+              setValue('name', '');
+              setExcelFile([]);
+              setShow(false);
+              callback();
+            });
           })}
         >
           <Modal.Header>
@@ -220,7 +182,7 @@ const CreateQuizForm: React.FC<{programID: string, courseID: string}> = ({progra
           </Modal.Header>
           <Modal.Body>
             <span>Quiz name:</span><br/>
-            <input type="text" {...register('quizName')} placeholder="quiz name" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+            <input type="text" {...register('name')} placeholder="quiz name" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
             <span>Upload quiz result:</span><br/>
             <input type="file" onChange={e => excelJSON(e.target.files[0])} className="p-1 mx-2 text-sm"/><br/>
           </Modal.Body>
@@ -233,4 +195,170 @@ const CreateQuizForm: React.FC<{programID: string, courseID: string}> = ({progra
   );
 };
 
-export default LO;
+const CreateQuestionLinkForm: React.FC<{los: LOModel[], questionID: string, callback: () => any}> = ({los, questionID, callback}) => {
+  const [createQuestionLink, { loading: submitting }] = useMutation<CreateQuestionLinkData, CreateQuestionLinkVars>(CREATE_QUESTIONLINK);
+  const [selectedLOID, setSelectedLOID] = useState<string>('');
+  const { register, handleSubmit, setValue } = useForm<CreateQuestionLinkModel>({defaultValues: {loID: '', level: 0}});
+  const resetForm = () => {
+    setValue('loID', '');
+    setValue('level', 0);
+  };
+  const submitForm = (form: CreateQuestionLinkModel) => {
+    if (form.loID === '' || form.level === 0 || submitting) {
+      return;
+    }
+    createQuestionLink({
+      variables: {
+        input: {
+          ...form,
+          questionID
+        },
+      }
+    }).then(() => {
+      resetForm();
+      setSelectedLOID('');
+      callback();
+    });
+  };
+  return (
+    <form onSubmit={handleSubmit((form) => submitForm(form))}>
+      <span>Select LO:</span><br/>
+      <select {...register('loID')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue="" onChange={e => {setSelectedLOID(e.target.value);setValue('level', 0);}}>
+        <option disabled value="">--Select LO--</option>
+        {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
+          <option value={lo.id} key={lo.id}>
+            {lo.title}
+          </option>
+        ))}
+      </select><br/>
+      {selectedLOID !== '' && <div>
+        <span>Select Level:</span><br/>
+        <select {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue={0}>
+          <option disabled value={0}>--Select Level--</option>
+          {los[los.findIndex((lo) => lo.id == selectedLOID)] && los[los.findIndex((lo) => lo.id == selectedLOID)].levels.map((level) => (
+            <option value={level.level} key={level.description}>
+              {level.description}
+            </option>
+          ))}
+        </select>
+      </div>}<br/>
+      <input type="submit" value="add" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+    </form>
+  );
+};
+
+const ApolloQuiz: React.FC<{programID: string, courseID: string}> = (props) => {
+  const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
+    uri: 'http://localhost:8080/query',
+    cache: new InMemoryCache()
+  });
+  return <ApolloProvider client={client}><Quiz programID={props.programID} courseID={props.courseID}/></ApolloProvider>
+};
+
+const GET_LOS = gql`
+  query LOs($courseID: ID!) {
+    los(courseID: $courseID) {
+      id
+      title
+      levels {
+        level
+        description
+      }
+      ploLinks {
+        id
+        title
+        description
+        ploGroupID
+      }
+    }
+  }
+`;
+
+interface GetLOsData {
+  los: LOModel[]
+};
+
+interface GetLOsVars {
+  courseID: string;
+};
+
+const GET_QUIZZES = gql`
+  query Quizzes($courseID: ID!) {
+    quizzes(courseID: $courseID) {
+      id
+      name
+      createdAt
+      questions {
+        id
+        title
+        maxScore
+        loLinks {
+          loID
+          level
+          description
+        }
+      }
+    }
+  }
+`;
+
+interface GetQuizzesData {
+  quizzes: QuizModel[];
+};
+
+interface GetQuizzesVars {
+  courseID: string;  
+};
+
+const DELETE_QUESTIONLINK = gql`
+  mutation DeleteQuestionLink($input: DeleteQuestionLinkInput!) {
+    deleteQuestionLink(input: $input) {
+      questionID
+      loID
+    }
+  }
+`;
+
+interface DeleteQuestionLinkData {
+  deleteQuestionLink: DeleteQuestionLinkResponse;
+};
+
+interface DeleteQuestionLinkVars {
+  input: DeleteQuestionLinkModel;
+};
+
+const CREATE_QUESTIONLINK = gql`
+  mutation CreateQuestionLink($input: CreateQuestionLinkInput!) {
+    createQuestionLink(input: $input) {
+      questionID
+      loID
+    }
+  }
+`;
+
+interface CreateQuestionLinkData {
+  createQuestionLink: CreateQuestionLinkResponse;
+};
+
+interface CreateQuestionLinkVars {
+  input: CreateQuestionLinkModel;
+};
+
+const CREATE_QUIZ = gql`
+  mutation CreateQuiz($courseID: ID!, $input: CreateQuizInput!) {
+    createQuiz(courseID: $courseID, input: $input) {
+      id
+    }
+  }
+`;
+
+interface CreateQuizData {
+  createQuiz: CreateQuizResponse;
+};
+
+interface CreateQuizVars {
+  courseID: string;
+  input: CreateQuizModel;
+};
+
+export default ApolloQuiz;

@@ -36,15 +36,19 @@ export const DELETE_QUESTIONLINK = gql`
 
 export interface CreateQuizModel {
   name: string;
-  createdAt: number;
-  questions: {
-    title: string;
-    maxScore: number;
-    results: {
-      studentID: string;
-      score: number;
-    }[];
-  }[];
+  createdAt: Date;
+  questions: CreateQuestionModel[];
+};
+
+export interface CreateQuestionModel {
+  title: string;
+  maxScore: number;
+  results: CreateQuestionResultModel[];
+};
+
+export interface CreateQuestionResultModel {
+  studentID: string;
+  score: number;
 };
 
 export interface CreateQuizResponse {
@@ -54,7 +58,7 @@ export interface CreateQuizResponse {
 export interface CreateQuestionLinkModel {
   questionID: string;
   loID: string;
-  level: string;
+  level: number;
 };
 
 export interface CreateQuestionLinkResponse {
@@ -69,7 +73,7 @@ export interface DeleteQuizResponse {
 export interface DeleteQuestionLinkModel {
   questionID: string;
   loID: string;
-  level: string;
+  level: number;
 };
 
 export interface DeleteQuestionLinkResponse {

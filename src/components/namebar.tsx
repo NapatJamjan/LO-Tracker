@@ -1,39 +1,39 @@
+import { useQuery } from '@apollo/client';
 import axios from 'axios';
 import { Link } from 'gatsby';
+import gql from 'graphql-tag';
 import React, { useEffect, useState } from 'react';
+import { CourseModel } from '../shared/graphql/course/query';
+import { ProgramModel } from '../shared/graphql/program/query';
 
 export const ProgramNameLink: React.FC<{programID: string, to: string}> = ({programID, to}) => {
-  const [programName, setProgramName] = useState<string>(programID);
-  useEffect(() => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .get<{programName: string}>('/program-name', { params: { programID } })
-      .then((res) => res.data.programName)
-      .then(setProgramName)
-      .catch(JSON.stringify)
-      .catch(console.log);
-  }, []);
+  const {data, loading, error} = useQuery<{program: ProgramModel}, {programID: string}>(gql`
+    query ProgramName($programID: ID!) {
+      program(programID: $programID) {
+        name
+      }
+    }
+  `, {variables: {programID}});
   return (
-    <Link to={to} style={{pointerEvents: (to === '' || to === '.')?'none':'auto'}}>{programName}</Link>
+    <Link to={to} style={{pointerEvents: (to === '' || to === '.')?'none':'auto'}}>
+      {loading || error && <>{programID}</>}
+      {data && <>{data.program.name}</>}
+    </Link>
   );
 }
 
-export const CourseNameLink: React.FC<{programID: string, courseID: string, to: string}> = ({programID, courseID, to}) => {
-  const [courseName, setCourseName] = useState<string>(courseID);
-  useEffect(() => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .get<{courseName: string}>('/course-name', { params: { programID, courseID } })
-      .then((res) => res.data.courseName)
-      .then(setCourseName)
-      .catch(JSON.stringify)
-      .catch(console.log);
-  }, []);
+export const CourseNameLink: React.FC<{courseID: string, to: string}> = ({courseID, to}) => {
+  const {data, loading, error} = useQuery<{course: CourseModel}, {courseID: string}>(gql`
+    query CourseName($courseID: ID!) {
+      course(courseID: $courseID) {
+        name
+      }
+    }
+  `, {variables: {courseID}});
   return (
-    <Link to={to} style={{pointerEvents: (to === '' || to === '.')?'none':'auto'}}>{courseName}</Link>
+    <Link to={to} style={{pointerEvents: (to === '' || to === '.')?'none':'auto'}}>
+      {loading || error && <>{courseID}</>}
+      {data && <>{data.course.name}</>}
+    </Link>
   );
 }

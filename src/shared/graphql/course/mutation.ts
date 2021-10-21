@@ -55,16 +55,16 @@ export const DELETE_LO = gql`
 `;
 
 export const DELETE_LOLEVEL = gql`
-  mutation DeleteLO($id: ID!, $level: Int!) {
-    deleteLO(id: $id, level: $level) {
+  mutation DeleteLOLevel($id: ID!, $level: Int!) {
+    deleteLOLevel(id: $id, level: $level) {
       id
     }
   }
 `;
 
 export const DELETE_LOLINK = gql`
-  mutation DeleteLO($loID: ID!, $ploID: ID!) {
-    deleteLO(loID: $loID, ploID: $ploID) {
+  mutation DeleteLOLink($loID: ID!, $ploID: ID!) {
+    deleteLOLink(loID: $loID, ploID: $ploID) {
       loID
       ploID
     }
@@ -94,6 +94,12 @@ export interface CreateLOsModel {
     level: number;
     description: number;
   }[];
+};
+
+export interface CreateLOModel {
+  title: string;
+  level: number;
+  description: string;
 };
 
 export interface CreateLOLinkResponse {

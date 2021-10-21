@@ -1,23 +1,19 @@
-import axios from "axios";
+import { gql, ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject, useQuery } from "@apollo/client";
 import { Link } from "gatsby";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Layout from "../../../../../components/layout";
 import { CourseNameLink, ProgramNameLink } from "../../../../../components/namebar";
 import Seo from "../../../../../components/seo";
+import { CourseModel } from "../../../../../shared/graphql/course/query";
 
 const Course: React.FC<{programID: string, courseID: string}> = ({programID, courseID}) => {
-  const [courseDescription, setCourseDescription] = useState<string>('');
-  useEffect(() => {
-    const api = axios.create({
-      baseURL: 'http://localhost:5000/api'
-    });
-    api
-      .get<{courseDescription: string}>('/course-description', { params: { programID, courseID } })
-      .then((res) => res.data.courseDescription)
-      .then(setCourseDescription)
-      .catch(JSON.stringify)
-      .catch(console.log);
-  }, []);
+  const {data} = useQuery<{course: CourseModel}, {courseID: string}>(gql`
+    query CourseDescription($courseID: ID!) {
+      course(courseID: $courseID) {
+        description
+      }
+    }
+  `, {variables: {courseID}});
   return (
     <Layout>
       <Seo title="Course" />
@@ -28,7 +24,7 @@ const Course: React.FC<{programID: string, courseID: string}> = ({programID, cou
         &nbsp;&#12297;&nbsp;
         <ProgramNameLink programID={programID} to={`/programs/${programID}/courses`} />
         &nbsp;&#12297;&nbsp;
-        <CourseNameLink programID={programID} courseID={courseID} to="" />
+        <CourseNameLink courseID={courseID} to="" />
       </p>
       <br/>
       <ul>
@@ -39,10 +35,18 @@ const Course: React.FC<{programID: string, courseID: string}> = ({programID, cou
       </ul>
       <p className="mt-5">
         <span className="text-2xl">Course Description</span><br/>
-        <span>{courseDescription}</span>
+        <span>{data && data.course.description}</span>
       </p>
     </Layout>
   );
-}
+};
 
-export default Course;
+const ApolloCourse: React.FC<{programID: string, courseID: string}> = (props) => {
+  const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
+    uri: 'http://localhost:8080/query',
+    cache: new InMemoryCache()
+  });
+  return <ApolloProvider client={client}><Course programID={props.programID} courseID={props.courseID}/></ApolloProvider>
+};
+
+export default ApolloCourse;

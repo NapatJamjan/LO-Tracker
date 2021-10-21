@@ -1,8 +1,8 @@
 import { gql } from '@apollo/client';
 
 export const GET_QUIZZES = gql`
-  query Quiz($courseID: ID!) {
-    quiz(courseID: $courseID) {
+  query Quizzes($courseID: ID!) {
+    quizzes(courseID: $courseID) {
       id
       name
       createdAt
@@ -10,13 +10,10 @@ export const GET_QUIZZES = gql`
         id
         title
         maxScore
-        results {
-          studentID
-          score
-        }
         loLinks {
           loID
           level
+          description
         }
       }
     }
@@ -27,17 +24,22 @@ export interface QuizModel {
   id: string;
   name: string;
   createdAt: number;
-  questions: {
-    id: string;
-    title: string;
-    maxScore: number;
-    results: {
-      studentID: string;
-      score: number;
-    }[];
-    loLinks: {
-      loID: string;
-      level: number;
-    }[];
+  questions: QuestionModel[];
+};
+
+export interface QuestionModel {
+  id: string;
+  title: string;
+  maxScore: number;
+  results: {
+    studentID: string;
+    score: number;
   }[];
+  loLinks: QuestionLinkModel[];
+};
+
+export interface QuestionLinkModel {
+  loID: string;
+  level: number;
+  description: string;
 };

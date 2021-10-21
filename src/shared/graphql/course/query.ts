@@ -45,6 +45,17 @@ export const GET_LOS = gql`
   }
 `;
 
+export const GET_STUDENTS_IN_COURSE = gql`
+  quey StudentsInCourse($courseID: ID!) {
+    studentsInCourse(courseID: $courseID) {
+      id
+      email
+      name
+      surname
+    }
+  }
+`;
+
 export interface CourseModel {
   id: string;
   name: string;
@@ -67,4 +78,11 @@ export interface LOModel {
     description: string;
     ploGroupID: string;
   }[];
+};
+
+export interface StudentModel {
+  id: string;
+  email: string;
+  name: string;
+  surname: string;
 };
