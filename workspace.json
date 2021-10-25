@@ -2,6 +2,33 @@
   "version": 2,
   "projects": {
     "web": "apps/web",
-    "web-e2e": "apps/web-e2e"
+    "web-e2e": "apps/web-e2e",
+    "api": {
+      "projectType": "application",
+      "root": "apps/api",
+      "sourceRoot": "apps/api",
+      "targets": {
+        "build": {
+          "executor": "@nx-go/nx-go:build",
+          "options": {
+            "outputPath": "dist/apps/api",
+            "main": "apps/api/main.go"
+          }
+        },
+        "serve": {
+          "executor": "@nx-go/nx-go:serve",
+          "options": {
+            "main": "apps/api/main.go"
+          }
+        },
+        "test": {
+          "executor": "@nx-go/nx-go:test"
+        },
+        "lint": {
+          "executor": "@nx-go/nx-go:lint"
+        }
+      },
+      "tags": []
+    }
   }
 }

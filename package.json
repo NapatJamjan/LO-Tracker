@@ -18,6 +18,9 @@
     "tslib": "^2.0.0"
   },
   "devDependencies": {
+    "@angular-devkit/architect": "^0.1202.11",
+    "@angular-devkit/core": "^12.2.11",
+    "@angular-devkit/schematics": "^12.2.11",
     "@nrwl/cli": "13.0.2",
     "@nrwl/cypress": "13.0.2",
     "@nrwl/eslint-plugin-nx": "13.0.2",
@@ -27,6 +30,7 @@
     "@nrwl/tao": "13.0.2",
     "@nrwl/web": "13.0.2",
     "@nrwl/workspace": "13.0.2",
+    "@nx-go/nx-go": "^1.7.1",
     "@testing-library/react": "12.1.2",
     "@testing-library/react-hooks": "7.0.2",
     "@types/jest": "27.0.2",
