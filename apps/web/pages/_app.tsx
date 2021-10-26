@@ -1,25 +1,22 @@
+import { ApolloProvider } from '@apollo/client';
 import { AppProps } from 'next/app';
-import Head from 'next/head';
-import './styles.css';
+import './styles.css'
+import client from '../apollo-client';
 
-function CustomApp({ Component, pageProps }: AppProps) {
-  return (
-    <>
-      <Head>
-        <title>Welcome to web!</title>
-      </Head>
-      <div className="app">
-        <header className="flex">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/nx-logo-white.svg" alt="Nx logo" width="75" height="50" />
-          <h1>Welcome to web!</h1>
-        </header>
-        <main>
-          <Component {...pageProps} />
-        </main>
-      </div>
-    </>
-  );
+function MyApp({ Component, pageProps }: AppProps) {
+  return <ApolloProvider client={client}>
+    <div className="min-h-screen flex flex-col w-100">
+      <main
+        style={{
+          maxWidth: 960,
+          padding: `0.5rem 1.0875rem 1.45rem`
+        }}
+        className="mx-auto flex-grow w-screen">
+        <Component {...pageProps} />
+      </main>
+      <footer className="mx-auto py-3">Footer</footer>
+    </div>
+  </ApolloProvider>;
 }
 
-export default CustomApp;
+export default MyApp;
