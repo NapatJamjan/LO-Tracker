@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ApolloProvider } from '@apollo/client';
 import { AppProps } from 'next/app';
 import './styles.css'
@@ -6,6 +7,9 @@ import client from '../apollo-client';
 function MyApp({ Component, pageProps }: AppProps) {
   return <ApolloProvider client={client}>
     <div className="min-h-screen flex flex-col w-100">
+      <nav className="text-white pl-10 bg-blue-700">
+        <Link href="/">LO Tracker</Link>
+      </nav>
       <main
         style={{
           maxWidth: 960,

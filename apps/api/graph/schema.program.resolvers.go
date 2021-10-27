@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph/model"
 

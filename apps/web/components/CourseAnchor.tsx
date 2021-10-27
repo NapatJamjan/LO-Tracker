@@ -18,8 +18,8 @@ export default function CourseNameLink({courseID, href}: {courseID: string, href
       }
     }
   `, {variables: {courseID}});
-  return (<Link href={href}><span style={{pointerEvents: (href === '' || href === '.')?'none':'auto'}}>
-    {loading || error && <>{courseID}</>}
-    {data && <>{data.course.name}</>}
-  </span></Link>);
+  if (loading || error) return (<span>{courseID}</span>);
+  return (<Link href={href}>
+    {data.course.name}
+  </Link>);
 }

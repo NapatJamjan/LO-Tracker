@@ -4,7 +4,8 @@ import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
-import CourseAnchor from '../../../components/CourseAnchor';
+import ProgramAnchor from '../../../components/ProgramAnchor';
+import ClientOnly from '../../../components/ClientOnly';
 import { CourseStaticPaths } from '../../../utils/staticpaths';
 
 interface CourseModel {
@@ -14,6 +15,7 @@ interface CourseModel {
   semester: number;
   year: number;
   ploGroupID: string;
+  programID: string;
 };
 
 export default function Index({course}: {course: CourseModel}) {
@@ -23,10 +25,14 @@ export default function Index({course}: {course: CourseModel}) {
     </Head>
     <p>
       <Link href="/">Home</Link>
-      &nbsp;&#12297;&nbsp;
-      <Link href="/programs">Programs</Link>
-      &nbsp;&#12297;&nbsp;
-      <CourseAnchor courseID={course.id} href="" />
+      {' '};&#12297;{' '}
+      <Link href="/programs">All Programs</Link>
+      {' '}&#12297;{' '}
+      <ClientOnly>
+        <ProgramAnchor programID={course.programID} href={`/program/${course.programID}/courses`}/>
+      </ClientOnly>
+      {' '}&#12297;{' '}
+      <Link href={`/course/${course.id}`}>{course.name}</Link>
     </p>
     <br/>
     <ul>
@@ -52,7 +58,9 @@ export const getStaticProps: GetStaticProps<{course: CourseModel}> = async (cont
     query CourseDescription($courseID: ID!) {
       course(courseID: $courseID) {
         id
+        name
         description
+        programID
       }
     }
   `;

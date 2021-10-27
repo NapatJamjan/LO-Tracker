@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph/generated"
 	"lo-tracker/apps/api/graph/model"
@@ -34,6 +33,7 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, i
 		Semester:    createdCourse.Semester,
 		Year:        createdCourse.Year,
 		PloGroupID:  createdCourse.PloGroupID,
+		ProgramID:   createdCourse.ProgramID,
 	}, nil
 }
 
@@ -185,6 +185,7 @@ func (r *queryResolver) Courses(ctx context.Context, programID string) ([]*model
 			Semester:    course.Semester,
 			Year:        course.Year,
 			PloGroupID:  course.PloGroupID,
+			ProgramID:   course.ProgramID,
 		})
 	}
 	return courses, nil
@@ -204,6 +205,7 @@ func (r *queryResolver) Course(ctx context.Context, courseID string) (*model.Cou
 		Semester:    course.Semester,
 		Year:        course.Year,
 		PloGroupID:  course.PloGroupID,
+		ProgramID:   course.ProgramID,
 	}, nil
 }
 
@@ -252,7 +254,7 @@ func (r *queryResolver) Los(ctx context.Context, courseID string) ([]*model.Lo, 
 func (r *queryResolver) StudentsInCourse(ctx context.Context, courseID string) ([]*model.User, error) {
 	allStudents, err := r.Client.User.FindMany(
 		db.User.Student.Where(
-			db.Student.QuestionResults.Every(
+			db.Student.QuestionResults.Some(
 				db.QuestionResult.Question.Where(
 					db.Question.Quiz.Where(
 						db.Quiz.CourseID.Equals(courseID),

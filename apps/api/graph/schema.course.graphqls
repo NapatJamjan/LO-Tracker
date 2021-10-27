@@ -7,6 +7,7 @@ type Course {
   semester: Int!
   year: Int!
   ploGroupID: String!
+  programID: String!
 }
 
 type LO {

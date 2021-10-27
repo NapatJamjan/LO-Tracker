@@ -49,6 +49,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		PloGroupID  func(childComplexity int) int
+		ProgramID   func(childComplexity int) int
 		Semester    func(childComplexity int) int
 		Year        func(childComplexity int) int
 	}
@@ -276,6 +277,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Course.PloGroupID(childComplexity), true
+
+	case "Course.programID":
+		if e.complexity.Course.ProgramID == nil {
+			break
+		}
+
+		return e.complexity.Course.ProgramID(childComplexity), true
 
 	case "Course.semester":
 		if e.complexity.Course.Semester == nil {
@@ -1026,6 +1034,7 @@ type Course {
   semester: Int!
   year: Int!
   ploGroupID: String!
+  programID: String!
 }
 
 type LO {
@@ -2011,6 +2020,41 @@ func (ec *executionContext) _Course_ploGroupID(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PloGroupID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Course_programID(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProgramID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6591,6 +6635,11 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "ploGroupID":
 			out.Values[i] = ec._Course_ploGroupID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "programID":
+			out.Values[i] = ec._Course_programID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

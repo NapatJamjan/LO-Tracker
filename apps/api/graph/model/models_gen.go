@@ -13,6 +13,7 @@ type Course struct {
 	Semester    int    `json:"semester"`
 	Year        int    `json:"year"`
 	PloGroupID  string `json:"ploGroupID"`
+	ProgramID   string `json:"programID"`
 }
 
 type CreateCourseInput struct {

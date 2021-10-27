@@ -15,8 +15,8 @@ export default function ProgramNameLink({programID, href}: {programID: string, h
       }
     }
   `, {variables: {programID}});
-  return (<Link href={href}><span style={{pointerEvents: (href === '' || href === '.')?'none':'auto'}}>
-    {loading || error && <>{programID}</>}
-    {data && <>{data.program.name}</>}
-  </span></Link>);
+  if (loading || error) return (<span>{programID}</span>);
+  return (<Link href={href}>
+    {data.program.name}
+  </Link>);
 };
