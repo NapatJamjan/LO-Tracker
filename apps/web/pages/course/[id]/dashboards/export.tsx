@@ -1,46 +1,23 @@
 import Head from 'next/head';
-import client from '../../../../apollo-client';
-import { gql } from '@apollo/client';
-import { GetStaticPaths } from 'next';
+import { useRouter } from 'next/router';
+import ClientOnly from '../../../../components/ClientOnly';
 
-interface CourseModel {
-  id: string;
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-};
-
+// path => /course/[id]/dashboards/export
 export default function Index() {
   return (<div>
     <Head>
-      <title>Course Home</title>
+      <title>Dashboard</title>
     </Head>
-    <p>Hello</p>
+    <ClientOnly>
+      <ExportPage/>
+    </ClientOnly>
   </div>);
 };
 
-export const getStaticPaths: GetStaticPaths = async (context) => {
-  const GET_COURSES = gql`
-    query Courses {
-      courses {
-        id
-        name
-        description
-        semester
-        year
-        ploGroupID
-      }
-    }
-  `;
-  const { data } = await client.query<{courses: CourseModel[]}>({
-    query: GET_COURSES,
-  });
-  return {
-    paths: data.courses.map((course) => ({
-      params: {id: course.id}
-    })),
-    fallback: true,
-  };
+function ExportPage() {
+  const router = useRouter();
+  const {id: courseID} = router.query; // extract id from router.query and rename to courseID
+  return <div>
+    Hello {courseID}
+  </div>;
 };

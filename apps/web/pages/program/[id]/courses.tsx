@@ -7,6 +7,7 @@ import { GetStaticProps, GetStaticPaths } from 'next';
 import { ParsedUrlQuery } from 'querystring';
 import ProgramAnchor from '../../../components/ProgramAnchor';
 import ClientOnly from '../../../components/ClientOnly';
+import { ProgramStaticPaths } from '../../../utils/staticpaths';
 
 interface ProgramModel {
   id: string;
@@ -41,13 +42,13 @@ export default function Courses({programID, courses}: {programID: string, course
     <p className="my-3">
       <span className="underline">Courses</span>
       <span className="mx-3"></span>
-      <Link href={{pathname: 'plos'}}>PLOs</Link>
+      <Link href={`/program/${programID}/plos`}>PLOs</Link>
     </p>
     <div className="flex justify-between items-end mt-4 mb-3">
       <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter} placeholder="search for a program" className="border-4 rounded-md p-1 mx-2 text-sm"/>
-      <button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+      <Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
         Create a new course <span className="text-xl text-green-800">+</span>
-      </button>
+      </button></Link>
     </div>
     <CourseList courses={courses} filter={filter}/>
   </div>);
@@ -110,7 +111,7 @@ export const getStaticProps: GetStaticProps<{programID: string, courses: CourseM
       }
     }
   `;
-  const { data, error } = await client.query<{courses: CourseModel[]}, {programID: string}>({
+  const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
     query: GET_COURSES,
     variables: { programID }
   });
@@ -123,23 +124,4 @@ export const getStaticProps: GetStaticProps<{programID: string, courses: CourseM
   };
 };
 
-export const getStaticPaths: GetStaticPaths = async (context) => {
-  const GET_PROGRAMS = gql`
-    query Programs {
-      programs {
-        id
-        name
-        description
-      }
-    }
-  `;
-  const { data } = await client.query<{programs: ProgramModel[]}>({
-    query: GET_PROGRAMS
-  });
-  return {
-    paths: data.programs.map((program) => ({
-      params: {id: program.id}
-    })),
-    fallback: true,
-  };
-};
+export const getStaticPaths: GetStaticPaths = ProgramStaticPaths;

@@ -1,7 +1,9 @@
 import Head from 'next/head';
 import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
-import { GetStaticPaths } from 'next';
+import { GetStaticPaths, GetStaticProps } from 'next';
+import { CourseStaticPaths } from '../../../utils/staticpaths';
+import { ParsedUrlQuery } from 'querystring';
 
 interface CourseModel {
   id: string;
@@ -12,7 +14,7 @@ interface CourseModel {
   ploGroupID: string;
 };
 
-export default function Index() {
+export default function Index({courseID}: {courseID: string}) {
   return (<div>
     <Head>
       <title>Students in the course</title>
@@ -21,26 +23,18 @@ export default function Index() {
   </div>);
 };
 
-export const getStaticPaths: GetStaticPaths = async (context) => {
-  const GET_COURSES = gql`
-    query Courses {
-      courses {
-        id
-        name
-        description
-        semester
-        year
-        ploGroupID
-      }
-    }
-  `;
-  const { data } = await client.query<{courses: CourseModel[]}>({
-    query: GET_COURSES,
-  });
+interface Params extends ParsedUrlQuery {
+  id: string;
+}
+
+export const getStaticProps: GetStaticProps<{courseID: string}> = async (context) => {
+  const { id: courseID } = context.params as Params;
   return {
-    paths: data.courses.map((course) => ({
-      params: {id: course.id}
-    })),
-    fallback: true,
+    props: {
+      courseID
+    },
+    revalidate: false,
   };
 };
+
+export const getStaticPaths: GetStaticPaths = CourseStaticPaths;

@@ -162,11 +162,17 @@ func (r *mutationResolver) DeleteLOLink(ctx context.Context, loID string, ploID 
 }
 
 func (r *queryResolver) Courses(ctx context.Context, programID string) ([]*model.Course, error) {
-	allCourses, err := r.Client.Course.FindMany(
-		db.Course.Program.Where(
-			db.Program.ID.Equals(programID),
-		),
-	).Exec(ctx)
+	var allCourses []db.CourseModel
+	var err error
+	if programID == "" {
+		allCourses, err = r.Client.Course.FindMany().Exec(ctx)
+	} else {
+		allCourses, err = r.Client.Course.FindMany(
+			db.Course.Program.Where(
+				db.Program.ID.Equals(programID),
+			),
+		).Exec(ctx)
+	}
 	if err != nil {
 		return []*model.Course{}, err
 	}
