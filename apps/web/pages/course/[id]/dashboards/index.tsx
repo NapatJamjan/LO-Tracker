@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router';
 import ClientOnly from '../../../../components/ClientOnly';
 import ProgramAnchor from '../../../../components/ProgramAnchor';
+import { useStudent } from '../../../../utils/dashboard-helper';
 
 // path => /course/[id]/dashboards
 export default function Index() {
@@ -20,11 +21,13 @@ export default function Index() {
 function IndexPage() {
   const router = useRouter();
   const courseID = router.query.id as string; // extract id from router.query and rename to courseID
+  const [students, loaded] = useStudent(courseID);
   return <div>
     <NavHistory courseID={courseID}/>
-    Hello {courseID}
-    <Link href={`/course/${courseID}`}>Back to Course Homepage</Link>
+    Hello {courseID}<br/>
+    <Link href={`/course/${courseID}`}>Back to Course Homepage</Link><br/>
     <button onClick={() => router.push(`/course/${courseID}`)}>This also works</button>
+    {loaded && <p>{JSON.stringify(students)}</p>}
   </div>;
 };
 
