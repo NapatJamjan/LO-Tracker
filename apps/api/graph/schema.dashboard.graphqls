@@ -1,0 +1,21 @@
+type DashboardResult {
+  quizName: String!
+  maxScore: Int!
+  results: [DashboardResultSub!]!
+}
+
+type DashboardResultSub {
+  studentID: String!
+  studentName: String!
+  studentScore: Int!
+}
+
+type DashboardPLOSummary {
+  ploID: String!
+  loID: [String!]!
+}
+
+extend type Query {
+  quizResults(courseID: ID!): [DashboardResult!]!
+  ploSummary(courseID: ID!): [DashboardPLOSummary!]!
+}

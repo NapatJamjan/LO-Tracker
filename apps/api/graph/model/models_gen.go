@@ -107,6 +107,23 @@ type CreateStudentResult struct {
 	ID string `json:"id"`
 }
 
+type DashboardPLOSummary struct {
+	PloID string   `json:"ploID"`
+	LoID  []string `json:"loID"`
+}
+
+type DashboardResult struct {
+	QuizName string                `json:"quizName"`
+	MaxScore int                   `json:"maxScore"`
+	Results  []*DashboardResultSub `json:"results"`
+}
+
+type DashboardResultSub struct {
+	StudentID    string `json:"studentID"`
+	StudentName  string `json:"studentName"`
+	StudentScore int    `json:"studentScore"`
+}
+
 type DeleteLOLevelResult struct {
 	ID string `json:"id"`
 }

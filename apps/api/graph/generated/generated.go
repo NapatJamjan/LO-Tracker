@@ -76,6 +76,23 @@ type ComplexityRoot struct {
 		ID func(childComplexity int) int
 	}
 
+	DashboardPLOSummary struct {
+		LoID  func(childComplexity int) int
+		PloID func(childComplexity int) int
+	}
+
+	DashboardResult struct {
+		MaxScore func(childComplexity int) int
+		QuizName func(childComplexity int) int
+		Results  func(childComplexity int) int
+	}
+
+	DashboardResultSub struct {
+		StudentID    func(childComplexity int) int
+		StudentName  func(childComplexity int) int
+		StudentScore func(childComplexity int) int
+	}
+
 	DeleteLOLevelResult struct {
 		ID func(childComplexity int) int
 	}
@@ -154,9 +171,11 @@ type ComplexityRoot struct {
 		Courses          func(childComplexity int, programID string) int
 		Los              func(childComplexity int, courseID string) int
 		PloGroups        func(childComplexity int, programID string) int
+		PloSummary       func(childComplexity int, courseID string) int
 		Plos             func(childComplexity int, ploGroupID string) int
 		Program          func(childComplexity int, programID string) int
 		Programs         func(childComplexity int) int
+		QuizResults      func(childComplexity int, courseID string) int
 		Quizzes          func(childComplexity int, courseID string) int
 		StudentsInCourse func(childComplexity int, courseID string) int
 	}
@@ -228,6 +247,8 @@ type QueryResolver interface {
 	Course(ctx context.Context, courseID string) (*model.Course, error)
 	Los(ctx context.Context, courseID string) ([]*model.Lo, error)
 	StudentsInCourse(ctx context.Context, courseID string) ([]*model.User, error)
+	QuizResults(ctx context.Context, courseID string) ([]*model.DashboardResult, error)
+	PloSummary(ctx context.Context, courseID string) ([]*model.DashboardPLOSummary, error)
 	Programs(ctx context.Context) ([]*model.Program, error)
 	Program(ctx context.Context, programID string) (*model.Program, error)
 	PloGroups(ctx context.Context, programID string) ([]*model.PLOGroup, error)
@@ -347,6 +368,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateStudentResult.ID(childComplexity), true
+
+	case "DashboardPLOSummary.loID":
+		if e.complexity.DashboardPLOSummary.LoID == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOSummary.LoID(childComplexity), true
+
+	case "DashboardPLOSummary.ploID":
+		if e.complexity.DashboardPLOSummary.PloID == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOSummary.PloID(childComplexity), true
+
+	case "DashboardResult.maxScore":
+		if e.complexity.DashboardResult.MaxScore == nil {
+			break
+		}
+
+		return e.complexity.DashboardResult.MaxScore(childComplexity), true
+
+	case "DashboardResult.quizName":
+		if e.complexity.DashboardResult.QuizName == nil {
+			break
+		}
+
+		return e.complexity.DashboardResult.QuizName(childComplexity), true
+
+	case "DashboardResult.results":
+		if e.complexity.DashboardResult.Results == nil {
+			break
+		}
+
+		return e.complexity.DashboardResult.Results(childComplexity), true
+
+	case "DashboardResultSub.studentID":
+		if e.complexity.DashboardResultSub.StudentID == nil {
+			break
+		}
+
+		return e.complexity.DashboardResultSub.StudentID(childComplexity), true
+
+	case "DashboardResultSub.studentName":
+		if e.complexity.DashboardResultSub.StudentName == nil {
+			break
+		}
+
+		return e.complexity.DashboardResultSub.StudentName(childComplexity), true
+
+	case "DashboardResultSub.studentScore":
+		if e.complexity.DashboardResultSub.StudentScore == nil {
+			break
+		}
+
+		return e.complexity.DashboardResultSub.StudentScore(childComplexity), true
 
 	case "DeleteLOLevelResult.id":
 		if e.complexity.DeleteLOLevelResult.ID == nil {
@@ -766,6 +843,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.PloGroups(childComplexity, args["programID"].(string)), true
 
+	case "Query.ploSummary":
+		if e.complexity.Query.PloSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ploSummary_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PloSummary(childComplexity, args["courseID"].(string)), true
+
 	case "Query.plos":
 		if e.complexity.Query.Plos == nil {
 			break
@@ -796,6 +885,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Programs(childComplexity), true
+
+	case "Query.quizResults":
+		if e.complexity.Query.QuizResults == nil {
+			break
+		}
+
+		args, err := ec.field_Query_quizResults_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.QuizResults(childComplexity, args["courseID"].(string)), true
 
 	case "Query.quizzes":
 		if e.complexity.Query.Quizzes == nil {
@@ -1118,6 +1219,28 @@ type Mutation {
   deleteLO(id: ID!): DeleteLOResult!
   deleteLOLevel(id: ID!, level: Int!): DeleteLOLevelResult!
   deleteLOLink(loID: ID!, ploID: ID!): DeleteLOLinkResult!
+}
+`, BuiltIn: false},
+	{Name: "apps/api/graph/schema.dashboard.graphqls", Input: `type DashboardResult {
+  quizName: String!
+  maxScore: Int!
+  results: [DashboardResultSub!]!
+}
+
+type DashboardResultSub {
+  studentID: String!
+  studentName: String!
+  studentScore: Int!
+}
+
+type DashboardPLOSummary {
+  ploID: String!
+  loID: [String!]!
+}
+
+extend type Query {
+  quizResults(courseID: ID!): [DashboardResult!]!
+  ploSummary(courseID: ID!): [DashboardPLOSummary!]!
 }
 `, BuiltIn: false},
 	{Name: "apps/api/graph/schema.program.graphqls", Input: `type Program {
@@ -1728,6 +1851,21 @@ func (ec *executionContext) field_Query_ploGroups_args(ctx context.Context, rawA
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_ploSummary_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["courseID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("courseID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["courseID"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_plos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1755,6 +1893,21 @@ func (ec *executionContext) field_Query_program_args(ctx context.Context, rawArg
 		}
 	}
 	args["programID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_quizResults_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["courseID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("courseID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["courseID"] = arg0
 	return args, nil
 }
 
@@ -2314,6 +2467,286 @@ func (ec *executionContext) _CreateStudentResult_id(ctx context.Context, field g
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOSummary_ploID(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOSummary) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOSummary",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PloID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOSummary_loID(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOSummary) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOSummary",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LoID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardResult_quizName(ctx context.Context, field graphql.CollectedField, obj *model.DashboardResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.QuizName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardResult_maxScore(ctx context.Context, field graphql.CollectedField, obj *model.DashboardResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxScore, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardResult_results(ctx context.Context, field graphql.CollectedField, obj *model.DashboardResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Results, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DashboardResultSub)
+	fc.Result = res
+	return ec.marshalNDashboardResultSub2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResultSubᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardResultSub_studentID(ctx context.Context, field graphql.CollectedField, obj *model.DashboardResultSub) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardResultSub",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StudentID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardResultSub_studentName(ctx context.Context, field graphql.CollectedField, obj *model.DashboardResultSub) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardResultSub",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StudentName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardResultSub_studentScore(ctx context.Context, field graphql.CollectedField, obj *model.DashboardResultSub) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardResultSub",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StudentScore, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _DeleteLOLevelResult_id(ctx context.Context, field graphql.CollectedField, obj *model.DeleteLOLevelResult) (ret graphql.Marshaler) {
@@ -4008,6 +4441,90 @@ func (ec *executionContext) _Query_studentsInCourse(ctx context.Context, field g
 	res := resTmp.([]*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_quizResults(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_quizResults_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().QuizResults(rctx, args["courseID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DashboardResult)
+	fc.Result = res
+	return ec.marshalNDashboardResult2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResultᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_ploSummary(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ploSummary_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().PloSummary(rctx, args["courseID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DashboardPLOSummary)
+	fc.Result = res
+	return ec.marshalNDashboardPLOSummary2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOSummaryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_programs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6799,6 +7316,112 @@ func (ec *executionContext) _CreateStudentResult(ctx context.Context, sel ast.Se
 	return out
 }
 
+var dashboardPLOSummaryImplementors = []string{"DashboardPLOSummary"}
+
+func (ec *executionContext) _DashboardPLOSummary(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardPLOSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardPLOSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardPLOSummary")
+		case "ploID":
+			out.Values[i] = ec._DashboardPLOSummary_ploID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "loID":
+			out.Values[i] = ec._DashboardPLOSummary_loID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var dashboardResultImplementors = []string{"DashboardResult"}
+
+func (ec *executionContext) _DashboardResult(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardResult")
+		case "quizName":
+			out.Values[i] = ec._DashboardResult_quizName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "maxScore":
+			out.Values[i] = ec._DashboardResult_maxScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "results":
+			out.Values[i] = ec._DashboardResult_results(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var dashboardResultSubImplementors = []string{"DashboardResultSub"}
+
+func (ec *executionContext) _DashboardResultSub(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardResultSub) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardResultSubImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardResultSub")
+		case "studentID":
+			out.Values[i] = ec._DashboardResultSub_studentID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "studentName":
+			out.Values[i] = ec._DashboardResultSub_studentName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "studentScore":
+			out.Values[i] = ec._DashboardResultSub_studentScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var deleteLOLevelResultImplementors = []string{"DeleteLOLevelResult"}
 
 func (ec *executionContext) _DeleteLOLevelResult(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteLOLevelResult) graphql.Marshaler {
@@ -7311,6 +7934,34 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_studentsInCourse(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "quizResults":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_quizResults(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "ploSummary":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ploSummary(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -8313,6 +8964,168 @@ func (ec *executionContext) marshalNCreateStudentResult2ᚖloᚑtrackerᚋapps�
 	return ec._CreateStudentResult(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNDashboardPLOSummary2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardPLOSummary) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDashboardPLOSummary2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOSummary(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardPLOSummary2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOSummary(ctx context.Context, sel ast.SelectionSet, v *model.DashboardPLOSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardPLOSummary(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardResult2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardResult) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDashboardResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResult(ctx context.Context, sel ast.SelectionSet, v *model.DashboardResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardResultSub2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResultSubᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardResultSub) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDashboardResultSub2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResultSub(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardResultSub2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardResultSub(ctx context.Context, sel ast.SelectionSet, v *model.DashboardResultSub) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardResultSub(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNDeleteLOLevelResult2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDeleteLOLevelResult(ctx context.Context, sel ast.SelectionSet, v model.DeleteLOLevelResult) graphql.Marshaler {
 	return ec._DeleteLOLevelResult(ctx, sel, &v)
 }
@@ -8929,6 +9742,42 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
