@@ -81,6 +81,19 @@ export function useDashboardFlat(courseID: string): [DashboardFlat, boolean] {
 };
 // ================================================================================================
 
+const GET_DASHBOARD_RESULT = gql`
+  query QuizResults($courseID: ID!) {
+    quizResults(courseID: $courseID) {
+      quizName
+      maxScore
+      results {
+        studentID
+        studentName
+        studentScore
+      }
+    }
+  }
+`;
 interface DashboardResult {
   quizName: string;
   maxScore: number; // sum of every question's maxscore in that quiz
@@ -95,26 +108,44 @@ export function useDashboardResult(courseID: string): [DashboardResult[], boolea
   const [dashboard, setDashboard] = useState<DashboardResult[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   if (courseID === '') return;
+  const {data, loading} = useQuery<{quizResults: DashboardResult[]}, {courseID: string}>(GET_DASHBOARD_RESULT, {variables: {courseID}});
   useEffect(() => {
+    if (loading && !data) return;
+    setDashboard(data.quizResults);
     setLoaded(true);
-  }, []);
+  }, [loading]);
   return [dashboard, loaded];
 };
 // ================================================================================================
 
-interface DashboardPLOSummary {
-  plos: Map<string, string[]>; // key: ploID, val: a set of linked LOs
-};
-const emptyDashboardPLOSummary: DashboardPLOSummary = {
-  plos: new Map<string, string[]>()
-};
+const GET_DASHBOARD_PLOSUMMARY = gql`
+  query PLOSummary($courseID: ID!) {
+    ploSummary(courseID: $courseID) {
+      ploID
+      loID
+    }
+  }
+`;
+type DashboardPLOSummary = Map<string, string[]>; // key: ploID, val: a set of linked LOs to that PLO
+interface GQLPLOSumaryResponse {
+  ploID: string;
+  loID: string[];
+}
 
 export function useDashboardPLOSummary(courseID: string): [DashboardPLOSummary, boolean] {
-  const [dashboard, setDashboard] = useState<DashboardPLOSummary>(emptyDashboardPLOSummary);
+  const [dashboard, setDashboard] = useState<DashboardPLOSummary>(new Map<string, string[]>());
   const [loaded, setLoaded] = useState<boolean>(false);
   if (courseID === '') return;
+  const {data, loading} = useQuery<{ploSummary: GQLPLOSumaryResponse[]}, {courseID: string}>(GET_DASHBOARD_PLOSUMMARY, {variables: {courseID}});
   useEffect(() => {
+    if (loading && !data) return;
+    let plos = new Map<string, string[]>();
+    data.ploSummary.forEach((v) => {
+      plos.set(v.ploID, v.loID);
+    });
+    setDashboard(new Map(plos.entries()));
     setLoaded(true);
-  }, []);
+  }, [loading]);
+  console.log('from helper: ', [dashboard, loaded]);
   return [dashboard, loaded];
 };
