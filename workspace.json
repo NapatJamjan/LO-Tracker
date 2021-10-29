@@ -1,8 +1,6 @@
 {
   "version": 2,
   "projects": {
-    "web": "apps/web",
-    "web-e2e": "apps/web-e2e",
     "api": {
       "projectType": "application",
       "root": "apps/api",
@@ -29,6 +27,8 @@
         }
       },
       "tags": []
-    }
+    },
+    "web": "apps/web",
+    "web-e2e": "apps/web-e2e"
   }
 }
