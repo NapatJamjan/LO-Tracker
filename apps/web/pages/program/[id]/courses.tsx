@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, createContext, useContext } from 'react';
 import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
 import { GetStaticProps, GetStaticPaths } from 'next';
@@ -8,12 +8,6 @@ import { ParsedUrlQuery } from 'querystring';
 import ProgramAnchor from '../../../components/ProgramAnchor';
 import ClientOnly from '../../../components/ClientOnly';
 import { ProgramStaticPaths } from '../../../utils/staticpaths';
-
-interface ProgramModel {
-  id: string;
-  name: string;
-  description: string;
-};
 
 interface CourseModel {
   id: string;
@@ -24,17 +18,19 @@ interface CourseModel {
   ploGroupID: string;
 };
 
-export default function Courses({programID, courses}: {programID: string, courses: CourseModel[]}) {
+const FilterContext = createContext<{filter: string, changeFilter: (string) => any}>({filter: '', changeFilter: (s) => {}});
+
+export default function Page({programID, courses}: {programID: string, courses: CourseModel[]}) {
   const [filter, setFilter] = useState<string>('');
-  return (<div>
+  return (<FilterContext.Provider value={{filter, changeFilter: payload => setFilter(payload)}}>
     <Head>
       <title>Courses</title>
     </Head>
     <p>
       <Link href="/">Home</Link>
-      &nbsp;&#12297;&nbsp;
+      {' '}&#12297;{' '}
       <Link href="/programs">Programs</Link>
-      &nbsp;&#12297;&nbsp;
+      {' '}&#12297;{' '}
       <ClientOnly>
         <ProgramAnchor programID={programID} href=""/>
       </ClientOnly>
@@ -45,22 +41,29 @@ export default function Courses({programID, courses}: {programID: string, course
       <Link href={`/program/${programID}/plos`}>PLOs</Link>
     </p>
     <div className="flex justify-between items-end mt-4 mb-3">
-      <input type="text" onChange={e => setFilter(e.target.value || '')} value={filter} placeholder="search for a program" className="border-4 rounded-md p-1 mx-2 text-sm"/>
+      <FilterTextField/>
       <Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
         Create a new course <span className="text-xl text-green-800">+</span>
       </button></Link>
     </div>
-    <CourseList courses={courses} filter={filter}/>
-  </div>);
+    <Courses courses={courses}/>
+  </FilterContext.Provider>);
 };
 
-function CourseList({courses, filter}: {courses: CourseModel[], filter: string}) {
+function FilterTextField() {
+  const { changeFilter } = useContext(FilterContext);
+  return <input type="text" onChange={e => changeFilter(e.target.value || '')} placeholder="search for a course" className="border-4 rounded-md p-1 mx-2 text-sm"/>;
+}
+
+function Courses({courses}: {courses: CourseModel[]}) {
+  const { filter } = useContext(FilterContext);
   let courseGroups = new Map<string, CourseModel[]>();
   for (let i = 0; i < courses.length; ++i) {
     if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue;
-    courseGroups.set(`${courses[i].semester},${courses[i].year}`, [...(courseGroups.get(`${courses[i].semester},${courses[i].year}`) || []), {...courses[i]}]);
+    let groupName: string = `${courses[i].semester},${courses[i].year}`;
+    courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}]);
   }
-  return (<>{
+  return <>{
     Array.from(courseGroups).sort((group1, group2) => {
       let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
       let [sem2, year2] = group2[0].split(',').map(val => parseInt(val, 10));
@@ -68,37 +71,39 @@ function CourseList({courses, filter}: {courses: CourseModel[], filter: string})
       return year2 - year1;
     }).map((group) => {
       let [semester, year] = group[0].split(',').map(val => parseInt(val, 10));
-      let courseList: CourseModel[] = group[1];
-      return (
-        <div key={`group-${group[0]}`}>
-          <h3 style={{textAlign:'left'}}>Semester {semester === 3 ? 'S' : semester}/{year}</h3>
-          <ul className="courselist">
-            {
-              courseList.sort((course1, course2) => {
-                if (course1.year !== course2.year) return course2.year - course1.year;
-                if (course1.semester !== course2.semester) return course2.semester - course1.semester;
-                return course1.name.localeCompare(course2.name);
-              }).map((course) => (
-                <li key={course.id} className="rounded shadow-lg p-3">
-                  <Link href={`/course/${course.id}`}>
-                    {course.name}
-                  </Link>
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-      );
+      let filteredCourses: CourseModel[] = group[1];
+      return <CourseSection key={`group-${group[0]}`} courses={filteredCourses} semester={semester} year={year}/>;
     })
-  }</>);
+  }</>;
 }
 
-interface Params extends ParsedUrlQuery {
+function CourseSection({courses, semester, year}: {courses: CourseModel[], semester: number, year: number}) {
+  return <div className="my-4">
+    <h3 className="text-left mb-2">Semester {semester === 3? 'S': semester}/{year}</h3>
+    <ul className="courselist">
+      {courses.sort((c1, c2) => {
+        if (c1.year !== c2.year) return c2.year - c1.year;
+        if (c1.semester !== c2.semester) return c2.semester - c1.semester;
+        return c1.name.localeCompare(c2.name);
+      }).map(course => <Course key={course.id} course={course}/>)}
+    </ul>
+  </div>;
+}
+
+function Course({course}: {course: CourseModel}) {
+  return <li className="rounded shadow-lg p-3">
+    <Link href={`/course/${course.id}`}>
+      {course.name}
+    </Link>
+  </li>;
+}
+
+interface PageParams extends ParsedUrlQuery {
   id: string;
 }
 
 export const getStaticProps: GetStaticProps<{programID: string, courses: CourseModel[]}> = async (context) => {
-  const { id: programID } = context.params as Params;
+  const { id: programID } = context.params as PageParams;
   const GET_COURSES = gql`
     query Courses($programID: ID!) {
       courses(programID: $programID) {
@@ -108,19 +113,16 @@ export const getStaticProps: GetStaticProps<{programID: string, courses: CourseM
         semester
         year
         ploGroupID
-      }
-    }
-  `;
+  }}`;
   const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
-    query: GET_COURSES,
-    variables: { programID }
+    query: GET_COURSES, variables: { programID }
   });
   return {
     props: {
       programID,
       courses: data.courses,
     },
-    revalidate: false,
+    revalidate: 30,
   };
 };
 
