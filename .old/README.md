@@ -1,1 +1,0 @@
-<p>Capstone Frontend</p>
