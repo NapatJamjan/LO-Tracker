@@ -15,7 +15,28 @@ type DashboardPLOSummary {
   loID: [String!]!
 }
 
+type DashboardFlat {
+  students: [User!]!
+  plos: [PLO!]!
+  los: [LO!]!
+  questions: [DashboardFlatQuestion!]!
+}
+
+type DashboardFlatQuestion {
+  title: String!
+  maxScore: Int!
+  linkedPLOs: [String!]!
+  linkedLOs: [String!]!
+  results: [DashboardFlatQuestionResult!]!
+}
+
+type DashboardFlatQuestionResult {
+  studentID: String!
+  studentScore: Int!
+}
+
 extend type Query {
   quizResults(courseID: ID!): [DashboardResult!]!
   ploSummary(courseID: ID!): [DashboardPLOSummary!]!
+  flatSummary(courseID: ID!): DashboardFlat!
 }

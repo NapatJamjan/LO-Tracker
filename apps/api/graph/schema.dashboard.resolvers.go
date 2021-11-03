@@ -7,6 +7,7 @@ import (
 	"context"
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph/model"
+	"strconv"
 )
 
 func (r *queryResolver) QuizResults(ctx context.Context, courseID string) ([]*model.DashboardResult, error) {
@@ -78,6 +79,109 @@ func (r *queryResolver) PloSummary(ctx context.Context, courseID string) ([]*mod
 			PloID: ploID,
 			LoID:  los,
 		})
+	}
+	return response, nil
+}
+
+func (r *queryResolver) FlatSummary(ctx context.Context, courseID string) (*model.DashboardFlat, error) {
+	students, err := r.StudentsInCourse(ctx, courseID)
+	if err != nil {
+		return &model.DashboardFlat{}, nil
+	}
+	allQuestions, err := r.Client.Question.FindMany(
+		db.Question.Quiz.Where(
+			db.Quiz.CourseID.Equals(courseID),
+		),
+	).With(
+		db.Question.Links.Fetch().With(
+			db.QuestionLink.LoLevel.Fetch().With(
+				db.LOlevel.Lo.Fetch().With(
+					db.LO.Links.Fetch().With(db.LOlink.Plo.Fetch()),
+				),
+			),
+		),
+		db.Question.Results.Fetch(),
+	).Exec(ctx)
+	if err != nil {
+		return &model.DashboardFlat{}, nil
+	}
+	response := &model.DashboardFlat{
+		Students:  students,
+		Plos:      []*model.Plo{},
+		Los:       []*model.Lo{},
+		Questions: []*model.DashboardFlatQuestion{},
+	}
+	includedPLOsGlobal := map[string]bool{}
+	includedLOsGlobal := map[string]model.Lo{}
+	for _, question := range allQuestions {
+		results := []*model.DashboardFlatQuestionResult{}
+		includedPLOsLocal := map[string]bool{}
+		includedLOsLocal := map[string]bool{}
+		for _, result := range question.Results() {
+			results = append(results, &model.DashboardFlatQuestionResult{
+				StudentID:    result.StudentID,
+				StudentScore: result.Score,
+			})
+		}
+		for _, lo := range question.Links() {
+			for _, link := range lo.LoLevel().Lo().Links() {
+				ploID := link.Plo().ID
+				if _, addedLocal := includedPLOsLocal[ploID]; !addedLocal {
+					includedPLOsLocal[link.Plo().ID] = true
+					if _, addedGlobal := includedPLOsGlobal[ploID]; !addedGlobal {
+						response.Plos = append(response.Plos, &model.Plo{
+							ID:          link.PloID,
+							Title:       link.Plo().Title,
+							Description: link.Plo().Description,
+							PloGroupID:  link.Plo().PloGroupID,
+						})
+					}
+				}
+			}
+			loID := lo.LoLevel().LoID
+			loLevel := strconv.Itoa(lo.LoLevel().Level)
+			if _, addedLocal := includedLOsLocal[loID+","+loLevel]; !addedLocal {
+				includedLOsLocal[loID+","+loLevel] = true
+				if _, addedGlobal := includedLOsGlobal[loID]; !addedGlobal {
+					includedLOsGlobal[lo.LoLevel().LoID] = model.Lo{
+						ID:     lo.LoLevel().LoID,
+						Title:  lo.LoLevel().Lo().Title,
+						Levels: []*model.LOLevel{{Level: lo.LoLevel().Level, Description: lo.LoLevel().Description}},
+					}
+				} else {
+					found := false
+					for _, loLevel := range includedLOsGlobal[loID].Levels {
+						if loLevel.Level == lo.LoLevel().Level {
+							found = true
+							break
+						}
+					}
+					if !found {
+						temp := includedLOsGlobal[lo.LoLevel().LoID]
+						temp.Levels = append(temp.Levels, &model.LOLevel{Level: lo.LoLevel().Level, Description: lo.LoLevel().Description})
+						includedLOsGlobal[lo.LoLevel().LoID] = temp
+					}
+				}
+			}
+		}
+		linkedPLOs := []string{}
+		linkedLOs := []string{}
+		for ploID := range includedPLOsLocal {
+			linkedPLOs = append(linkedPLOs, ploID)
+		}
+		for loIDLevel := range includedLOsLocal {
+			linkedLOs = append(linkedLOs, loIDLevel)
+		}
+		response.Questions = append(response.Questions, &model.DashboardFlatQuestion{
+			Title:      question.Title,
+			MaxScore:   question.MaxScore,
+			LinkedPLOs: linkedPLOs,
+			LinkedLOs:  linkedLOs,
+			Results:    results,
+		})
+	}
+	for _, lo := range includedLOsGlobal {
+		response.Los = append(response.Los, &lo)
 	}
 	return response, nil
 }

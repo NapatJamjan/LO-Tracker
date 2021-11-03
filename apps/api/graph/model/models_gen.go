@@ -107,6 +107,26 @@ type CreateStudentResult struct {
 	ID string `json:"id"`
 }
 
+type DashboardFlat struct {
+	Students  []*User                  `json:"students"`
+	Plos      []*Plo                   `json:"plos"`
+	Los       []*Lo                    `json:"los"`
+	Questions []*DashboardFlatQuestion `json:"questions"`
+}
+
+type DashboardFlatQuestion struct {
+	Title      string                         `json:"title"`
+	MaxScore   int                            `json:"maxScore"`
+	LinkedPLOs []string                       `json:"linkedPLOs"`
+	LinkedLOs  []string                       `json:"linkedLOs"`
+	Results    []*DashboardFlatQuestionResult `json:"results"`
+}
+
+type DashboardFlatQuestionResult struct {
+	StudentID    string `json:"studentID"`
+	StudentScore int    `json:"studentScore"`
+}
+
 type DashboardPLOSummary struct {
 	PloID string   `json:"ploID"`
 	LoID  []string `json:"loID"`

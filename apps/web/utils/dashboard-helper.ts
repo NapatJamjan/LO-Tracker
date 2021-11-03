@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react';
 
 
 // ================================================================================================
+const GET_STUDENTS_IN_COURSE = gql`
+  query StudentsInCourse($courseID: ID!) {
+    studentsInCourse(courseID: $courseID) {
+      id
+      email
+      name
+      surname
+    }
+  }
+`;
 interface Student {
   id: string;
   email: string;
@@ -15,16 +25,6 @@ interface CustomStudent {
   email: string;
   fullname: string;
 };
-const GET_STUDENTS_IN_COURSE = gql`
-  query StudentsInCourse($courseID: ID!) {
-    studentsInCourse(courseID: $courseID) {
-      id
-      email
-      name
-      surname
-    }
-  }
-`;
 
 export function useStudent(courseID: string): [CustomStudent[], boolean] {
   const [students, setStudents] = useState<CustomStudent[]>([]);
@@ -48,20 +48,76 @@ export function useStudent(courseID: string): [CustomStudent[], boolean] {
 };
 // ================================================================================================
 
+const GET_DASHBOARD_FLAT = gql`
+  query FlatSummary($courseID: ID!) {
+    flatSummary(courseID: $courseID) {
+      students {
+        id
+        name
+        surname
+      }
+      plos {
+        id
+        title
+        description
+      }
+      los {
+        id
+        title
+        levels {
+          level
+          description
+        }
+      }
+      questions {
+        title
+        maxScore
+        linkedPLOs
+        linkedLOs
+        results {
+          studentID
+          studentScore
+        }
+      }
+    }
+  }
+`;
+interface GQLFlatResponse {
+  students: {
+    id: string;
+    name: string;
+    surname: string;
+  }[];
+  plos: {
+    id: string;
+    title: string;
+    description: string;
+  }[];
+  los: {
+    id: string;
+    title: string;
+    levels: {
+      level: number;
+      description: string;
+    }[];
+  }[];
+  questions: DashboardFlatQuestion[];
+}
+interface DashboardFlatQuestion {
+  title: string;
+  maxScore: number;
+  linkedPLOs: string[];
+  linkedLOs: string[];
+  results: {
+    studentID: string;
+    studentScore: number;
+  }[];
+}
 interface DashboardFlat {
   students: Map<string, string>; // key: studentID, val: studentName
   plos: Map<string, string>; // key: ploID, val: name
   los: Map<string, string>; // key: loID | "loID,loLevel", val: title | levelDescription
-  questions: {
-    title: string;
-    maxScore: number;
-    results: {
-      studentID: string;
-      studentScore: number;
-    }[];
-    linkedPLOs: string[];
-    linkedLOs: string[];
-  }[]; // all questions in a course
+  questions: DashboardFlatQuestion[]; // all questions in a course
 };
 const emptyDashboardFlat: DashboardFlat = {
   students: new Map<string, string>(),
@@ -74,9 +130,25 @@ export function useDashboardFlat(courseID: string): [DashboardFlat, boolean] {
   const [dashboard, setDashboard] = useState<DashboardFlat>(emptyDashboardFlat);
   const [loaded, setLoaded] = useState<boolean>(false);
   if (courseID === '') return;
+  const {data, loading } = useQuery<{flatSummary: GQLFlatResponse}, {courseID: string}>(GET_DASHBOARD_FLAT, {variables: {courseID}});
   useEffect(() => {
+    if (loading && !data) return;
+    let newDashboard: DashboardFlat = {
+      students: new Map<string, string>(),
+      plos: new Map<string, string>(),
+      los: new Map<string, string>(),
+      questions: []
+    };
+    data.flatSummary.students.forEach(student => newDashboard.students.set(student.id, `${student.name} ${student.surname}`));
+    data.flatSummary.plos.forEach(plo => newDashboard.plos.set(plo.id, plo.title));
+    data.flatSummary.los.forEach(lo => {
+      newDashboard.los.set(lo.id, lo.title);
+      lo.levels.forEach(loLevel => newDashboard.los.set(`${lo.id},${loLevel.level}`, loLevel.description));
+    });
+    newDashboard.questions = data.flatSummary.questions;
+    setDashboard(newDashboard);
     setLoaded(true);
-  }, []);
+  }, [loading]);
   return [dashboard, loaded];
 };
 // ================================================================================================
