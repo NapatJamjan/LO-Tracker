@@ -1,10 +1,13 @@
 import { gql, useQuery } from '@apollo/client';
 import Head from 'next/head';
-import Link from 'next/link'
+import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
+import styled from 'styled-components';
 import ClientOnly from '../../../../components/ClientOnly';
 import ProgramAnchor from '../../../../components/ProgramAnchor';
-import { useStudent, useDashboardPLOSummary, useDashboardResult } from '../../../../utils/dashboard-helper';
+import { useStudent, useDashboardPLOSummary, useDashboardResult, useDashboardFlat } from '../../../../utils/dashboard-helper';
+import { ScoreTable, ScoreTablePLO } from './table';
 
 // path => /course/[id]/dashboards
 export default function Index() {
@@ -12,7 +15,7 @@ export default function Index() {
     <Head>
       <title>Dashboard</title>
     </Head>
-    <ClientOnly>
+    <ClientOnly> 
       <IndexPage/>
     </ClientOnly>
   </div>);
@@ -21,22 +24,31 @@ export default function Index() {
 function IndexPage() {
   const router = useRouter();
   const courseID = router.query.id as string; // extract id from router.query and rename to courseID
-  const [students, loaded] = useStudent(courseID);
-  const [dashboardPLO, loaded2] = useDashboardPLOSummary(courseID);
-  console.log('from page: ', dashboardPLO);
-  const [dashboardQuiz, loaded3] = useDashboardResult(courseID);
+  const [state, setState] = useState("Quiz");
   return <div>
     <NavHistory courseID={courseID}/>
-    Hello {courseID}<br/>
-    <Link href={`/course/${courseID}`}>Back to Course Homepage</Link><br/>
+    {/*<Link href={`/course/${courseID}`}>Back to Course Homepage</Link><br/>
     <button onClick={() => router.push(`/course/${courseID}`)}>This also works</button><br/>
     <p>useStudent(): </p>
     {loaded && <p>{JSON.stringify(students)}</p>}
     <p>useDashboardPLOSummary(): </p>
     {loaded2 && <p>{JSON.stringify([...dashboardPLO.entries()])}</p>}
     <p>useDashboardResult(): </p>
-    {loaded3 && <p>{JSON.stringify(dashboardQuiz)}</p>}
-    <p>For details, check apps/web/utils/dashboard-helper.js</p>
+    {loaded3 && <p>{JSON.stringify(dashboardQuiz)}</p>} 
+    <p>For details, check apps/web/utils/dashboard-helper.js</p>*/}
+    <h1 style={{textAlign: "center"}}>Summary</h1>
+    <ButtonTab>
+      <button onClick={() => setState("Quiz")} style={{marginRight: 5}}
+      className="border border-blue-500 rounded-md border-2">
+        {state === "Quiz" && <b>Quiz Score</b> || <span>Quiz Score</span>}
+        </button>
+      <button onClick={() => setState("Outcome")}
+      className="border border-blue-500 rounded-md border-2">
+        {state === "Outcome" && <b>Outcome Score</b> || <span>Outcome Score</span>}
+        </button>
+    </ButtonTab>
+    {state === "Quiz" && <ScoreTable courseID={courseID} />}
+    {state === "Outcome" && <ScoreTablePLO courseID={courseID} />}
   </div>;
 };
 
@@ -70,6 +82,15 @@ function NavHistory({courseID}: {courseID: string}) {
   </p>);
 }
 
+const ButtonTab = styled.div`
+  display: inline-block;
+`;
+
+
+
+function setState(arg0: string): void {
+  throw new Error('Function not implemented.');
+}
 /**
  * quiz
  *  id
