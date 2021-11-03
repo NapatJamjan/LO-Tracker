@@ -112,7 +112,7 @@ func (r *queryResolver) FlatSummary(ctx context.Context, courseID string) (*mode
 		Questions: []*model.DashboardFlatQuestion{},
 	}
 	includedPLOsGlobal := map[string]bool{}
-	includedLOsGlobal := map[string]model.Lo{}
+	includedLOsGlobal := map[string]*model.Lo{}
 	for _, question := range allQuestions {
 		results := []*model.DashboardFlatQuestionResult{}
 		includedPLOsLocal := map[string]bool{}
@@ -143,7 +143,7 @@ func (r *queryResolver) FlatSummary(ctx context.Context, courseID string) (*mode
 			if _, addedLocal := includedLOsLocal[loID+","+loLevel]; !addedLocal {
 				includedLOsLocal[loID+","+loLevel] = true
 				if _, addedGlobal := includedLOsGlobal[loID]; !addedGlobal {
-					includedLOsGlobal[lo.LoLevel().LoID] = model.Lo{
+					includedLOsGlobal[loID] = &model.Lo{
 						ID:     lo.LoLevel().LoID,
 						Title:  lo.LoLevel().Lo().Title,
 						Levels: []*model.LOLevel{{Level: lo.LoLevel().Level, Description: lo.LoLevel().Description}},
@@ -181,7 +181,7 @@ func (r *queryResolver) FlatSummary(ctx context.Context, courseID string) (*mode
 		})
 	}
 	for _, lo := range includedLOsGlobal {
-		response.Los = append(response.Los, &lo)
+		response.Los = append(response.Los, lo)
 	}
 	return response, nil
 }
