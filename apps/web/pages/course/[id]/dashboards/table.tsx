@@ -238,6 +238,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
           <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
             <option value="avg">Average Scores</option>
             <option value="all">Student Scores</option>
+            <option value="pie">Average (Pie)</option>
           </select>
         </div>
       </div>
@@ -318,6 +319,7 @@ export function ScoreTable(props: { courseID: string}) {
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="avg">Average Scores</option>
           <option value="all">Student Scores</option>
+          <option value="pie">Average (Pie)</option>
         </select>
       </div>
     <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>
