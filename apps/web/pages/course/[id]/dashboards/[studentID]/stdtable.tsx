@@ -259,7 +259,7 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
 
   return (
     <div>
-      <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" />
+      <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
       <br/>
       <div style={{display:"inline-block"}}>
         <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
@@ -365,7 +365,7 @@ export function IndividualQuiz (props: { courseID: string, studentID: string }) 
   }, [compareID])
 
   return <div>
-    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz"/><br/>
+    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz" tableHead={tableHead.slice(2)}/><br/>
     <span>Compare to</span>
       <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
         <option value="---">---</option>

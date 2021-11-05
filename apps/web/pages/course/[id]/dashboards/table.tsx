@@ -60,8 +60,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
     const stdname = []; // name for the table
     //object entries can be replaced by foreach now
     score.students.forEach((v, k) => {
-      std.push(k);
-      stdname.push(v);
+      std.push(k); stdname.push(v);
     })
     let loScore = []; let loScoreC = []; // for counting purpose, plo score go down
     let questions = score.questions;
@@ -166,14 +165,13 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     }// end of lo score calculation
     for (let i = 0; i < loName.length; i++) {
-      studentLOHead.push(loName[i].substring(0,4)+" (%)");
+      studentLOHead.push(loName[i].substring(0,4));
     }
     setLOH(studentLOHead.slice());
     for (let i = 0; i < loRes.length; i++) {
       studentLOScore.push({studentID: std[i], studentName: stdname[i] ,scores: [...loRes[i]]})
     }
     setLOS(studentLOScore.slice());
-    console.log(studentLOHead); console.log(studentLOScore);
 
     //plo section
     let ploScore:Array<Number[]> = [];
@@ -201,7 +199,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     } // calculation end
     for (let i = 0; i < ploName.length; i++) {
-      studentPLOHead.push(ploName[i]+" (%)");
+      studentPLOHead.push(ploName[i]);
     }
     setPLOH(studentPLOHead.slice()); 
     setHead(studentPLOHead.slice()); // set as start
@@ -223,10 +221,9 @@ export function ScoreTablePLO(props: { courseID: string}) {
       setHead(studentLOHead.slice());  setData(studentLOScore.slice());
     }
   }, [dataType])
-
   return (
     <div>
-      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome"/>
+      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
       <div style={{display:"inline"}}>
         <select value={dataType} onChange={handleDataType} className="border rounded-md border-2 ">
@@ -245,7 +242,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
       <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
         <thead>
           <tr>
-            {tableHead.map(head => (<th>{head}</th>))}
+            {tableHead.map(head => (<th>{head} (%)</th>))}
           </tr>
         </thead>
         <tbody>
@@ -312,7 +309,7 @@ export function ScoreTable(props: { courseID: string}) {
   function handleChartType(e: any){ setChartType(e.target.value) }
 
   return <div>
-    <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz"/>
+    <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
     <br/>
       <div style={{display: "inline"}}>
         <span style={{marginRight: 5}}>Graph Type</span>

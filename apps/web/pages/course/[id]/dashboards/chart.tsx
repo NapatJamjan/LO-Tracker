@@ -29,20 +29,21 @@ function ChartPage() {
   return <div> Hello {courseID} </div>;
 };
 
-export function AllStudentChart(props: { data: studentResult[], chartType: string, scoreType: string }) {
+export function AllStudentChart(props: { data: studentResult[], chartType: string, scoreType: string, tableHead: string[] }) {
   return (
     <div>
-      {props.chartType === "avg" && <ChartBarAverage data={props.data} scoreType={props.scoreType}/>}
-      {props.chartType === "all" && <ChartBarAll data={props.data} scoreType={props.scoreType}/>}
-      {props.chartType === "pie" && <ChartPieAverage data={props.data} scoreType={props.scoreType}/>}
+      {props.chartType === "avg" && <ChartBarAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {props.chartType === "all" && <ChartBarAll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {props.chartType === "pie" && <ChartPieAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
     </div>
   )
 }
 
 
-export function ChartBarAverage(props: { data: studentResult[], scoreType: string }) {
+export function ChartBarAverage(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
+  const tableHead = props.tableHead;
   //Scoring
   interface averageScore { name: string, score: number }
   let datas = props.data; let dataLength = 0;
@@ -63,7 +64,7 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
   }
   for (let i = 0; i < avg.length; i++) {
     avg[i] = parseInt((avg[i] / datas.length).toFixed(0))
-    avgScore.push({ name: scoreType + (i + 1), score: avg[i] });
+    avgScore.push({ name: tableHead[i], score: avg[i] });
   }
 
   //Charting
@@ -92,7 +93,7 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
       //scale
       const xScale = d3.scaleBand()
         .range([0, boxW])
-        .domain(dataset.map(function (d) { return d.name; }))
+        .domain(tableHead)
         .padding(0.2);
       box.append("g").transition()
         .attr("transform", "translate(0," + boxH + ")")
@@ -103,9 +104,6 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
         .range([boxH, 0]);
       box.append("g").transition()
         .call(d3.axisLeft(yScale));
-
-      const xAccessor = d => d.name
-      const yAccessor = d => d.score
 
       box.selectAll("rect") // can use in svg instead
         .data(dataset).enter().append('rect')
@@ -178,8 +176,9 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
 }
 
 
-export function ChartBarAll(props: { data:studentResult[], scoreType: string }) {
+export function ChartBarAll(props: { data:studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
+  const tableHead = props.tableHead;
   //scoring
   let datas = props.data;
   const scoreType = props.scoreType;
@@ -188,12 +187,12 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string }) 
   for(var i in datas) {
     allScoreTemp.push({name: datas[i].studentID})
     for(var j in datas[i].scores) {
-      allScoreTemp[i][scoreType+(parseInt(j)+1)] = datas[i].scores[j]
+      allScoreTemp[i][tableHead[j]] = datas[i].scores[j]
     }
   }
   let subgroupTemp = []
   if(datas.length != 0){
-    subgroupTemp = Array.from({length: datas[0].scores.length}, (d,i) => scoreType+(i+1));
+    subgroupTemp = Array.from({length: datas[0].scores.length}, (d,i) => tableHead[i]);
   } 
   allScore = allScoreTemp.slice();
   let scoreBar = []; // for bar mapping
@@ -362,9 +361,10 @@ interface averageScore {
   name: string, avgScore: number, stdScore: number
 }
 
-export function ChartBarCompare(props: { data: studentResult[], stdData: studentResult[], scoreType: string }) {
+export function ChartBarCompare(props: { data: studentResult[], stdData: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
+  const tableHead = props.tableHead;
   //scoring
   let stdDatas = props.stdData;
   let datas = props.data;
@@ -386,7 +386,7 @@ export function ChartBarCompare(props: { data: studentResult[], stdData: student
   }
   for (let i = 0; i < avg.length; i++) {
     avg[i] = parseInt((avg[i]/datas.length).toFixed(0))
-    avgScoreTemp.push({ name: props.scoreType+(i + 1), avgScore: avg[i], stdScore: 20 });
+    avgScoreTemp.push({ name: tableHead[i], avgScore: avg[i], stdScore: 20 });
   }
   if(stdDatas.length !== 0) {
     for (let i = 0; i < avgScoreTemp.length; i++) {
@@ -574,9 +574,10 @@ interface pieData {
   value: number;
 }
 
-export function ChartPieAverage(props: { data: studentResult[], scoreType: string }) {
+export function ChartPieAverage(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
+  const tableHead = props.tableHead;
   const scoreDomain = [];
   let totalScore = 0;
   //Scoring
@@ -599,9 +600,9 @@ export function ChartPieAverage(props: { data: studentResult[], scoreType: strin
   }
   for (let i = 0; i < avg.length; i++) {
     avg[i] = parseInt((avg[i] / datas.length).toFixed(0))
-    avgScore.push({ name: scoreType + (i + 1), score: avg[i] });
+    avgScore.push({ name: tableHead[i], score: avg[i] });
     totalScore += avg[i]
-    scoreDomain.push(scoreType + (i + 1))
+    scoreDomain.push(tableHead[i])
   }
 
   //Charting
