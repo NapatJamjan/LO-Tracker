@@ -2,12 +2,12 @@ import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStuden
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
-import React from 'react-bootstrap/node_modules/@types/react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../components/ClientOnly';
 import { AllStudentChart } from './chart';
+import { ExportOutcome2 } from './export';
 
 // path => /course/[id]/dashboards/table
 export default function Index() {
@@ -54,8 +54,8 @@ export function ScoreTablePLO(props: { courseID: string}) {
   function calculatePLO() {
     let score = dashboardFlat;
     let plolink = dashboardPLO;
-    console.log("calculate", score)
-    console.log("plolink", plolink)
+    // console.log("calculate", score)
+    // console.log("plolink", plolink)
     const std = []; // score index will be based on student in this response
     const stdname = []; // name for the table
     //object entries can be replaced by foreach now
@@ -103,8 +103,6 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     }
     
-    console.log("stddd",std)
-    console.log("lo arr",loArr)
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loID.indexOf(loID.find(e => e == questions[i].linkedLOs[k].split(',')[0]))
@@ -127,7 +125,6 @@ export function ScoreTablePLO(props: { courseID: string}) {
         }
       }
     }
-    console.log("loscore array", loScore)
 
     let lvlRes: Array<Array<number[]>> = loScore.slice();
     let lvlResC: Array<Array<number[]>> = loScoreC.slice();
@@ -165,7 +162,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     }// end of lo score calculation
     for (let i = 0; i < loName.length; i++) {
-      studentLOHead.push(loName[i].substring(0,4));
+      studentLOHead.push(loName[i].substring(0,4)); // % can be added here if needed
     }
     setLOH(studentLOHead.slice());
     for (let i = 0; i < loRes.length; i++) {
@@ -223,6 +220,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
   }, [dataType])
   return (
     <div>
+       <ExportOutcome2 courseID={props.courseID} datas={tableData} head={tableHead}/>
       <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
       <div style={{display:"inline"}}>
@@ -242,7 +240,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
       <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
         <thead>
           <tr>
-            {tableHead.map(head => (<th>{head} (%)</th>))}
+            {tableHead.map(head => (<th>{head}</th>))}
           </tr>
         </thead>
         <tbody>
@@ -291,7 +289,7 @@ export function ScoreTable(props: { courseID: string}) {
       }
     }
     for (let i = 0; i < score.length; i++) {
-      tableHead.push(score[i].quizName + " (%)");
+      tableHead.push(score[i].quizName);
     }
     setHead(tableHead.slice());
     for (let i = 0; i < quizScore.length; i++) {
@@ -302,7 +300,6 @@ export function ScoreTable(props: { courseID: string}) {
       })
     }
     setData(tableData.slice());
-    console.log("tabledata", tableData);
   }
   
   const [chartType, setChartType] = useState("avg");
