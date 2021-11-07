@@ -2,12 +2,12 @@ import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStuden
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
-import React from 'react-bootstrap/node_modules/@types/react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../components/ClientOnly';
 import { AllStudentChart } from './chart';
+import { ExportOutcome2 } from './export';
 
 // path => /course/[id]/dashboards/table
 export default function Index() {
@@ -54,14 +54,13 @@ export function ScoreTablePLO(props: { courseID: string}) {
   function calculatePLO() {
     let score = dashboardFlat;
     let plolink = dashboardPLO;
-    console.log("calculate", score)
-    console.log("plolink", plolink)
+    // console.log("calculate", score)
+    // console.log("plolink", plolink)
     const std = []; // score index will be based on student in this response
     const stdname = []; // name for the table
     //object entries can be replaced by foreach now
     score.students.forEach((v, k) => {
-      std.push(k);
-      stdname.push(v);
+      std.push(k); stdname.push(v);
     })
     let loScore = []; let loScoreC = []; // for counting purpose, plo score go down
     let questions = score.questions;
@@ -104,8 +103,6 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     }
     
-    console.log("stddd",std)
-    console.log("lo arr",loArr)
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loID.indexOf(loID.find(e => e == questions[i].linkedLOs[k].split(',')[0]))
@@ -128,7 +125,6 @@ export function ScoreTablePLO(props: { courseID: string}) {
         }
       }
     }
-    console.log("loscore array", loScore)
 
     let lvlRes: Array<Array<number[]>> = loScore.slice();
     let lvlResC: Array<Array<number[]>> = loScoreC.slice();
@@ -166,14 +162,13 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     }// end of lo score calculation
     for (let i = 0; i < loName.length; i++) {
-      studentLOHead.push(loName[i].substring(0,4)+" (%)");
+      studentLOHead.push(loName[i].substring(0,4)); // % can be added here if needed
     }
     setLOH(studentLOHead.slice());
     for (let i = 0; i < loRes.length; i++) {
       studentLOScore.push({studentID: std[i], studentName: stdname[i] ,scores: [...loRes[i]]})
     }
     setLOS(studentLOScore.slice());
-    console.log(studentLOHead); console.log(studentLOScore);
 
     //plo section
     let ploScore:Array<Number[]> = [];
@@ -201,7 +196,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
       }
     } // calculation end
     for (let i = 0; i < ploName.length; i++) {
-      studentPLOHead.push(ploName[i]+" (%)");
+      studentPLOHead.push(ploName[i]);
     }
     setPLOH(studentPLOHead.slice()); 
     setHead(studentPLOHead.slice()); // set as start
@@ -223,10 +218,10 @@ export function ScoreTablePLO(props: { courseID: string}) {
       setHead(studentLOHead.slice());  setData(studentLOScore.slice());
     }
   }, [dataType])
-
   return (
     <div>
-      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome"/>
+       <ExportOutcome2 courseID={props.courseID} datas={tableData} head={tableHead}/>
+      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
       <div style={{display:"inline"}}>
         <select value={dataType} onChange={handleDataType} className="border rounded-md border-2 ">
@@ -238,6 +233,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
           <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
             <option value="avg">Average Scores</option>
             <option value="all">Student Scores</option>
+            <option value="pie">Average (Pie)</option>
           </select>
         </div>
       </div>
@@ -293,7 +289,7 @@ export function ScoreTable(props: { courseID: string}) {
       }
     }
     for (let i = 0; i < score.length; i++) {
-      tableHead.push(score[i].quizName + " (%)");
+      tableHead.push(score[i].quizName);
     }
     setHead(tableHead.slice());
     for (let i = 0; i < quizScore.length; i++) {
@@ -304,20 +300,20 @@ export function ScoreTable(props: { courseID: string}) {
       })
     }
     setData(tableData.slice());
-    console.log("tabledata", tableData);
   }
   
   const [chartType, setChartType] = useState("avg");
   function handleChartType(e: any){ setChartType(e.target.value) }
 
   return <div>
-    <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz"/>
+    <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
     <br/>
       <div style={{display: "inline"}}>
         <span style={{marginRight: 5}}>Graph Type</span>
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="avg">Average Scores</option>
           <option value="all">Student Scores</option>
+          <option value="pie">Average (Pie)</option>
         </select>
       </div>
     <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>

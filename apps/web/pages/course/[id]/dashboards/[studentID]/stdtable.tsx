@@ -2,7 +2,6 @@ import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStuden
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import React from 'react-bootstrap/node_modules/@types/react';
 import { Table } from 'react-bootstrap';
 import ClientOnly from '../../../../../components/ClientOnly';
 import { ChartBarAverage, ChartBarCompare } from '../chart';
@@ -124,7 +123,6 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
         }
       }
     }
-    console.log("loscore array", loScore)
 
     let lvlRes: Array<Array<number[]>> = loScore.slice();
     let lvlResC: Array<Array<number[]>> = loScoreC.slice();
@@ -259,7 +257,7 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
 
   return (
     <div>
-      <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" />
+      <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
       <br/>
       <div style={{display:"inline-block"}}>
         <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
@@ -327,7 +325,7 @@ export function IndividualQuiz (props: { courseID: string, studentID: string }) 
       }
     }
     for (let i = 0; i < score.length; i++) {
-      tableHead.push(score[i].quizName + " (%)");
+      tableHead.push(score[i].quizName);
     }
     setHead(tableHead.slice());
     for (let i = 0; i < quizScore.length; i++) {
@@ -346,7 +344,6 @@ export function IndividualQuiz (props: { courseID: string, studentID: string }) 
     }
     setTotalData(totalData.slice());
     setData(tableData.slice());
-    console.log("tabledata", tableData);
   }
   
   const [compareID, setCompare] = useState("---");
@@ -365,7 +362,7 @@ export function IndividualQuiz (props: { courseID: string, studentID: string }) 
   }, [compareID])
 
   return <div>
-    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz"/><br/>
+    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz" tableHead={tableHead.slice(2)}/><br/>
     <span>Compare to</span>
       <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
         <option value="---">---</option>
@@ -423,7 +420,6 @@ export function IndividualQuiz2 (props: { courseID: string, studentID: string })
             stdScore = 0;
           }
           stdScore = parseInt(((stdScore/score[i].maxScore)*100).toFixed(0)); // find percentage
-          console.log(stdScore)
           quizScore[j].push(stdScore);
         }
         catch{ quizScore[j].push(0); }
@@ -431,7 +427,7 @@ export function IndividualQuiz2 (props: { courseID: string, studentID: string })
     } 
     
     for (let i = 0; i < score.length; i++) {
-      tableHead.push(score[i].quizName + " (%)");
+      tableHead.push(score[i].quizName);
     }
     setHead(tableHead.slice());
     let stdidx = sID.indexOf(sID.find(e => e == thisStudent)); // get student //
@@ -442,7 +438,6 @@ export function IndividualQuiz2 (props: { courseID: string, studentID: string })
     }
     setTotalData(tableData.slice());
     setData([tableData[stdidx]].slice())
-    console.log("tableData", tableData);
   }
 
   const [compareID, setCompare] = useState("---");
