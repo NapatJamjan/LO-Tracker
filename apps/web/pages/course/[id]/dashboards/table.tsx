@@ -1,7 +1,7 @@
 import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStudent } from 'apps/web/utils/dashboard-helper';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import styled from 'styled-components';
@@ -35,9 +35,10 @@ export interface studentResult {
   scores: Array<Number>
 }
 
-export function ScoreTablePLO(props: { courseID: string}) {
-  const [dashboardFlat, loaded] = useDashboardFlat(props.courseID);
-  const [dashboardPLO, loaded2] = useDashboardPLOSummary(props.courseID);
+export function ScoreTablePLO() {
+  const courseID = router.query.id as string;
+  const [dashboardFlat] = useDashboardFlat(courseID);
+  const [dashboardPLO] = useDashboardPLOSummary(courseID);
   const [tableHead, setHead] = useState<string[]>([])
   const [tableData, setData] = useState<studentResult[]>([]);
  
@@ -220,7 +221,7 @@ export function ScoreTablePLO(props: { courseID: string}) {
   }, [dataType])
   return (
     <div>
-       <ExportOutcome2 courseID={props.courseID} datas={tableData} head={tableHead}/>
+      <ExportOutcome2 datas={tableData} head={tableHead}/>
       <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
       <div style={{display:"inline"}}>
@@ -240,14 +241,14 @@ export function ScoreTablePLO(props: { courseID: string}) {
       <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
         <thead>
           <tr>
-            {tableHead.map(head => (<th>{head}</th>))}
+            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
           </tr>
         </thead>
         <tbody>
           {tableData.map(data => (
             <tr>
-              <td><LinkedCol href={`/course/${props.courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
-              <td><LinkedCol href={`/course/${props.courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
               {data.scores.map(scores => ( // map score of this student's id
                 <td>{scores}</td>
               ))}
@@ -260,16 +261,17 @@ export function ScoreTablePLO(props: { courseID: string}) {
 }
 
 
-export function ScoreTable(props: { courseID: string}) {
-  const [students, loaded] = useStudent(props.courseID);
-  const [dashboardQuiz, loaded2] = useDashboardResult(props.courseID);
+export function ScoreTable() {
+  const courseID = router.query.id as string;
+  const [students] = useStudent(courseID);
+  const [dashboardQuiz] = useDashboardResult(courseID);
 
   const [tableData, setData] = useState<studentResult[]>([]);
   const [tableHead, setHead] = useState<string[]>(['Student ID','Student Name']); 
 
   useEffect(() => {
     displayScore()
-  }, [dashboardQuiz.length > 0 && students.length > 0]) //probably work
+  }, [dashboardQuiz.length > 0 && students.length > 0])
 
   function displayScore(){
     let score = dashboardQuiz
@@ -319,15 +321,15 @@ export function ScoreTable(props: { courseID: string}) {
     <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>
       <thead>
         <tr>
-          {tableHead.map(head => (<th>{head}</th>))}
+          {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
         </tr>
       </thead>
       <tbody>
         {tableData.map(data => (
           <tr>
-            <td><LinkedCol href={`/course/${props.courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
-            <td><LinkedCol href={`/course/${props.courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
-            {data.scores.map(scores => ( // map score of this student's id
+            <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+            <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+            {data.scores.map(scores => (
               <td>{scores}</td>
             ))}
           </tr>

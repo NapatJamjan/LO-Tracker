@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../../components/ClientOnly';
-import { IndividualPLO, IndividualQuiz } from './stdtable';
+import { IndividualPLO, IndividualQuiz, InfoPage } from './stdtable';
 
 // path => /course/[id]/dashboards/[studentID]
 export default function Index() {
@@ -53,19 +53,23 @@ function IndexPage() {
           className="border border-blue-500 rounded-md border-2">
             {state === "Quiz" && <b>Quiz Score</b> || <span>Quiz Score</span>}
           </button>
-          <button onClick={() => setState("Outcome")}
+          <button onClick={() => setState("Outcome")} style={{ marginRight: 5 }}
           className="border border-blue-500 rounded-md border-2">
              {state === "Outcome" && <b>Outcome Score</b> || <span>Outcome Score</span>}
           </button>
+          {/* <button onClick={() => setState("Info")}
+          className="border border-blue-500 rounded-md border-2">
+            {state === "Info" && <b>Information</b> || <span>Information</span>}
+          </button> */}
         </ButtonTab>
-        {state === "Quiz" && <IndividualQuiz courseID={courseID} studentID={studentID}/>}
-        {state === "Outcome" && <IndividualPLO courseID={courseID} studentID={studentID}/>}
+        {state === "Quiz" && <IndividualQuiz studentID={studentID}/>}
+        {state === "Outcome" && <IndividualPLO studentID={studentID}/>}
+        {/* {state === "Info" && <InfoPage studentID={studentID}/>} */}
       </DashboardDiv>
     </MainDiv>
     
   </div>;
 };
-
 
 // supply
 interface CourseModel {
