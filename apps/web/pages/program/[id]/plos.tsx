@@ -42,47 +42,41 @@ const PLOContext = createContext<{
   ploGroups: PLOGroupModel[],
   savePLOGroup: (name: string, plos: CreatePLOModel[]) => Promise<any>,
   savePLO: (ploGroupID: string, plo: CreatePLOModel) => Promise<any>,
+  removePLOGroup: (id: string) => Promise<any>,
+  removePLO: (id: string) => Promise<any>,
   submitting: boolean,
   }>({
   ploGroups: [],
   savePLOGroup: () => null,
   savePLO: () => null,
+  removePLOGroup: () => null,
+  removePLO: () => null,
   submitting: false,
 });
 
 export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) => {
   const router = useRouter();
-  const CREATE_PLOGROUP = gql`
-    mutation CreatePLOGroup($programID: ID!, $name: String!, $input: [CreatePLOsInput!]!) {
-      createPLOGroup(programID: $programID, name: $name, input: $input) {
-        id
-        name
-  }}`;
-  const CREATE_PLO = gql`
-    mutation CreatePLO($ploGroupID: ID!, $input: CreatePLOInput!) {
-      createPLO(ploGroupID: $ploGroupID, input: $input) {
-        id
-        title
-        description
-        ploGroupID
-  }}`;
   const [createPLOGroup, { loading: submitPLOGroup }] = useMutation<{createPLOGroup: CreatePLOGroupResponse}, {programID: string, name: string, input: CreatePLOModel[]}>(CREATE_PLOGROUP);
+  const [deletePLOGroup, { loading: withdrawPLOGroup}] = useMutation<{deletePLOGroup: {id: string}}, {id: string}>(DELETE_PLOGROUP);
   const [createPLO, { loading: submitPLO }] = useMutation<{createPLO: PLOModel}, {ploGroupID: string, input: CreatePLOModel}>(CREATE_PLO);
+  const [deletePLO, { loading: withdrawPLO}] = useMutation<{deletePLO: {id: string}}, {id: string}>(DELETE_PLO);
   const savePLOGroup = (name: string, plos: CreatePLOModel[]) => createPLOGroup({variables: {programID, name, input: plos}}).finally(() => router.replace(router.asPath));
   const savePLO = (ploGroupID: string, plo: CreatePLOModel) => createPLO({variables: {ploGroupID, input: plo}});
-  const submitting = submitPLOGroup || submitPLO;
-  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, submitting}}>
+  const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath));
+  const removePLO = (id: string) => deletePLO({variables: {id}});
+  const submitting = submitPLOGroup || submitPLO || withdrawPLOGroup || withdrawPLO;
+  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, removePLOGroup, removePLO, submitting}}>
     <Head>
       <title>Manage PLOs</title>
     </Head>
     <ProgramMainMenu programID={programID} />
     <ProgramSubMenu programID={programID} selected={'plos'}/>
-    <PLOs />
+    <PLOs/>
   </PLOContext.Provider>;
 };
 
 export function PLOs() {
-  const { ploGroups } = useContext(PLOContext);
+  const { ploGroups, removePLOGroup } = useContext(PLOContext);
   const [selectedPLOGroupID, setSelectedPLOGroupID] = useState<string>('');
   return <div>
     <CreatePLOGroupForm />
@@ -98,7 +92,11 @@ export function PLOs() {
         ))}
       </div>
       <div>
-        {selectedPLOGroupID !== '' && <p>{ploGroups.find(g => g.id === selectedPLOGroupID).name}</p>}
+        {selectedPLOGroupID !== '' && <p className="mb-3">
+          <span>{ploGroups.find(g => g.id === selectedPLOGroupID).name}</span>
+          <span className="cursor-pointer underline text-blue-600 px-4">edit</span>
+          <span className="cursor-pointer underline text-red-500" onClick={() => removePLOGroup(selectedPLOGroupID)}>delete</span>
+        </p>}
         {selectedPLOGroupID !== '' && <PLOSub ploGroupID={selectedPLOGroupID}/>}
       </div>
     </div>
@@ -126,11 +124,10 @@ function CreatePLOGroupForm() {
     setExcelFile([]);
   };
   const submitForm = (name: string) => {
-    if (name !== '' && excelFile.length !== 0) {
-      savePLOGroup(name, excelFile).then(() => {
-        resetForm();
-      });
-    }
+    if (name === '' || excelFile.length === 0) return;
+    savePLOGroup(name, excelFile).then(() => {
+      resetForm();
+    });
   }
   return <div>
     <button onClick={() => setShow(true)}>Create a new PLO Group.</button>
@@ -154,28 +151,19 @@ function CreatePLOGroupForm() {
 };
 
 const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
-  if (ploGroupID === '') {
-    return <p></p>;
-  }
-  const GET_PLOS = gql`
-    query PLOs($ploGroupID: ID!) {
-      plos(ploGroupID: $ploGroupID) {
-        id
-        title
-        description
-        ploGroupID
-      }
-    }
-  `;
+  if (ploGroupID === '') return <p></p>;
+  const { removePLO } = useContext(PLOContext);
   const { data, loading, refetch } = useQuery<{plos: PLOModel[]}, {ploGroupID: string}>(GET_PLOS, { variables: { ploGroupID } });
-  if (loading) {
-    return <p>Loading...</p>
-  }
+  if (loading) return <p>Loading...</p>;
   return <div>
     <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>
     {[...data.plos].sort((p1, p2) => p1.title.localeCompare(p2.title)).map((plo) => (
       <div key={plo.id} className="flex flex-column rounded shadow-lg p-3 mb-3 -space-y-4">
-        <p className="text-xl text-bold">{plo.title}</p>
+        <p className="text-xl text-bold">
+          <span>{plo.title}</span>
+          <span className="text-sm cursor-pointer underline text-blue-600 px-3">edit</span>
+          <span className="text-sm cursor-pointer underline text-red-500" onClick={() => removePLO(plo.id).then(() => refetch())}>delete</span>
+        </p>
         <span className="m-0">{plo.description}</span>
       </div>
     ))}
@@ -197,7 +185,7 @@ function CreatePLOForm({ ploGroupID, callback }: { ploGroupID: string, callback:
     });
   };
   return <div>
-    <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+    <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm my-2">
       Create a new PLO <span className="text-xl text-green-800">+</span>
     </button>
     <Modal show={show} onHide={() => resetForm()}>
@@ -224,12 +212,6 @@ interface Params extends ParsedUrlQuery {
 }
 
 export const getServerSideProps: GetServerSideProps<{programID: string, ploGroups: PLOGroupModel[]}> = async (context) => {
-  const GET_PLOGROUPS = gql`
-    query PLOGroups($programID: ID!) {
-      ploGroups(programID: $programID) {
-        id
-        name
-  }}`;
   const { id: programID } = context.params as Params;
   const { data } = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
     query: GET_PLOGROUPS,
@@ -244,3 +226,42 @@ export const getServerSideProps: GetServerSideProps<{programID: string, ploGroup
     },
   };
 };
+
+const GET_PLOGROUPS = gql`
+  query PLOGroups($programID: ID!) {
+    ploGroups(programID: $programID) {
+      id
+      name
+}}`;
+const GET_PLOS = gql`
+  query PLOs($ploGroupID: ID!) {
+    plos(ploGroupID: $ploGroupID) {
+      id
+      title
+      description
+      ploGroupID
+}}`;
+const CREATE_PLOGROUP = gql`
+  mutation CreatePLOGroup($programID: ID!, $name: String!, $input: [CreatePLOsInput!]!) {
+    createPLOGroup(programID: $programID, name: $name, input: $input) {
+      id
+      name
+}}`;
+const CREATE_PLO = gql`
+  mutation CreatePLO($ploGroupID: ID!, $input: CreatePLOInput!) {
+    createPLO(ploGroupID: $ploGroupID, input: $input) {
+      id
+      title
+      description
+      ploGroupID
+}}`;
+const DELETE_PLOGROUP = gql`
+  mutation DeletePLOGroup($id: ID!) {
+    deletePLOGroup(id: $id) {
+      id
+}}`;
+const DELETE_PLO = gql`
+mutation DeletePLO($id: ID!) {
+  deletePLO(id: $id) {
+    id
+}}`;

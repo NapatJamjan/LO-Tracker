@@ -5,8 +5,6 @@ import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
 import { GetStaticProps, GetStaticPaths } from 'next';
 import { ParsedUrlQuery } from 'querystring';
-import ProgramAnchor from '../../../components/ProgramAnchor';
-import ClientOnly from '../../../components/ClientOnly';
 import { ProgramStaticPaths } from '../../../utils/staticpaths';
 import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
 
@@ -35,6 +33,7 @@ export default ({programID, courses}: {programID: string, courses: CourseModel[]
         Create a new course <span className="text-xl text-green-800">+</span>
       </button></Link>
     </div>
+    <FilterOwner/>
     <Courses courses={courses}/>
   </FilterContext.Provider>);
 };
@@ -42,6 +41,14 @@ export default ({programID, courses}: {programID: string, courses: CourseModel[]
 function FilterTextField() {
   const { changeFilter } = useContext(FilterContext);
   return <input type="text" onChange={e => changeFilter(e.target.value || '')} placeholder="search for a course" className="border-4 rounded-md p-1 mx-2 text-sm"/>;
+}
+
+function FilterOwner() {
+  const [checked, setChecked] = useState<boolean>(false)
+  return <div onClick={() => setChecked(!checked)} className="cursor-pointer">
+    <input type="checkbox" defaultChecked={checked} className="border-4 rounded-md mr-2"/>
+    <span>Show only my courses</span>
+  </div>;
 }
 
 function Courses({courses}: {courses: CourseModel[]}) {
@@ -52,9 +59,7 @@ function Courses({courses}: {courses: CourseModel[]}) {
     let groupName: string = `${courses[i].semester},${courses[i].year}`;
     courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}]);
   }
-  if (courseGroups.size === 0) {
-    return <p>No course available</p>;
-  }
+  if (courseGroups.size === 0) return <p>No course available</p>;
   return <>{
     Array.from(courseGroups).sort((group1, group2) => {
       let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
@@ -96,16 +101,6 @@ interface PageParams extends ParsedUrlQuery {
 
 export const getStaticProps: GetStaticProps<{programID: string, courses: CourseModel[]}> = async (context) => {
   const { id: programID } = context.params as PageParams;
-  const GET_COURSES = gql`
-    query Courses($programID: ID!) {
-      courses(programID: $programID) {
-        id
-        name
-        description
-        semester
-        year
-        ploGroupID
-  }}`;
   const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
     query: GET_COURSES, variables: { programID }
   });
@@ -119,3 +114,14 @@ export const getStaticProps: GetStaticProps<{programID: string, courses: CourseM
 };
 
 export const getStaticPaths: GetStaticPaths = ProgramStaticPaths;
+
+const GET_COURSES = gql`
+  query Courses($programID: ID!) {
+    courses(programID: $programID) {
+      id
+      name
+      description
+      semester
+      year
+      ploGroupID
+}}`;

@@ -11,15 +11,23 @@ interface ProgramModel {
   description: string;
 };
 
-export default ({programID, program}: {programID: string, program: ProgramModel}) => {
+export default ({program}: {program: ProgramModel}) => {
   return <div>
     <Head>
       <title>Program Settings</title>
     </Head>
-    <ProgramMainMenu programID={programID} />
-    <ProgramSubMenu programID={programID} selected={'settings'}/>
-    {program.name}<br/>
-    {program.description}
+    <ProgramMainMenu programID={program.id} />
+    <ProgramSubMenu programID={program.id} selected={'settings'}/>
+    <p className="mt-4 mb-2 underline">Program Settings</p>
+    <div className="grid grid-cols-2 gap-4">
+      <div>Program Name</div>
+      <input type="text" placeholder="program's name" value={program.name} className="border-4 rounded-md p-1 text-sm"/>
+      <div>Program Description</div>
+      <textarea placeholder="program's description" value={program.description} cols={30} className="border-4 rounded-md p-2" rows={4}></textarea>
+    </div>
+    <div className="flex justify-end">
+      <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg" onClick={() => alert('not implemented')}/>
+    </div>
   </div>;
 };
 
@@ -27,14 +35,7 @@ interface Params extends ParsedUrlQuery {
   id: string;
 }
 
-export const getServerSideProps: GetServerSideProps<{programID: string, program: ProgramModel}> = async (context) => {
-  const GET_PROGRAM = gql`
-    query Program($programID: ID!) {
-      program(programID: $programID) {
-        id
-        name
-        description
-  }}`;
+export const getServerSideProps: GetServerSideProps<{program: ProgramModel}> = async (context) => {
   const { id: programID } = context.params as Params;
   const { data } = await client.query<{program: ProgramModel}, {programID: string}>({
     query: GET_PROGRAM,
@@ -44,8 +45,15 @@ export const getServerSideProps: GetServerSideProps<{programID: string, program:
   });
   return {
     props: {
-      programID,
       program: data.program,
     },
   };
 };
+
+const GET_PROGRAM = gql`
+  query Program($programID: ID!) {
+    program(programID: $programID) {
+      id
+      name
+      description
+}}`;
