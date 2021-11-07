@@ -1,16 +1,15 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useState } from 'react';
 import client from '../../../apollo-client';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { CourseStaticPaths } from '../../../utils/staticpaths';
-import ProgramAnchor from '../../../components/ProgramAnchor';
 import ClientOnly from '../../../components/ClientOnly';
 import { ParsedUrlQuery } from 'querystring';
 import { Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import xlsx from 'xlsx';
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 
 interface CourseModel {
   id: string;
@@ -114,24 +113,13 @@ interface DeleteQuestionLinkResponse {
   loID: string;
 };
 
-export default function Index({course}: {course: CourseModel}) {
+export default ({course}: {course: CourseModel}) => {
   return (<div>
     <Head>
       <title>Manage quizzes</title>
     </Head>
-    <p>
-      <Link href="/">Home</Link>
-      {' '}&#12297;{' '}
-      <Link href="/programs">Programs</Link>
-      {' '}&#12297;{' '}
-      <ClientOnly>
-        <ProgramAnchor programID={course.programID} href={`/program/${course.programID}/courses`}/>
-      </ClientOnly>
-      {' '}&#12297;{' '}
-      <Link href={`/course/${course.id}`}>{course.name}</Link>
-      {' '}&#12297;{' '}
-      <span>Quizzes</span>
-    </p>
+    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+    <CourseSubMenu courseID={course.id} selected={'quizzes'}/>
     <ClientOnly>
       <Quiz courseID={course.id}/>
     </ClientOnly>
@@ -154,9 +142,7 @@ function Quiz({courseID}: {courseID: string}) {
           description
           ploGroupID
         }
-      }
-    }
-  `;
+  }}`;
   const GET_QUIZZES = gql`
     query Quizzes($courseID: ID!) {
       quizzes(courseID: $courseID) {
@@ -173,17 +159,13 @@ function Quiz({courseID}: {courseID: string}) {
             description
           }
         }
-      }
-    }
-  `;
+  }}`;
   const DELETE_QUESTIONLINK = gql`
     mutation DeleteQuestionLink($input: DeleteQuestionLinkInput!) {
       deleteQuestionLink(input: $input) {
         questionID
         loID
-      }
-    }
-  `;
+  }}`;
   const los = useQuery<{los: LOModel[]}, {courseID: string}>(GET_LOS, {variables: {courseID}});
   const [selectedQuestionID, setSelectedQuestionID] = useState<string>('');
   const { data, loading, refetch } = useQuery<{quizzes: QuizModel[]}, {courseID: string}>(GET_QUIZZES, { variables: { courseID } });
@@ -270,9 +252,7 @@ function CreateQuizForm({courseID, callback}: {courseID: string, callback: () =>
     mutation CreateQuiz($courseID: ID!, $input: CreateQuizInput!) {
       createQuiz(courseID: $courseID, input: $input) {
         id
-      }
-    }
-  `;
+  }}`;
   const [createQuiz, {loading: submitting}] = useMutation<{createQuiz: CreateQuizResponse}, {courseID: string, input: CreateQuizModel}>(CREATE_QUIZ);
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, setValue } = useForm<{ name: string }>();
@@ -355,9 +335,7 @@ const CreateQuestionLinkForm: React.FC<{los: LOModel[], questionID: string, call
       createQuestionLink(input: $input) {
         questionID
         loID
-      }
-    }
-  `;
+  }}`;
   const [createQuestionLink, { loading: submitting }] = useMutation<{createQuestionLink: CreateQuestionLinkResponse}, {input: CreateQuestionLinkModel}>(CREATE_QUESTIONLINK);
   const [selectedLOID, setSelectedLOID] = useState<string>('');
   const { register, handleSubmit, setValue } = useForm<CreateQuestionLinkModel>({defaultValues: {loID: '', level: 0}});
@@ -421,9 +399,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel}> = async (cont
         id
         name
         programID
-      }
-    }
-  `;
+  }}`;
   const { data } = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {

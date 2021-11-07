@@ -1,12 +1,10 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { CourseStaticPaths } from '../../../utils/staticpaths';
 import { ParsedUrlQuery } from 'querystring';
-import ProgramAnchor from '../../../components/ProgramAnchor';
-import ClientOnly from '../../../components/ClientOnly';
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 
 interface CourseModel {
   id: string;
@@ -25,24 +23,13 @@ interface StudentModel {
   surname: string;
 };
 
-export default function Index({course, students}: {course: CourseModel, students: StudentModel[]}) {
+export default ({course, students}: {course: CourseModel, students: StudentModel[]}) => {
   return (<div>
     <Head>
       <title>Students in the course</title>
     </Head>
-    <p>
-      <Link href="/">Home</Link>
-      {' '}&#12297;{' '}
-      <Link href="/programs">Programs</Link>
-      {' '}&#12297;{' '}
-      <ClientOnly>
-        <ProgramAnchor programID={course.programID} href={`/program/${course.programID}/courses`}/>
-      </ClientOnly>
-      {' '}&#12297;{' '}
-      <Link href={`/course/${course.id}`}>{course.name}</Link>
-      {' '}&#12297;{' '}
-      <span>Students</span>
-    </p>
+    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+    <CourseSubMenu courseID={course.id} selected={'students'}/>
     <table className="table-auto mt-4">
       <thead>
         <tr className="bg-gray-100">
@@ -57,7 +44,7 @@ export default function Index({course, students}: {course: CourseModel, students
         {
           [...students].sort((s1, s2) => s1.id.localeCompare(s2.id)).map((student) => (
             <tr key={student.id}>
-              <td className="text-center">{student.id}</td>
+              <td className="text-center pr-3">{student.id}</td>
               <td>{student.email}</td>
               <td>{student.name}</td>
               <td>{student.surname}</td>
@@ -81,9 +68,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel, students: Stud
         id
         name
         programID
-      }
-    }
-  `;
+  }}`;
   const {data: {course}} = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {
@@ -97,9 +82,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel, students: Stud
         email
         name
         surname
-      }
-    }
-  `;
+  }}`;
   const {data: {studentsInCourse}} = await client.query<{studentsInCourse: StudentModel[]}, {courseID: string}>({
     query: GET_STUDENTS_IN_COURSE,
     variables: {courseID}
@@ -109,7 +92,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel, students: Stud
       course,
       students: studentsInCourse
     },
-    revalidate: false,
+    revalidate: 60,
   };
 };
 

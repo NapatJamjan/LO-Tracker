@@ -1,9 +1,9 @@
 import Head from 'next/head';
 import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
-import { GetStaticPaths, GetStaticProps } from 'next';
-import { CourseStaticPaths } from '../../../utils/staticpaths';
+import { GetServerSideProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 
 interface CourseModel {
   id: string;
@@ -12,29 +12,65 @@ interface CourseModel {
   semester: number;
   year: number;
   ploGroupID: string;
+  programID: string;
 };
 
-export default function Index({courseID}: {courseID: string}) {
-  return (<div>
+interface PLOGroupModel {
+  id: string;
+  name: string;
+};
+
+export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupModel[]}) => {
+  return <div>
     <Head>
       <title>Course Settings</title>
     </Head>
-    <p>Hello</p>
-  </div>);
+    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+    <CourseSubMenu courseID={course.id} selected={'settings'}/>
+    <p>{JSON.stringify(course, null, 2)}</p>
+    <p>{JSON.stringify(ploGroups, null, 2)}</p>
+  </div>;
 };
 
 interface Params extends ParsedUrlQuery {
   id: string;
 }
 
-export const getStaticProps: GetStaticProps<{courseID: string}> = async (context) => {
+export const getServerSideProps: GetServerSideProps<{course: CourseModel, ploGroups: PLOGroupModel[]}> = async (context) => {
   const { id: courseID } = context.params as Params;
+  const GET_COURSE = gql`
+    query CourseDetail($courseID: ID!) {
+      course(courseID: $courseID) {
+        id
+        name
+        description
+        semester
+        year
+        ploGroupID
+        programID
+  }}`;
+  const GET_PLOGROUPS = gql`
+    query PLOGroups($programID: ID!) {
+      ploGroups(programID: $programID) {
+        id
+        name
+  }}`;
+  const {data: fetchCourse} = await client.query<{course: CourseModel}, {courseID: string}>({
+    query: GET_COURSE,
+    variables: {
+      courseID
+    }
+  });
+  const {data: fetchPLOGroups} = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
+    query: GET_PLOGROUPS,
+    variables: {
+      programID: fetchCourse.course.programID
+    }
+  });
   return {
     props: {
-      courseID
-    },
-    revalidate: false,
+      course: fetchCourse.course,
+      ploGroups: fetchPLOGroups.ploGroups
+    }
   };
 };
-
-export const getStaticPaths: GetStaticPaths = CourseStaticPaths;

@@ -1,12 +1,10 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import client from '../../../apollo-client';
 import { gql } from '@apollo/client';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
-import ProgramAnchor from '../../../components/ProgramAnchor';
-import ClientOnly from '../../../components/ClientOnly';
 import { CourseStaticPaths } from '../../../utils/staticpaths';
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 
 interface CourseModel {
   id: string;
@@ -18,34 +16,18 @@ interface CourseModel {
   programID: string;
 };
 
-export default function Index({course}: {course: CourseModel}) {
-  return (<div>
+export default ({course}: {course: CourseModel}) => {
+  return <div>
     <Head>
       <title>Course Home</title>
     </Head>
-    <p>
-      <Link href="/">Home</Link>
-      {' '};&#12297;{' '}
-      <Link href="/programs">All Programs</Link>
-      {' '}&#12297;{' '}
-      <ClientOnly>
-        <ProgramAnchor programID={course.programID} href={`/program/${course.programID}/courses`}/>
-      </ClientOnly>
-      {' '}&#12297;{' '}
-      <Link href={`/course/${course.id}`}>{course.name}</Link>
-    </p>
-    <br/>
-    <ul>
-      <li><Link href={`/course/${course.id}/los`}>Manage LOs</Link></li>
-      <li><Link href={`/course/${course.id}/students`}>Manage Students</Link></li>
-      <li><Link href={`/course/${course.id}/quizzes`}>Manage Quizzes</Link></li>
-      <li><Link href={`/course/${course.id}/dashboards`}>Dashboards</Link></li>
-    </ul>
+    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+    <CourseSubMenu courseID={course.id} selected={'main'}/>
     <p className="mt-5">
       <span className="text-2xl">Course Description</span><br/>
       <span>{course.description}</span>
     </p>
-  </div>);
+  </div>;
 };
 
 interface Params extends ParsedUrlQuery {
@@ -61,9 +43,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel}> = async (cont
         name
         description
         programID
-      }
-    }
-  `;
+  }}`;
   const { data } = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {

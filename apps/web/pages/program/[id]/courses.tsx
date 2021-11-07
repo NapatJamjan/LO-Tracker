@@ -8,6 +8,7 @@ import { ParsedUrlQuery } from 'querystring';
 import ProgramAnchor from '../../../components/ProgramAnchor';
 import ClientOnly from '../../../components/ClientOnly';
 import { ProgramStaticPaths } from '../../../utils/staticpaths';
+import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
 
 interface CourseModel {
   id: string;
@@ -20,26 +21,14 @@ interface CourseModel {
 
 const FilterContext = createContext<{filter: string, changeFilter: (string) => any}>({filter: '', changeFilter: (s) => {}});
 
-export default function Page({programID, courses}: {programID: string, courses: CourseModel[]}) {
+export default ({programID, courses}: {programID: string, courses: CourseModel[]}) => {
   const [filter, setFilter] = useState<string>('');
   return (<FilterContext.Provider value={{filter, changeFilter: payload => setFilter(payload)}}>
     <Head>
       <title>Courses</title>
     </Head>
-    <p>
-      <Link href="/">Home</Link>
-      {' '}&#12297;{' '}
-      <Link href="/programs">Programs</Link>
-      {' '}&#12297;{' '}
-      <ClientOnly>
-        <ProgramAnchor programID={programID} href=""/>
-      </ClientOnly>
-    </p>
-    <p className="my-3">
-      <span className="underline">Courses</span>
-      <span className="mx-3"></span>
-      <Link href={`/program/${programID}/plos`}>PLOs</Link>
-    </p>
+    <ProgramMainMenu programID={programID} />
+    <ProgramSubMenu programID={programID} selected={'courses'}/>
     <div className="flex justify-between items-end mt-4 mb-3">
       <FilterTextField/>
       <Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
@@ -62,6 +51,9 @@ function Courses({courses}: {courses: CourseModel[]}) {
     if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue;
     let groupName: string = `${courses[i].semester},${courses[i].year}`;
     courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}]);
+  }
+  if (courseGroups.size === 0) {
+    return <p>No course available</p>;
   }
   return <>{
     Array.from(courseGroups).sort((group1, group2) => {

@@ -1,15 +1,14 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useState } from 'react';
 import client from '../../../apollo-client';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { CourseStaticPaths } from '../../../utils/staticpaths';
-import ProgramAnchor from '../../../components/ProgramAnchor';
 import ClientOnly from '../../../components/ClientOnly';
 import { ParsedUrlQuery } from 'querystring';
 import { Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 
 interface CourseModel {
   id: string;
@@ -72,24 +71,13 @@ interface DeleteLOLinkResponse {
   ploID: string;
 };
 
-export default function Index({course}: {course: CourseModel}) {
+export default ({course}: {course: CourseModel}) => {
   return (<div>
     <Head>
       <title>Manage LOs</title>
     </Head>
-    <p>
-      <Link href="/">Home</Link>
-      {' '}&#12297;{' '}
-      <Link href="/programs">Programs</Link>
-      {' '}&#12297;{' '}
-      <ClientOnly>
-        <ProgramAnchor programID={course.programID} href={`/program/${course.programID}/courses`}/>
-      </ClientOnly>
-      {' '}&#12297;{' '}
-      <Link href={`/course/${course.id}`}>{course.name}</Link>
-      {' '}&#12297;{' '}
-      <span>LOs</span>
-    </p>
+    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+    <CourseSubMenu courseID={course.id} selected={'los'}/>
     <ClientOnly>
       <LO courseID={course.id} ploGroupID={course.ploGroupID}/>
     </ClientOnly>
@@ -112,17 +100,13 @@ function LO({courseID, ploGroupID}: {courseID: string, ploGroupID: string}) {
           description
           ploGroupID
         }
-      }
-    }
-  `;
+  }}`;
   const DELETE_LOLINK = gql`
     mutation DeleteLOLink($loID: ID!, $ploID: ID!) {
       deleteLOLink(loID: $loID, ploID: $ploID) {
         loID
         ploID
-      }
-    }
-  `;
+  }}`;
   const { data, loading, refetch } = useQuery<{los: LOModel[]}, {courseID: string}>(GET_LOS, { variables: { courseID } });
   const [deleteLOLink, {loading: submitting}] = useMutation<{deleteLOLink: DeleteLOLinkResponse}, {loID: string, ploID: string}>(DELETE_LOLINK);
   const [selectedLOID, setSelectedLOID] = useState<string>('');
@@ -207,17 +191,13 @@ function CreateLOLink({ loID, ploGroupID, callback }: { loID: string, ploGroupID
         title
         description
         ploGroupID
-      }
-    }
-  `;
+  }}`;
   const CREATE_LOLINK = gql`
     mutation CreateLOLink($loID: ID!, $ploID: ID!) {
       createLOLink(loID: $loID, ploID: $ploID) {
         loID
         ploID
-      }
-    }
-  `;
+  }}`;
   const { data, loading }  = useQuery<{plos: PLOModel[]}, {ploGroupID: string}>(GET_PLOS, {variables: {ploGroupID}});
   const [createLOLink, {loading: submitting}] = useMutation<{createLOLink: CreateLOLinkResponse}, {loID: string, ploID: string}>(CREATE_LOLINK);
   const { register, handleSubmit, setValue } = useForm<{ploID: string}>({defaultValues: {ploID: ''}});
@@ -258,9 +238,7 @@ function CreateLOForm({courseID, callback}: {courseID: string, callback: () => a
     mutation CreateLO($courseID: ID!, $input: CreateLOInput!) {
       createLO(courseID: $courseID, input: $input) {
         id
-      }
-    }
-  `;
+  }}`;
   const [createLO, { loading }] = useMutation<{createLO: CreateLOResponse}, {courseID: string, input: CreateLOModel}>(CREATE_LO);
   const [show, setShow] = useState<boolean>(false);
   const { register, handleSubmit, reset } = useForm<CreateLOModel>({
@@ -317,9 +295,7 @@ function CreateLOLevelForm({loID, initLevel, callback}: {loID: string, initLevel
     mutation CreateLOLevel($loID: ID!, $input: CreateLOLevelInput!) {
       createLOLevel(loID: $loID, input: $input) {
         id
-      }
-    }
-  `;
+  }}`;
   const [show, setShow] = useState<boolean>(false);
   const [createLOLevel, {loading: submitting}] = useMutation<{createLOLevel: CreateLOLevelResponse}, {loID: string, input: CreateLOLevelModel}>(CREATE_LOLEVEL);
   const { register, handleSubmit, setValue } = useForm<CreateLOLevelModel>({
@@ -382,9 +358,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel}> = async (cont
         name
         programID
         ploGroupID
-      }
-    }
-  `;
+  }}`;
   const { data } = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {

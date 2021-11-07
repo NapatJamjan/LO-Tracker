@@ -32,7 +32,7 @@ export const CourseStaticPaths: GetStaticPaths = async (context) => {
     paths: data.courses.map((course) => ({
       params: {id: course.id}
     })),
-    fallback: true,
+    fallback: 'blocking',
   };
 };
 
@@ -59,6 +59,6 @@ export const ProgramStaticPaths: GetStaticPaths = async (context) => {
     paths: data.programs.map((program) => ({
       params: {id: program.id}
     })),
-    fallback: true,
+    fallback: 'blocking',
   };
 };
