@@ -48,7 +48,7 @@ export function KnownCourseMainMenu({programID, courseID, courseName}: {programI
   </p>;
 }
 
-export function CourseSubMenu({courseID, selected}: {courseID: string, selected: 'main' | 'los' | 'quizzes' | 'students' | 'dashbaords' | 'settings'}) {
+export function CourseSubMenu({courseID, selected}: {courseID: string, selected: 'main' | 'los' | 'quizzes' | 'students' | 'dashboards' | 'settings'}) {
   return <p className="my-3">
     {selected === 'main'? <span className="underline">Home</span>: <Link href={`/course/${courseID}`}>Home</Link>}
     <span className="mx-3"></span>
@@ -58,7 +58,7 @@ export function CourseSubMenu({courseID, selected}: {courseID: string, selected:
     <span className="mx-3"></span>
     {selected === 'students'? <span className="underline">Students</span>: <Link href={`/course/${courseID}/students`}>Students</Link>}
     <span className="mx-3"></span>
-    {selected === 'dashbaords'? <span className="underline">Dashboards</span>: <Link href={`/course/${courseID}/dashboards`}>Dashboards</Link>}
+    {selected === 'dashboards'? <span className="underline">Dashboards</span>: <Link href={`/course/${courseID}/dashboards`}>Dashboards</Link>}
     <span className="mx-3"></span>
     {selected === 'settings'? <span className="underline">Settings</span>: <Link href={`/course/${courseID}/settings`}>Settings</Link>}
     <span className="mx-3"></span>

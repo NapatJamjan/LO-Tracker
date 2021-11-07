@@ -57,9 +57,7 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
       createPLOGroup(programID: $programID, name: $name, input: $input) {
         id
         name
-      }
-    }
-  `;
+  }}`;
   const CREATE_PLO = gql`
     mutation CreatePLO($ploGroupID: ID!, $input: CreatePLOInput!) {
       createPLO(ploGroupID: $ploGroupID, input: $input) {
@@ -67,9 +65,7 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
         title
         description
         ploGroupID
-      }
-    }
-  `;
+  }}`;
   const [createPLOGroup, { loading: submitPLOGroup }] = useMutation<{createPLOGroup: CreatePLOGroupResponse}, {programID: string, name: string, input: CreatePLOModel[]}>(CREATE_PLOGROUP);
   const [createPLO, { loading: submitPLO }] = useMutation<{createPLO: PLOModel}, {ploGroupID: string, input: CreatePLOModel}>(CREATE_PLO);
   const savePLOGroup = (name: string, plos: CreatePLOModel[]) => createPLOGroup({variables: {programID, name, input: plos}}).finally(() => router.replace(router.asPath));
