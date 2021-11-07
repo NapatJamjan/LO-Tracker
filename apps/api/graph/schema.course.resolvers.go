@@ -37,6 +37,59 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, i
 	}, nil
 }
 
+func (r *mutationResolver) EditCourse(ctx context.Context, id string, input model.CreateCourseInput) (*model.Course, error) {
+	course, err := r.Client.Course.FindUnique(db.Course.ID.Equals(id)).Exec(ctx)
+	if err != nil {
+		return &model.Course{}, err
+	}
+	if course.PloGroupID != input.PloGroupID {
+		_, err := r.Client.LOlink.FindMany(
+			db.LOlink.Lo.Where(
+				db.LO.Course.Where(
+					db.Course.ID.Equals(id),
+				),
+			),
+		).Delete().Exec(ctx)
+		if err != nil {
+			return &model.Course{}, err
+		}
+	}
+	updated, err := r.Client.Course.FindUnique(
+		db.Course.ID.Equals(id),
+	).Update(
+		db.Course.Name.Set(input.Name),
+		db.Course.Description.Set(input.Description),
+		db.Course.Semester.Set(input.Semester),
+		db.Course.Year.Set(input.Year),
+		db.Course.PloGroup.Link(
+			db.PLOgroup.ID.Equals(input.PloGroupID),
+		),
+	).Exec(ctx)
+	if err != nil {
+		return &model.Course{}, err
+	}
+	return &model.Course{
+		ID:          updated.ID,
+		Name:        updated.Name,
+		Description: updated.Description,
+		Semester:    updated.Semester,
+		Year:        updated.Year,
+		PloGroupID:  updated.PloGroupID,
+	}, nil
+}
+
+func (r *mutationResolver) DeleteCourse(ctx context.Context, id string) (*model.DeleteCourseResult, error) {
+	deleted, err := r.Client.Course.FindUnique(
+		db.Course.ID.Equals(id),
+	).Delete().Exec(ctx)
+	if err != nil {
+		return &model.DeleteCourseResult{}, err
+	}
+	return &model.DeleteCourseResult{
+		ID: deleted.ID,
+	}, nil
+}
+
 func (r *mutationResolver) CreateLOs(ctx context.Context, courseID string, input []*model.CreateLOsInput) ([]*model.CreateLOResult, error) {
 	result := []*model.CreateLOResult{}
 	for _, loInput := range input {

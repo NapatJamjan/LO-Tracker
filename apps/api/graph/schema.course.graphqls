@@ -44,6 +44,10 @@ input CreateCourseInput {
   ploGroupID: String!
 }
 
+type DeleteCourseResult {
+  id: ID!
+}
+
 input CreateLOsInput {
   title: String!
   levels: [CreateLOLevelInput!]!
@@ -84,6 +88,8 @@ type DeleteLOLinkResult {
 
 type Mutation {
   createCourse(programID: ID!, input: CreateCourseInput!): Course!
+  editCourse(id: ID!, input: CreateCourseInput!): Course!
+  deleteCourse(id: ID!): DeleteCourseResult!
   createLOs(courseID: ID!, input: [CreateLOsInput!]!): [CreateLOResult!]!
   createLOLink(loID: ID!, ploID: ID!): CreateLOLinkResult!
   createLO(courseID: ID!, input: CreateLOInput!): CreateLOResult!

@@ -144,6 +144,10 @@ type DashboardResultSub struct {
 	StudentScore int    `json:"studentScore"`
 }
 
+type DeleteCourseResult struct {
+	ID string `json:"id"`
+}
+
 type DeleteLOLevelResult struct {
 	ID string `json:"id"`
 }

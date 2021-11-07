@@ -49,7 +49,9 @@ type deletePLOResult {
 extend type Mutation {
   createProgram(input: CreateProgramInput!): Program!
   createPLOGroup(programID: ID!, name: String!, input: [CreatePLOsInput!]!): PLOGroup!
+  editPLOGroup(id: ID!, name: String!): PLOGroup!
   createPLO(ploGroupID: ID!, input: CreatePLOInput!): PLO!
+  editPLO(id: ID!, title: String!, description: String!): PLO!
   deletePLOGroup(id: ID!): deletePLOGroupResult!
   deletePLO(id: ID!): deletePLOResult!
 }

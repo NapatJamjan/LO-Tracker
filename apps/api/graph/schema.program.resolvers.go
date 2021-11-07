@@ -55,6 +55,21 @@ func (r *mutationResolver) CreatePLOGroup(ctx context.Context, programID string,
 	}, nil
 }
 
+func (r *mutationResolver) EditPLOGroup(ctx context.Context, id string, name string) (*model.PLOGroup, error) {
+	updated, err := r.Client.PLOgroup.FindUnique(
+		db.PLOgroup.ID.Equals(id),
+	).Update(
+		db.PLOgroup.Name.Set(name),
+	).Exec(ctx)
+	if err != nil {
+		return &model.PLOGroup{}, err
+	}
+	return &model.PLOGroup{
+		ID:   updated.ID,
+		Name: updated.Name,
+	}, nil
+}
+
 func (r *mutationResolver) CreatePlo(ctx context.Context, ploGroupID string, input model.CreatePLOInput) (*model.Plo, error) {
 	createdPLO, err := r.Client.PLO.CreateOne(
 		db.PLO.Title.Set(input.Title),
@@ -71,6 +86,24 @@ func (r *mutationResolver) CreatePlo(ctx context.Context, ploGroupID string, inp
 		Title:       createdPLO.Title,
 		Description: createdPLO.Description,
 		PloGroupID:  createdPLO.PloGroupID,
+	}, nil
+}
+
+func (r *mutationResolver) EditPlo(ctx context.Context, id string, title string, description string) (*model.Plo, error) {
+	updated, err := r.Client.PLO.FindUnique(
+		db.PLO.ID.Equals(id),
+	).Update(
+		db.PLO.Title.Set(title),
+		db.PLO.Description.Set(description),
+	).Exec(ctx)
+	if err != nil {
+		return &model.Plo{}, err
+	}
+	return &model.Plo{
+		ID:          updated.ID,
+		Title:       updated.Title,
+		Description: updated.Description,
+		PloGroupID:  updated.PloGroupID,
 	}, nil
 }
 
