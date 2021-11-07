@@ -1,10 +1,10 @@
 import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStudent } from 'apps/web/utils/dashboard-helper';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import ClientOnly from '../../../../../components/ClientOnly';
-import { ChartBarAverage, ChartBarCompare } from '../chart';
+import { ChartBarCompare } from './stdchart';
 
 // path => /course/[id]/dashboards/[studentID]/stdtable
 export default function Index() {
@@ -32,9 +32,10 @@ interface studentResult {
   scores: Array<Number>
 }
 
-export function IndividualPLO(props: { courseID: string, studentID: string}) {
-  const [dashboardFlat, loaded] = useDashboardFlat(props.courseID);
-  const [dashboardPLO, loaded2] = useDashboardPLOSummary(props.courseID);
+export function IndividualPLO(props: { studentID: string }) {
+  const courseID = router.query.id as string;
+  const [dashboardFlat] = useDashboardFlat(courseID);
+  const [dashboardPLO] = useDashboardPLOSummary(courseID);
   const [tableHead, setHead] = useState<string[]>([])
   const [tableData, setData] = useState<studentResult[]>([]);
  
@@ -162,7 +163,7 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
 
     let stdidx = std.indexOf(std.find(e => e == thisStudent));
     for (let i = 0; i < loName.length; i++) {
-      studentLOHead.push(loName[i].substring(0,4)+" (%)");
+      studentLOHead.push(loName[i].substring(0,4));
     }
     setLOH(studentLOHead.slice());
     let loTemp = []
@@ -198,7 +199,7 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
       }
     } // calculation end
     for (let i = 0; i < ploName.length; i++) {
-      studentPLOHead.push(ploName[i]+" (%)");
+      studentPLOHead.push(ploName[i]);
     }
     let ploTemp = []
     setPLOH(studentPLOHead.slice()); 
@@ -276,7 +277,7 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
       <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
         <thead>
           <tr>
-            {tableHead.map(head => (<th>{head}</th>))}
+            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
           </tr>
         </thead>
         <tbody>
@@ -295,12 +296,13 @@ export function IndividualPLO(props: { courseID: string, studentID: string}) {
   )
 }
 
-export function IndividualQuiz (props: { courseID: string, studentID: string }) {
-  const [students, loaded] = useStudent(props.courseID);
-  const [dashboardQuiz, loaded2] = useDashboardResult(props.courseID);
+export function IndividualQuiz (props: { studentID: string }) {
+  const courseID = router.query.id as string;
+  const [students, loaded] = useStudent(courseID);
+  const [dashboardQuiz, loaded2] = useDashboardResult(courseID);
   const [totalData, setTotalData] = useState<studentResult[]>([]);
   const [tableData, setData] = useState<studentResult[]>([]);
-  const [tableHead, setHead] = useState<string[]>(['Student ID','Student Name']); 
+  const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name']); 
 
   useEffect(() => {
     displayScore()
@@ -374,7 +376,7 @@ export function IndividualQuiz (props: { courseID: string, studentID: string }) 
     <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>
       <thead>
         <tr>
-          {tableHead.map(head => (<th>{head}</th>))}
+          {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
         </tr>
       </thead>
       <tbody>
@@ -392,98 +394,11 @@ export function IndividualQuiz (props: { courseID: string, studentID: string }) 
   </div>
 }
 
-//not working because the setdata thing please delete
-export function IndividualQuiz2 (props: { courseID: string, studentID: string }) {
-  const [students, loaded] = useStudent(props.courseID);
-  const [dashboardQuiz, loaded2] = useDashboardResult(props.courseID);
-  const [totalData, setTotalData] = useState<studentResult[]>([{ studentID: '0000', studentName: 'Loading', scores: [0] }]);
-  const [tableData, setData] = useState<studentResult[]>([{ studentID: '0000', studentName: 'Loading', scores: [0] }]);
-  const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name']);
-  
-  useEffect(() => {
-    displayScore()
-  }, [dashboardQuiz.length > 0 && students.length > 0])
-
-  function displayScore() {
-    let thisStudent = props.studentID;
-    let score = dashboardQuiz
-    let quizScore: Array<Number[]> = [];
-    let sID: Array<string> = [];
-    for (var i in students) {
-      quizScore.push([]); sID.push(students[i].id);
-    }
-    for (let i = 0; i < score.length; i++) { // adding to new array
-      for (let j = 0; j < sID.length; j++) {
-        try{ // check if NaN
-          let stdScore = score[i].results.find(e => e.studentID == sID[j]).studentScore;
-          if(isNaN(stdScore)){
-            stdScore = 0;
-          }
-          stdScore = parseInt(((stdScore/score[i].maxScore)*100).toFixed(0)); // find percentage
-          quizScore[j].push(stdScore);
-        }
-        catch{ quizScore[j].push(0); }
-      }
-    } 
-    
-    for (let i = 0; i < score.length; i++) {
-      tableHead.push(score[i].quizName);
-    }
-    setHead(tableHead.slice());
-    let stdidx = sID.indexOf(sID.find(e => e == thisStudent)); // get student //
-    for (let i = 0; i < quizScore.length; i++) {
-      tableData.push({studentID: sID[i], 
-      studentName: students.find(e => e.id == sID[i]).fullname, 
-      scores: quizScore[i]})
-    }
-    setTotalData(tableData.slice());
-    setData([tableData[stdidx]].slice())
-  }
-
-  const [compareID, setCompare] = useState("---");
-  function handleCompare(e: any) { setCompare(e.target.value) }
-  useEffect(() => {
-    if(tableData.length != 0) {
-      if (compareID == "---" && tableData.length > 1) {
-        let temp = [tableData[0]]; setData(temp.slice());
-      }else{
-        let temp = [tableData[0]];
-        let stdidx = totalData.indexOf(totalData.find(e => e.studentID == compareID));
-        temp.push(totalData[stdidx]);
-        setData(temp.slice());
-      }
-    }
-  }, [compareID])
-  
-  return (
-    <div> 
-      <span>Compare to</span>
-      <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
-        <option value="---">---</option>
-        {totalData.map(std => (
-          <option value={std.studentID}>{std.studentID}</option>
-        ))}
-      </select>
-      <br/>
-      <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
-        <thead>
-          <tr>
-            {tableHead.map(head => (<th>{head}</th>))}
-          </tr>
-        </thead>
-        <tbody>
-          {tableData.map(data => (
-            <tr>
-              <td>{data.studentID}</td>
-              <td>{data.studentName}</td>
-              {data.scores.map(scores => (
-                // <Overlay score={scores.score} detail={[scores.detail]} />
-                <td>{scores}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
-  )
+export function InfoPage(props: { studentID: string }){
+  const courseID = router.query.id as string;
+  // const [dashboardPLO] = useDashboardPLOSummary(courseID);
+  return <div>
+    <br/>
+    <h1>Information Page</h1>
+  </div>
 }

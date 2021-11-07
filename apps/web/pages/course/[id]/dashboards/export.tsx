@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import ClientOnly from '../../../../components/ClientOnly';
 import { Modal } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
@@ -40,8 +40,8 @@ interface studentResult {
   scores: Array<Number>
 }
 
-export const ExportOutcome2: React.FC<{courseID, datas: studentResult[], head: string[]}> = 
-({ courseID, datas, head}) => {
+export const ExportOutcome2: React.FC<{datas: studentResult[], head: string[]}> = ({datas, head}) => {
+  const courseID = router.query.id as string;
   const [show, setShow] = useState(false);
   const { register, handleSubmit, setValue } = useForm<{fileName: string, fileType: string}>();
   

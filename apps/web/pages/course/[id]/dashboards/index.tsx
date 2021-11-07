@@ -1,4 +1,5 @@
 import { gql, useQuery } from '@apollo/client';
+import { CourseSubMenu } from 'apps/web/components/Menu';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -6,7 +7,6 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../components/ClientOnly';
 import ProgramAnchor from '../../../../components/ProgramAnchor';
-import { useStudent, useDashboardPLOSummary, useDashboardResult, useDashboardFlat } from '../../../../utils/dashboard-helper';
 import { ScoreTable, ScoreTablePLO } from './table';
 
 // path => /course/[id]/dashboards
@@ -23,32 +23,25 @@ export default function Index() {
 
 function IndexPage() {
   const router = useRouter();
-  const courseID = router.query.id as string; // extract id from router.query and rename to courseID
+  const courseID = router.query.id as string;
   const [state, setState] = useState("Quiz");
   return <div>
     <NavHistory courseID={courseID}/>
     {/*<Link href={`/course/${courseID}`}>Back to Course Homepage</Link><br/>
-    <button onClick={() => router.push(`/course/${courseID}`)}>This also works</button><br/>
-    <p>useStudent(): </p>
-    {loaded && <p>{JSON.stringify(students)}</p>}
-    <p>useDashboardPLOSummary(): </p>
-    {loaded2 && <p>{JSON.stringify([...dashboardPLO.entries()])}</p>}
-    <p>useDashboardResult(): </p>
-    {loaded3 && <p>{JSON.stringify(dashboardQuiz)}</p>} 
-    <p>For details, check apps/web/utils/dashboard-helper.js</p>*/}
-    <h1 style={{textAlign: "center"}}>Summary</h1>
+    <button onClick={() => router.push(`/course/${courseID}`)}>This also works</button><br/>*/}
+    <CourseSubMenu courseID={courseID} selected={'dashboards'}/>
     <ButtonTab>
       <button onClick={() => setState("Quiz")} style={{marginRight: 5}}
       className="border border-blue-500 rounded-md border-2">
         {state === "Quiz" && <b>Quiz Score</b> || <span>Quiz Score</span>}
-        </button>
+      </button>
       <button onClick={() => setState("Outcome")}
       className="border border-blue-500 rounded-md border-2">
         {state === "Outcome" && <b>Outcome Score</b> || <span>Outcome Score</span>}
-        </button>
+      </button>
     </ButtonTab>
-    {state === "Quiz" && <ScoreTable courseID={courseID} />}
-    {state === "Outcome" && <ScoreTablePLO courseID={courseID} />}
+    {state === "Quiz" && <ScoreTable/>}
+    {state === "Outcome" && <ScoreTablePLO/>}
   </div>;
 };
 
