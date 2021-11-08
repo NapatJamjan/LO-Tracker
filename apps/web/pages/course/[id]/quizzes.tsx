@@ -126,6 +126,7 @@ export default ({course, quizzes, los}: {course: CourseModel, quizzes: QuizModel
 function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[], los: LOModel[]}) {
   const router = useRouter();
   const [selectedQuestionID, setSelectedQuestionID] = useState<string>('');
+  const [deleteQuiz, { loading: deleting}] = useMutation<{deleteQuiz: {id: string}}, {id: string}>(DELETE_QUIZ);
   const [deleteQuestionLink, {loading: submitting}] = useMutation<{deleteQuestionLink: DeleteQuestionLinkResponse}, {input: DeleteQuestionLinkModel}>(DELETE_QUESTIONLINK);
   let questionLinks: QuestionLinkModel[] = [];
   if (selectedQuestionID !== '') {
@@ -144,6 +145,18 @@ function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[],
       }
     }).then(() => router.replace(router.asPath));
   };
+  const removeQuiz = (id: string) => {
+    if (deleting) return;
+    deleteQuiz({
+      variables: {id}
+    }).then(() => {
+      let isSelected = quizzes.find(quiz => quiz.id === id).questions.findIndex(question => question.id === selectedQuestionID) !== -1
+      if (isSelected) {
+        setSelectedQuestionID('');
+      }
+      router.replace(router.asPath);
+    });
+  }
   return <>
     <CreateQuizForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
@@ -152,7 +165,7 @@ function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[],
         <div key={quiz.id} className="rounded shadow-lg p-3">
           <div className="flex justify-between items-center">
             <span className="font-bold">{quiz.name}</span>
-            <span className="underline cursor-pointer text-red-400">delete</span>
+            <span className="underline cursor-pointer text-red-400" onClick={() => removeQuiz(quiz.id)}>delete</span>
           </div>
           <ul>
           {[...quiz.questions].sort((q1, q2) => q1.title.localeCompare(q2.title)).map((question, index) => (
@@ -389,6 +402,11 @@ const GET_QUIZZES = gql`
 const CREATE_QUIZ = gql`
   mutation CreateQuiz($courseID: ID!, $input: CreateQuizInput!) {
     createQuiz(courseID: $courseID, input: $input) {
+      id
+}}`;
+const DELETE_QUIZ = gql`
+  mutation DeleteQuiz($id: ID!) {
+    deleteQuiz(id: $id) {
       id
 }}`;
 const CREATE_QUESTIONLINK = gql`

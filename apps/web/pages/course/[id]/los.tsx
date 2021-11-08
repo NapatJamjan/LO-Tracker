@@ -83,6 +83,7 @@ export default ({course, los}: {course: CourseModel, los: LOModel[]}) => {
 
 function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, los: LOModel[]}) {
   const router = useRouter();
+  const [deleteLO, {loading: deleting}] = useMutation<{deleteLO: {id: string}}, {id: string}>(DELETE_LO);
   const [deleteLOLink, {loading: submitting}] = useMutation<{deleteLOLink: DeleteLOLinkResponse}, {loID: string, ploID: string}>(DELETE_LOLINK);
   const [selectedLOID, setSelectedLOID] = useState<string>('');
   const deleteLinkedPLO = (ploID: string) => {
@@ -94,13 +95,24 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
       }
     }).then(() => router.replace(router.asPath));
   };
+  const removeLO = (id: string) => {
+    if (deleting) return;
+    deleteLO({
+      variables: { id }
+    }).then(() => {
+      if (id === selectedLOID) {
+        setSelectedLOID('');
+      }
+      router.replace(router.asPath);
+    });
+  };
   return <>
     <CreateLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
       <div className="flex flex-column space-y-2">
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
         <div key={lo.id} className="rounded shadow-lg p-3">
-          {lo.title} <span className="underline cursor-pointer text-red-400">delete</span>
+          {lo.title} <span className="underline cursor-pointer text-red-400" onClick={() => removeLO(lo.id)}>delete</span>
           <ul>
           {[...lo.levels].sort((l1, l2) => l1.level - l2.level).map((level) => (
             <li key={`${lo.id}-${level.level}`}>
@@ -321,6 +333,11 @@ const GET_LOS = gql`
 const CREATE_LO = gql`
   mutation CreateLO($courseID: ID!, $input: CreateLOInput!) {
     createLO(courseID: $courseID, input: $input) {
+      id
+}}`;
+const DELETE_LO = gql`
+  mutation DeleteLO($id: ID!) {
+    deleteLO(id: $id) {
       id
 }}`;
 const CREATE_LOLEVEL = gql`
