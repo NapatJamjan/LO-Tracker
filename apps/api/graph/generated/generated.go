@@ -174,6 +174,7 @@ type ComplexityRoot struct {
 		EditCourse         func(childComplexity int, id string, input model.CreateCourseInput) int
 		EditPLOGroup       func(childComplexity int, id string, name string) int
 		EditPlo            func(childComplexity int, id string, title string, description string) int
+		EditProgram        func(childComplexity int, id string, input model.CreateProgramInput) int
 	}
 
 	Plo struct {
@@ -263,6 +264,7 @@ type MutationResolver interface {
 	DeleteLOLevel(ctx context.Context, id string, level int) (*model.DeleteLOLevelResult, error)
 	DeleteLOLink(ctx context.Context, loID string, ploID string) (*model.DeleteLOLinkResult, error)
 	CreateProgram(ctx context.Context, input model.CreateProgramInput) (*model.Program, error)
+	EditProgram(ctx context.Context, id string, input model.CreateProgramInput) (*model.Program, error)
 	CreatePLOGroup(ctx context.Context, programID string, name string, input []*model.CreatePLOsInput) (*model.PLOGroup, error)
 	EditPLOGroup(ctx context.Context, id string, name string) (*model.PLOGroup, error)
 	CreatePlo(ctx context.Context, ploGroupID string, input model.CreatePLOInput) (*model.Plo, error)
@@ -898,6 +900,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.EditPlo(childComplexity, args["id"].(string), args["title"].(string), args["description"].(string)), true
 
+	case "Mutation.editProgram":
+		if e.complexity.Mutation.EditProgram == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editProgram_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditProgram(childComplexity, args["id"].(string), args["input"].(model.CreateProgramInput)), true
+
 	case "PLO.description":
 		if e.complexity.Plo.Description == nil {
 			break
@@ -1498,6 +1512,7 @@ type deletePLOResult {
 
 extend type Mutation {
   createProgram(input: CreateProgramInput!): Program!
+  editProgram(id: ID!, input: CreateProgramInput!): Program!
   createPLOGroup(programID: ID!, name: String!, input: [CreatePLOsInput!]!): PLOGroup!
   editPLOGroup(id: ID!, name: String!): PLOGroup!
   createPLO(ploGroupID: ID!, input: CreatePLOInput!): PLO!
@@ -2076,6 +2091,30 @@ func (ec *executionContext) field_Mutation_editPLO_args(ctx context.Context, raw
 		}
 	}
 	args["description"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editProgram_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.CreateProgramInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNCreateProgramInput2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateProgramInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -4388,6 +4427,48 @@ func (ec *executionContext) _Mutation_createProgram(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreateProgram(rctx, args["input"].(model.CreateProgramInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Program)
+	fc.Result = res
+	return ec.marshalNProgram2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐProgram(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editProgram(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editProgram_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditProgram(rctx, args["id"].(string), args["input"].(model.CreateProgramInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8804,6 +8885,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createProgram":
 			out.Values[i] = ec._Mutation_createProgram(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "editProgram":
+			out.Values[i] = ec._Mutation_editProgram(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

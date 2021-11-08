@@ -1,9 +1,12 @@
 import Head from 'next/head';
 import client from '../../../apollo-client';
-import { gql } from '@apollo/client';
+import { gql, useMutation } from '@apollo/client';
 import { GetServerSideProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
-import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
+import { KnownProgramMainMenu, ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
+import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
 interface ProgramModel {
   id: string;
@@ -11,23 +14,50 @@ interface ProgramModel {
   description: string;
 };
 
+interface EditProgramModel {
+  name: string;
+  description: string;
+}
+
 export default ({program}: {program: ProgramModel}) => {
+  const router = useRouter();
+  const [editProgram, { loading: submitting }] = useMutation<{editProgram: {id: string}}, {id: string, input: EditProgramModel}>(EDIT_PROGRAM);
+  const { register, handleSubmit } = useForm<EditProgramModel>({
+    defaultValues: {
+      name: program.name,
+      description: program.description
+    }
+  });
+  const saveProgram = (form: EditProgramModel) => {
+    if (submitting) return;
+    editProgram({
+      variables: {
+        id: program.id,
+        input: form
+      }
+    }).then(() => {
+      alert('updated');
+      router.replace(router.asPath);
+    });
+  };
   return <div>
     <Head>
       <title>Program Settings</title>
     </Head>
-    <ProgramMainMenu programID={program.id} />
+    <KnownProgramMainMenu programID={program.id} programName={program.name}/>
     <ProgramSubMenu programID={program.id} selected={'settings'}/>
     <p className="mt-4 mb-2 underline">Program Settings</p>
+    <form onSubmit={handleSubmit(saveProgram)}>
     <div className="grid grid-cols-2 gap-4">
       <div>Program Name</div>
-      <input type="text" placeholder="program's name" value={program.name} className="border-4 rounded-md p-1 text-sm"/>
+      <input {...register('name')} type="text" placeholder="program's name" className="border-4 rounded-md p-1 text-sm"/>
       <div>Program Description</div>
-      <textarea placeholder="program's description" value={program.description} cols={30} className="border-4 rounded-md p-2" rows={4}></textarea>
+      <textarea {...register('description')}  placeholder="program's description" cols={30} className="border-4 rounded-md p-2" rows={4}></textarea>
     </div>
     <div className="flex justify-end">
-      <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg" onClick={() => alert('not implemented')}/>
+      <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
     </div>
+    </form>
   </div>;
 };
 
@@ -56,4 +86,9 @@ const GET_PROGRAM = gql`
       id
       name
       description
+}}`;
+const EDIT_PROGRAM = gql`
+  mutation EditProgram($id: ID!, $input: CreateProgramInput!) {
+    editProgram(id: $id, input: $input) {
+      id
 }}`;

@@ -26,6 +26,23 @@ func (r *mutationResolver) CreateProgram(ctx context.Context, input model.Create
 	}, nil
 }
 
+func (r *mutationResolver) EditProgram(ctx context.Context, id string, input model.CreateProgramInput) (*model.Program, error) {
+	updated, err := r.Client.Program.FindUnique(
+		db.Program.ID.Equals(id),
+	).Update(
+		db.Program.Name.Set(input.Name),
+		db.Program.Description.Set(input.Description),
+	).Exec(ctx)
+	if err != nil {
+		return &model.Program{}, err
+	}
+	return &model.Program{
+		ID:          updated.ID,
+		Name:        updated.Name,
+		Description: updated.Description,
+	}, nil
+}
+
 func (r *mutationResolver) CreatePLOGroup(ctx context.Context, programID string, name string, input []*model.CreatePLOsInput) (*model.PLOGroup, error) {
 	createPLOGroup, err := r.Client.PLOgroup.CreateOne(
 		db.PLOgroup.Name.Set(name),

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import ClientOnly from './ClientOnly';
 import { CourseNameLink, ProgramNameLink } from './ConvertIDName';
 
 function MainMenuWithOnlyProgram({programID}: {programID: string}) {
@@ -8,9 +7,17 @@ function MainMenuWithOnlyProgram({programID}: {programID: string}) {
     {' '}&#12297;{' '}
     <Link href="/programs">Programs</Link>
     {' '}&#12297;{' '}
-    <ClientOnly>
-      <ProgramNameLink programID={programID} href={`/program/${programID}/courses`}/>
-    </ClientOnly>
+    <ProgramNameLink programID={programID} href={`/program/${programID}/courses`}/>
+  </>;
+}
+
+export function KnownProgramMainMenu({programID, programName}: {programID: string, programName: string}) {
+  return <>
+    <Link href="/">Home</Link>
+    {' '}&#12297;{' '}
+    <Link href="/programs">Programs</Link>
+    {' '}&#12297;{' '}
+    <Link href={`/program/${programID}/courses`}>{programName}</Link>
   </>;
 }
 
@@ -34,9 +41,7 @@ export function CourseMainMenu({programID, courseID}: {programID: string, course
   return <p>
     <MainMenuWithOnlyProgram programID={programID}/>
     {' '}&#12297;{' '}
-    <ClientOnly>
-      <CourseNameLink courseID={courseID} href={`/course/${courseID}`}/>
-    </ClientOnly>
+    <CourseNameLink courseID={courseID} href={`/course/${courseID}`}/>
   </p>;
 }
 
