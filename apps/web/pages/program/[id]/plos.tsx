@@ -42,6 +42,8 @@ const PLOContext = createContext<{
   ploGroups: PLOGroupModel[],
   savePLOGroup: (name: string, plos: CreatePLOModel[]) => Promise<any>,
   savePLO: (ploGroupID: string, plo: CreatePLOModel) => Promise<any>,
+  modifyPLOGroup: (id: string, name: string) => Promise<any>,
+  modifyPLO: (id: string, title: string, description: string) => Promise<any>,
   removePLOGroup: (id: string) => Promise<any>,
   removePLO: (id: string) => Promise<any>,
   submitting: boolean,
@@ -49,6 +51,8 @@ const PLOContext = createContext<{
   ploGroups: [],
   savePLOGroup: () => null,
   savePLO: () => null,
+  modifyPLOGroup: () => null,
+  modifyPLO: () => null,
   removePLOGroup: () => null,
   removePLO: () => null,
   submitting: false,
@@ -60,12 +64,16 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
   const [deletePLOGroup, { loading: withdrawPLOGroup}] = useMutation<{deletePLOGroup: {id: string}}, {id: string}>(DELETE_PLOGROUP);
   const [createPLO, { loading: submitPLO }] = useMutation<{createPLO: PLOModel}, {ploGroupID: string, input: CreatePLOModel}>(CREATE_PLO);
   const [deletePLO, { loading: withdrawPLO}] = useMutation<{deletePLO: {id: string}}, {id: string}>(DELETE_PLO);
+  const [editPLOGroup, { loading: writePLOGroup }] = useMutation<{editPLOGroup: {id: string}}, {id: string, name: string}>(EDIT_PLOGROUP);
+  const [editPLO, { loading: writePLO }] = useMutation<{editPLO: {id: string}}, {id: string, title: string, description: string}>(EDIT_PLO);
   const savePLOGroup = (name: string, plos: CreatePLOModel[]) => createPLOGroup({variables: {programID, name, input: plos}}).finally(() => router.replace(router.asPath));
   const savePLO = (ploGroupID: string, plo: CreatePLOModel) => createPLO({variables: {ploGroupID, input: plo}});
+  const modifyPLOGroup = (id: string, name: string) => editPLOGroup({variables: {id, name}}).finally(() => router.replace(router.asPath));
+  const modifyPLO = (id: string, title: string, description: string) => editPLO({variables: {id, title, description}});
   const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath));
   const removePLO = (id: string) => deletePLO({variables: {id}});
-  const submitting = submitPLOGroup || submitPLO || withdrawPLOGroup || withdrawPLO;
-  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, removePLOGroup, removePLO, submitting}}>
+  const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO;
+  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, submitting}}>
     <Head>
       <title>Manage PLOs</title>
     </Head>
@@ -94,8 +102,8 @@ export function PLOs() {
       <div>
         {selectedPLOGroupID !== '' && <p className="mb-3">
           <span>{ploGroups.find(g => g.id === selectedPLOGroupID).name}</span>
-          <span className="cursor-pointer underline text-blue-600 px-4">edit</span>
-          <span className="cursor-pointer underline text-red-500" onClick={() => removePLOGroup(selectedPLOGroupID)}>delete</span>
+          <EditPLOGroupForm ploGroupID={selectedPLOGroupID} initName={ploGroups.find(g => g.id === selectedPLOGroupID).name}/>
+          <span className="cursor-pointer underline text-red-500" onClick={() => removePLOGroup(selectedPLOGroupID).then(() => setSelectedPLOGroupID(''))}>delete</span>
         </p>}
         {selectedPLOGroupID !== '' && <PLOSub ploGroupID={selectedPLOGroupID}/>}
       </div>
@@ -161,7 +169,7 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
       <div key={plo.id} className="flex flex-column rounded shadow-lg p-3 mb-3 -space-y-4">
         <p className="text-xl text-bold">
           <span>{plo.title}</span>
-          <span className="text-sm cursor-pointer underline text-blue-600 px-3">edit</span>
+          <EditPLOForm ploID={plo.id} initTitle={plo.title} initDesc={plo.description} callback={refetch}/>
           <span className="text-sm cursor-pointer underline text-red-500" onClick={() => removePLO(plo.id).then(() => refetch())}>delete</span>
         </p>
         <span className="m-0">{plo.description}</span>
@@ -206,6 +214,71 @@ function CreatePLOForm({ ploGroupID, callback }: { ploGroupID: string, callback:
     </Modal>
   </div>;
 };
+
+function EditPLOGroupForm({ploGroupID, initName}: {ploGroupID: string, initName: string}) {
+  const { modifyPLOGroup, submitting } = useContext(PLOContext);
+  const [show, setShow] = useState<boolean>(false);
+  const {register, handleSubmit, reset} = useForm<{name: string}>({defaultValues: {name: initName}});
+  const resetForm = () => {
+    setShow(false);
+  };
+  const submitForm = (name: string) => {
+    if (submitting) return;
+    modifyPLOGroup(ploGroupID, name).then(() => resetForm());
+  }
+  return <>
+    <span className="cursor-pointer underline text-blue-600 px-4" onClick={() => setShow(true)}>edit</span>
+    <Modal show={show} onHide={resetForm}>
+      <form onSubmit={handleSubmit((form) => submitForm(form.name))}>
+        <Modal.Header>
+          <Modal.Title>Update the PLO</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <span>PLO group name:</span><br/>
+          <input type="text" {...register('name')} placeholder="PLO group name" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+        </Modal.Body>
+        <Modal.Footer>
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        </Modal.Footer>
+      </form>
+    </Modal>
+  </>;
+}
+
+function EditPLOForm({ploID, initTitle, initDesc, callback}: {ploID: string, initTitle: string, initDesc: string, callback: () => any}) {
+  const { modifyPLO, submitting } = useContext(PLOContext);
+  const [show, setShow] = useState<boolean>(false);
+  const {register, handleSubmit, formState: {errors, touchedFields}} = useForm<CreatePLOModel>({defaultValues: {title: initTitle, description: initDesc}});
+  const resetForm = () => {
+    setShow(false);
+  };
+  const submitForm = ({title, description}: CreatePLOModel) => {
+    if (submitting) return;
+    modifyPLO(ploID, title, description).then(() => {
+      resetForm();
+      callback();
+    });
+  };
+  return <>
+    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
+    <Modal show={show} onHide={resetForm}>
+      <form onSubmit={handleSubmit(submitForm)}>
+        <Modal.Header>
+          <Modal.Title>Create a new PLO</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <input type="text" {...register('title', {required: true})} placeholder="type PLO's name" className="border-4 rounded-md p-1 mx-2 text-sm"/>
+          <br/><span className="text-red-500 text-sm italic pl-3">{touchedFields.title && errors.title && 'PLO name is required.'}</span>
+          <p className="my-3"></p>
+          <textarea {...register('description')} placeholder="PLO's description" cols={40} rows={4} className="border-4 rounded-md p-1 mx-2 text-sm"></textarea>
+        </Modal.Body>
+        <Modal.Footer>
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        </Modal.Footer>
+      </form>
+    </Modal>
+  </>;
+}
 
 interface Params extends ParsedUrlQuery {
   id: string;
@@ -264,4 +337,14 @@ const DELETE_PLO = gql`
 mutation DeletePLO($id: ID!) {
   deletePLO(id: $id) {
     id
+}}`;
+const EDIT_PLOGROUP = gql`
+  mutation EditPLOGroup($id: ID!, $name: String!) {
+    editPLOGroup(id: $id, name: $name) {
+      id  
+}}`;
+const EDIT_PLO = gql`
+  mutation EditPLO($id: ID!, $title: String!, $description: String!) {
+    editPLO(id: $id, title: $title, description: $description) {
+      id
 }}`;
