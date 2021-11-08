@@ -1,9 +1,11 @@
 import Head from 'next/head';
 import client from '../../../apollo-client';
-import { gql } from '@apollo/client';
+import { gql, useMutation } from '@apollo/client';
 import { GetServerSideProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
+import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/router';
 
 interface CourseModel {
   id: string;
@@ -20,7 +22,48 @@ interface PLOGroupModel {
   name: string;
 };
 
+interface CreateCourseModel {
+  name: string;
+  description: string;
+  semester: number;
+  year: number;
+  ploGroupID: string;
+};
+
 export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupModel[]}) => {
+  const router = useRouter();
+  const { register, handleSubmit } = useForm<CreateCourseModel>({
+    defaultValues: {
+      name: course.name,
+      description: course.description,
+      semester: course.semester,
+      year: course.year,
+      ploGroupID: course.ploGroupID,
+    }
+  });
+  const [editCourse, { loading: editing }] = useMutation<{editCourse: {id: string}}, {id: string, input: CreateCourseModel}>(EDIT_COURSE);
+  const [deleteCourse, { loading: deleting }] = useMutation<{deleteCourse: {id: string}}, {id: string}>(DELETE_COURSE);
+  const saveCourse = (form: CreateCourseModel) => {
+    if (editing) return;
+    editCourse({
+      variables: {
+        id: course.id,
+        input: form,
+      }
+    }).then(() => {
+      alert('updated');
+      router.replace(router.asPath);
+    });
+  };
+  const removeCourse = () => {
+    if (!confirm('Are you sure?') || deleting) return;
+    deleteCourse({
+      variables: { id: course.id }
+    }).then(() => {
+      alert('deleted');
+      router.push(`/program/${course.programID}/courses`);
+    });
+  };
   return <div>
     <Head>
       <title>Course Settings</title>
@@ -28,19 +71,20 @@ export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupMo
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'settings'}/>
     <p className="mt-4 mb-2 underline">Course Settings</p>
+    <form onSubmit={handleSubmit(saveCourse)}>
     <div className="grid grid-cols-2 gap-4">
       <div>Name</div>
-      <input type="text" placeholder="program's name" defaultValue={course.name} className="border-4 rounded-md p-1 text-sm"/>
+      <input {...register('name')} placeholder="program's name" className="border-4 rounded-md p-1 text-sm"/>
       <div>Description</div>
-      <textarea placeholder="program's description" defaultValue={course.description} cols={30} className="border-4 rounded-md p-2" rows={4}></textarea>
+      <textarea {...register('description')} placeholder="program's description" cols={30} className="border-4 rounded-md p-2" rows={4}></textarea>
       <div>Semester</div>
-      <select defaultValue={course.semester} className="border-4 rounded-md p-1 mx-2 text-sm">
+      <select {...register('semester')} className="border-4 rounded-md p-1 mx-2 text-sm">
         <option value={1}>1</option>
         <option value={2}>2</option>
         <option value={3}>S</option>
       </select>
       <div>Year</div>
-      <select defaultValue={course.year} className="border-4 rounded-md p-1 mx-2 text-sm">
+      <select {...register('year')} className="border-4 rounded-md p-1 mx-2 text-sm">
         {Array.from({ length: 10 }, (_, i) => 2021 - i).map((year) => (
           <option value={year} key={`year-${year}`}>
             {year}
@@ -48,7 +92,7 @@ export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupMo
         ))}
       </select>
       <div>PLO Group</div>
-      <select defaultValue={course.ploGroupID} className="border-4 rounded-md p-1 mx-2 text-sm">
+      <select {...register('ploGroupID')} className="border-4 rounded-md p-1 mx-2 text-sm">
         <option disabled value="">--Select PLO Group--</option>
         {[...ploGroups].sort((p1, p2) => p1.name.localeCompare(p2.name)).map((plo) => (
           <option value={plo.id} key={plo.id}>
@@ -58,8 +102,10 @@ export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupMo
       </select>
     </div>
     <div className="flex justify-end">
-      <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg" onClick={() => alert('not implemented')}/>
+      <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
     </div>
+    </form>
+    <p className="cursor-pointer text-red-400" onClick={removeCourse}>Delete this course</p>
   </div>;
 };
 
@@ -106,3 +152,14 @@ const GET_PLOGROUPS = gql`
       id
       name
 }}`;
+const EDIT_COURSE = gql`
+  mutation EditCourse($id: ID!, $input: CreateCourseInput!) {
+    editCourse(id: $id, input: $input) {
+      id
+}}`;
+const DELETE_COURSE = gql`
+  mutation DeleteCourse($id: ID!) {
+    deleteCourse(id: $id) {
+      id
+}}`;
+
