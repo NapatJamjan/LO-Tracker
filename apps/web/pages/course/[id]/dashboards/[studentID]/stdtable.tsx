@@ -32,6 +32,11 @@ interface studentResult {
   scores: Array<Number>
 }
 
+interface loData {
+  id: string,
+  name: string
+}
+
 export function IndividualPLO(props: { studentID: string }) {
   const courseID = router.query.id as string;
   const [dashboardFlat] = useDashboardFlat(courseID);
@@ -65,15 +70,25 @@ export function IndividualPLO(props: { studentID: string }) {
     let loScore = []; let loScoreC = []; // for counting purpose, plo score go down
     let questions = score.questions;
     let loArr:Array<number[]> = [];
-    let loName: Array<string> = []; let loID: Array<string> = [];
-    let ploID: Array<string> = [];  let ploName: Array<string> = [];
+    let loData: Array<loData> = [];
+    let ploData: Array<loData> = [];
     score.plos.forEach((v, k) => {
-      ploName.push(v); ploID.push(k);
+      ploData.push({name: v, id: k});
     })
     score.los.forEach((v, k) => {
       if(k.split(',').length === 1){
-        loName.push(v); loID.push(k);
+        loData.push({name: v, id: k});
       }
+    })
+    loData.sort((a: any, b: any) => {
+      if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+      if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+      return 0;
+    })
+    ploData.sort((a: any, b: any) => {
+      if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+      if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+      return 0;
     })
 
     let lotemp = 0;
@@ -104,7 +119,7 @@ export function IndividualPLO(props: { studentID: string }) {
     
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
-        let loidx = loID.indexOf(loID.find(e => e == questions[i].linkedLOs[k].split(',')[0]))
+        let loidx = loData.indexOf(loData.find(e => e.id == questions[i].linkedLOs[k].split(',')[0]))
         let lvlidx = parseInt(questions[i].linkedLOs[k].split(',')[1])-1;
         // index of level, all combined will be [student][lo][level]
         for (let j = 0; j < questions[i].results.length; j++) { // might have to loop after link check
@@ -162,8 +177,8 @@ export function IndividualPLO(props: { studentID: string }) {
     }// end of lo score calculation
 
     let stdidx = std.indexOf(std.find(e => e == thisStudent));
-    for (let i = 0; i < loName.length; i++) {
-      studentLOHead.push(loName[i].substring(0,4));
+    for (let i = 0; i < loData.length; i++) {
+      studentLOHead.push(loData[i].name.substring(0,4));
     }
     setLOH(studentLOHead.slice());
     let loTemp = []
@@ -174,17 +189,18 @@ export function IndividualPLO(props: { studentID: string }) {
     setLOS([loTemp[stdidx]].slice());
 
     //plo section
-    let ploScore:Array<Number[]> = [];
+    let ploScore: Array<Number[]> = [];
     for (let i = 0; i < std.length; i++) {
-      ploScore.push([]); ploScore[i] = Array.from({length: ploID.length}, () => 0);
+      ploScore.push([]); ploScore[i] = Array.from({length: ploData.length}, () => 0);
     }
-    let linkIndex:Array<number[]> = [];
+    let linkIndex: Array<number[]> = Array.from({length: ploData.length}, () => []);
     plolink.forEach((v, k) => { // register which lo is linked (index)
       let temp = [];
+      let ploindex = ploData.indexOf(ploData.find(e => e.id == k))
       v.forEach((vv, kk) => { // each of linked lo
-        temp.push(loID.indexOf(vv))
+        temp.push(loData.indexOf(loData.find(e => e.id == vv)))
       })
-      linkIndex.push(temp);
+      linkIndex[ploindex] = (temp);
     });
 
     for (let i = 0; i < std.length; i++) { // start plo calculation
@@ -198,8 +214,8 @@ export function IndividualPLO(props: { studentID: string }) {
         ploScore[i][j] = res;
       }
     } // calculation end
-    for (let i = 0; i < ploName.length; i++) {
-      studentPLOHead.push(ploName[i]);
+    for (let i = 0; i < ploData.length; i++) {
+      studentPLOHead.push(ploData[i].name);
     }
     let ploTemp = []
     setPLOH(studentPLOHead.slice()); 
@@ -327,7 +343,7 @@ export function IndividualQuiz (props: { studentID: string }) {
       }
     }
     for (let i = 0; i < score.length; i++) {
-      tableHead.push(score[i].quizName);
+      tableHead.push(score[i].quizName.substring(0, 6));
     }
     setHead(tableHead.slice());
     for (let i = 0; i < quizScore.length; i++) {
