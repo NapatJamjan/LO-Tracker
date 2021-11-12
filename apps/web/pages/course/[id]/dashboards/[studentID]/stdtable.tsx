@@ -301,7 +301,7 @@ export function IndividualPLO(props: { studentID: string }) {
             <tr>
               <td>{data.studentID}</td>
               <td>{data.studentName}</td>
-              {data.scores.map(scores => ( // map score of this student's id
+              {data.scores.map(scores => ( // map score of this student's id 
                 <td>{scores}</td>
               ))}
             </tr>

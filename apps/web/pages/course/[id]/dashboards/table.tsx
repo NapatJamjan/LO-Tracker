@@ -244,11 +244,10 @@ export function ScoreTablePLO() {
           <option value="LO">LO</option>
         </select>
         <div style={{display: "inline", marginLeft: 10}}>
-          <span style={{marginRight: 5}}>Graph Type</span>
+          <span style={{marginRight: 5}}>Data Type</span>
           <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
             <option value="avg">Average Scores</option>
             <option value="all">Student Scores</option>
-            <option value="pie">Average (Pie)</option>
           </select>
         </div>
       </div>
@@ -325,11 +324,10 @@ export function ScoreTable() {
     <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
     <br/>
       <div style={{display: "inline"}}>
-        <span style={{marginRight: 5}}>Graph Type</span>
+        <span style={{marginRight: 5}}>Data Type</span>
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="avg">Average Scores</option>
           <option value="all">Student Scores</option>
-          <option value="pie">Average (Pie)</option>
         </select>
       </div>
     <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>

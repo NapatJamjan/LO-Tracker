@@ -32,9 +32,45 @@ function ChartPage() {
 export function AllStudentChart(props: { data: studentResult[], chartType: string, scoreType: string, tableHead: string[] }) {
   return (
     <div>
-      {props.chartType === "avg" && <ChartBarAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
-      {props.chartType === "all" && <ChartBarAll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
-      {props.chartType === "pie" && <ChartPieAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {props.chartType === "avg" && <AverageChart data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {props.chartType === "all" && <AllChart data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+    </div>
+  )
+}
+
+//Chart Selection
+function AverageChart(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
+  const [chartType, setChartType] = useState("bar");
+  function handleChartType(e: any){ setChartType(e.target.value) }
+  return(
+    <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+      <div style={{ display: "inline" }}>
+        <span style={{ marginRight: 5 }}>Graph Type</span>
+        <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
+          <option value="bar">Bar Chart</option>
+          <option value="pie">Pie Chart</option>
+        </select>
+      </div>
+      {chartType === "bar" && <ChartBarAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {chartType === "pie" && <ChartPieAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+    </div>
+  )
+}
+
+function AllChart(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
+  const [chartType, setChartType] = useState("bar");
+  function handleChartType(e: any){ setChartType(e.target.value) }
+  return(
+    <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+      <div style={{ display: "inline" }}>
+        <span style={{ marginRight: 5 }}>Graph Type</span>
+        <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
+          <option value="bar">Bar Chart</option>
+          <option value="bar2">Bar Scroll</option>
+        </select>
+      </div>
+      {chartType === "bar" && <ChartBarAll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {chartType === "bar2" && <ChartBarAllScroll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
     </div>
   )
 }
@@ -149,7 +185,7 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
       }
       
       function mMoveEvent(e: any, d: any) {
-        tooltip.style('display','block')
+        tooltip.style('display', 'block')
         .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
       }
 
@@ -157,12 +193,12 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
         d3.select(this).style('stroke-width', 0)
         d3.select(this).attr('fill', '#69b3a2')
         d3.select('svg').selectAll('.temp').remove()
-        tooltip.style('display','none')
+        tooltip.style('display', 'none')
       }
     }
   }, [avgScore])
 
-  return <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+  return <div >
     <div>
       <svg ref={ref}></svg>
       <Tooltip id='tooltip'>
@@ -193,9 +229,6 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string, ta
     subgroupTemp = Array.from({length: datas[0].scores.length}, (d,i) => tableHead[i]);
   } 
   allScore = allScoreTemp.slice();
-  let scoreBar = []; // for bar mapping
-  if(datas.length != 0){scoreBar = Array.from({length: datas[0].scores.length}, () => "green");} // graph color
-  scoreBar[0] = "darkgreen";
   //Charting
   let dimensions = {
     w: 600, h: 400,
@@ -327,7 +360,6 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string, ta
         tooltip.style('display','block')
         .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
       }
-
       function mOutEvent() {
         d3.select(this).style('opacity', 0.8)
         d3.select(this).style('stroke-width', 0)
@@ -338,17 +370,16 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string, ta
     }
   }, [allScore])
 
-  return <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+  return <div /*style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}*/>
     <div>
       <svg ref={ref}>
-        
       </svg>
       <Tooltip id='tooltip'>
-        <div className='name'>A</div>
+        <div className='name'></div>
         <div className='score'></div>
       </Tooltip>
       <Tooltip id='tooltip2'>
-        <div className='name'>A</div>
+        <div className='name'></div>
       </Tooltip>
     </div>
   </div>
@@ -500,19 +531,445 @@ export function ChartPieAverage(props: { data: studentResult[], scoreType: strin
     }
   }, [avgScore])
 
-  return <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+  return <div>
+    <svg ref={ref}>
+    </svg>
+    <Tooltip id='tooltip'>
+      <div className='name'>A</div>
+      <div className='score'></div>
+    </Tooltip>
+  </div>
+}
+
+
+//http://bl.ocks.org/cdagli/728e1f4509671b7de16d5f7f6bfee6f0
+export function ChartBarAllScroll2(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
+  const ref = useRef();
+  const tableHead = props.tableHead;
+  //scoring
+  let datas = props.data;
+  const scoreType = props.scoreType;
+  let allScore = []; // all student score graph
+  let allScoreTemp = [];
+  for(var i in datas) {
+    allScoreTemp.push({name: datas[i].studentID})
+    for(var j in datas[i].scores) {
+      allScoreTemp[i][tableHead[j]] = datas[i].scores[j]
+    }
+  }
+  let subgroupTemp = []
+  if(datas.length != 0){
+    subgroupTemp = Array.from({length: datas[0].scores.length}, (d,i) => tableHead[i]);
+  } 
+  allScore = allScoreTemp.slice();
+  //Charting
+  let dimensions = {
+    w: 600, h: 400,
+    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+  }
+  let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
+  let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
+
+  useEffect(() => {
+    if (allScore.length != 0) {
+      d3.selectAll("svg > *").remove();
+      const svgElement = d3.select(ref.current)
+      let dataset = allScore;
+      const selectorHeight = 40;
+      const heightOverview = 40;
+      const maxLength = d3.max(dataset.map(function(d){ return d.name.length}))
+      const barWidth = maxLength * 7;
+      const numBars = Math.round(boxW/barWidth);
+      const isScrollDisplayed = barWidth * dataset.length > boxW;
+      
+      //chart area
+      svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
+        .style("background-color", "transparent")
+      svgElement.append('text')
+        .attr('x', dimensions.w / 2).attr('y', 30)
+        .style('text-anchor', 'middle').style('font-size', 20)
+        .text(`Graph of Students' ${scoreType} Score Scrollable`)
+      const box = svgElement.append('g')
+        .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
+      const diagram = svgElement.append("g")
+        .attr("transform", "translate(" + dimensions.margin.left + "," + dimensions.margin.top + ")");
+
+      //scale
+      var groups = allScore.map(d => d.name);
+      var subgroups = subgroupTemp.slice();
+      const xScale = d3.scaleBand()
+        .domain(groups)
+        .range([0, boxW])
+        .padding(0.2);
+      box.append("g").transition()
+        .attr("transform", "translate(0," + boxH + ")")
+        .call(d3.axisBottom(xScale).tickValues(xScale.domain().filter(function(d,i){ 
+          if(allScore.length >= 15){
+            return !(i%4)
+          }else{
+            return !(i%2)
+          }
+          
+      })))
+        .selectAll("text").style("text-anchor", "middle")
+        // .attr("transform", "translate(-25,15)rotate(-45)")
+      const yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([boxH, 0]);
+      box.append("g").transition()
+        .call(d3.axisLeft(yScale));
+      const xSubGroup = d3.scaleBand()
+        .domain(subgroups)
+        .range([0, xScale.bandwidth()])
+        .padding(0.05)
+      
+      const color = d3.scaleOrdinal<any>()
+        .domain(subgroups)
+        .range(d3.schemeSet1);
+
+      box.append("g")
+        .selectAll("g") // can use in svg instead
+        .data(dataset).enter()
+        .append('g')
+          .attr("transform", function(d) { return "translate(" + xScale(d.name) + ",0)"; })
+          .on('mouseover', mOverMain)
+          .on('mousemove', mMoveMain)
+          .selectAll('rect')
+          .data(function(d) { return subgroups.map(function(key) { return {key: key, value: d[key]}; }); })
+          .enter().append("rect")
+            .attr("x", function(d) { return xSubGroup(d.key); })
+            .attr("y", function(d) { return yScale(d.value); })
+            .attr("width", xSubGroup.bandwidth())
+            .attr("height", function(d) { return boxH - yScale(d.value); })
+            .attr("fill", function(d) { return color(d.key); })
+            .style('stroke-width', 0).style("stroke", "black")
+            .style("opacity", 0.8)
+            .on('mouseover', mOverEvent)
+            .on('mousemove', mMoveEvent)
+            .on('mouseout', mOutEvent)
+            .transition()
+      console.log("scroll display check", isScrollDisplayed)
+      //Axis
+      const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
+      const yAxisGroup = box.append("g")
+      xAxisGroup.append('text')
+        .attr('x', boxW / 2)
+        .attr('y', dimensions.margin.bottom - 10)
+        .attr('fill', 'black')
+        .text(scoreType)
+        .style('text-anchor', 'middle')
+        .transition()
+      yAxisGroup.append('text')
+        .attr('x', -boxH / 2)
+        .attr('y', -dimensions.margin.left + 15) // have - when you rotate
+        .attr('fill', 'black')
+        .text('Score')
+        .style('transform', 'rotate(270deg)')
+        .style('text-anchor', 'middle')
+        .transition()
+
+      //Scroll
+      const displayed = d3.scaleQuantize()
+          .domain([0, boxW])
+          .range(d3.range(dataset.length));
+
+      if(isScrollDisplayed){
+        const xOverview = d3.scaleBand()
+          .domain(groups) .range([0, boxW]).padding(0.2);
+        const yOverview = d3.scaleLinear().range([heightOverview, 0]);
+        yOverview.domain(yScale.domain());
+        const subBars = diagram.selectAll('.subBar').data(dataset);
+        subBars.enter().append("rect").classed('subBar', true)
+          .attr("height", d => heightOverview - yOverview(d.score))
+          .attr("width", d => xOverview.bandwidth())
+          .attr("x", d => xOverview(d.name))
+          .attr("y", d => boxH + heightOverview + yOverview(d.score))
+
+        diagram.append("rect")
+          .attr("transform", "translate(0, " + (boxH + dimensions.margin.bottom) + ")")
+          .attr("class", "mover")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("height", selectorHeight)
+          .attr("width", Math.round((numBars * boxW)/dataset.length))
+          .attr("pointer-events", "all")
+          .attr("cursor", "ew-resize")
+          .call(d3.drag().on("drag", display));
+      }
+      function display(e, d) {
+        var x = parseInt(d3.select(this).attr("x")),
+          nx = x + e.dx,
+          w = parseInt(d3.select(this).attr("width")),
+          f, nf, new_data, rects;
+
+        if (nx < 0 || nx + w > boxW) return;
+
+        d3.select(this).attr("x", nx);
+
+        f = displayed(x);
+        nf = displayed(nx);
+
+        if (f === nf) return;
+
+        new_data = dataset.slice(nf, nf + numBars);
+
+        xScale.domain(new_data.map(function (d) { return d.name; }));
+        const xAxis: any  = d3.axisBottom(xScale);
+        diagram.select(".x.axis").call(xAxis);
+
+        rects = box.selectAll("rect")
+          .data(new_data, function (d: any) { return d.name; });
+
+        rects.attr("x", function (d: any) { return xScale(d.name); });
+
+        //rects.attr("transform", function(d) { return "translate(" + xscale(d.label) + ",0)"; })
+
+        rects.enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", function (d) { return xScale(d.name); })
+          .attr("y", function (d) { return yScale(d.score); })
+          .attr("width", xScale.bandwidth())
+          .attr("height", function (d) { return boxH - yScale(d.score); });
+
+        rects.exit().remove();
+      };
+
+      //event
+      const tooltip = d3.select('#tooltip')
+      const tooltipMain = d3.select('#tooltip2')
+      function mOverMain(e: any, d: any) {
+        tooltipMain.select('.name')
+          .html(
+            `<b>${d.name}</b> <br/> `
+          )
+      }
+      function mMoveMain(e: any, d: any) {
+        tooltipMain.style('display','block')
+        .style('top', e.layerY-45 +'px').style('left', e.layerX+20 +'px')
+      }
+      function mOverEvent(e: any, d: any) { //event, data
+        d3.select(this).style('opacity', 1)
+        d3.select(this).style('stroke-width', 1)
+        box.append('line')
+          .attr('x1', 0).attr('y1', d3.select(this).attr('y'))
+          .attr('x2', dimensions.w).attr('y2', d3.select(this).attr('y'))
+          .style('stroke', 'black').classed('temp', true).style('opacity', '0.25')
+        //tooltip
+        tooltip.select('.name')
+          .html(
+            `<b>${d.key}</b> <br/> 
+            Score ${d.value} <br/>`
+          )
+      }
+
+      function mMoveEvent(e: any, d: any) {
+        tooltip.style('display','block')
+        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+      }
+      function mOutEvent() {
+        d3.select(this).style('opacity', 0.8)
+        d3.select(this).style('stroke-width', 0)
+        d3.select('svg').selectAll('.temp').remove()
+        tooltip.style('display','none')
+        tooltipMain.style('display','none')
+      }
+    }
+  }, [allScore])
+
+  return <div /*style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}*/>
     <div>
       <svg ref={ref}>
-        
       </svg>
       <Tooltip id='tooltip'>
-          <div className='name'>A</div>
-          <div className='score'></div>
-        </Tooltip>
+        <div className='name'></div>
+        <div className='score'></div>
+      </Tooltip>
+      <Tooltip id='tooltip2'>
+        <div className='name'></div>
+      </Tooltip>
     </div>
   </div>
 }
 
+export function ChartBarAllScroll(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
+  const ref = useRef();
+  const tableHead = props.tableHead;
+  //scoring
+  let datas = props.data;
+  const scoreType = props.scoreType;
+  let allScore = []; // all student score graph
+  let allScoreTemp = [];
+  for(var i in datas) {
+    allScoreTemp.push({name: datas[i].studentID})
+    for(var j in datas[i].scores) {
+      allScoreTemp[i][tableHead[j]] = datas[i].scores[j]
+    }
+  }
+  let subgroupTemp = []
+  if(datas.length != 0){
+    subgroupTemp = Array.from({length: datas[0].scores.length}, (d,i) => tableHead[i]);
+  } 
+  allScore = allScoreTemp.slice();
+  //Charting
+  let dimensions = {
+    w: 600, h: 400,
+    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+  }
+  //boxW now in useEffect
+  let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
+  useEffect(() => {
+    if (allScore.length != 0) {
+      d3.selectAll("svg > *").remove();
+      const svgElement = d3.select(ref.current)
+      let dataset = allScore;
+      // dataset.push({name:"61130500999",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
+      // dataset.push({name:"61130501000",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
+      // dataset.push({name:"61130501001",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
+      //chart area
+      let boxW = dataset.length*50 - dimensions.margin.left - dimensions.margin.right
+      svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
+        .style("background-color", "transparent")
+      svgElement.append('text')
+        .attr('x', dimensions.w / 2).attr('y', 30)
+        .style('text-anchor', 'middle').style('font-size', 20)
+        .text(`Graph of Students' ${scoreType} Score`)
+      const box = svgElement.append('g')
+        .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
+      //scale
+      // var groups = d3.map(dataset, function(d){return(d.studentName)}).keys()
+      var groups = allScore.map(d => d.name);
+      var subgroups = subgroupTemp.slice();
+      const xScale = d3.scaleBand()
+        .domain(groups)
+        .range([0, boxW])
+        .padding(0.2);
+      box.append("g").transition()
+        .attr("transform", "translate(0," + boxH + ")")
+        .call(d3.axisBottom(xScale).tickValues(xScale.domain().filter(function(d,i){ 
+          if(allScore.length >= 15){
+            return !(i%4)
+          }else{
+            return !(i%2)
+          }
+          
+      })))
+        .selectAll("text").style("text-anchor", "middle")
+        // .attr("transform", "translate(-25,15)rotate(-45)")
+      const yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([boxH, 0]);
+      box.append("g").transition()
+        .call(d3.axisLeft(yScale));
+      const xSubGroup = d3.scaleBand()
+        .domain(subgroups)
+        .range([0, xScale.bandwidth()])
+        .padding(0.05)
+      
+      const color = d3.scaleOrdinal<any>()
+        .domain(subgroups)
+        .range(d3.schemeSet1);
+
+      box.append("g")
+        .selectAll("g") // can use in svg instead
+        .data(dataset).enter()
+        .append('g')
+          .attr("transform", function(d) { return "translate(" + xScale(d.name) + ",0)"; })
+          .on('mouseover', mOverMain)
+          .on('mousemove', mMoveMain)
+          .selectAll('rect')
+          .data(function(d) { return subgroups.map(function(key) { return {key: key, value: d[key]}; }); })
+          .enter().append("rect")
+            .attr("x", function(d) { return xSubGroup(d.key); })
+            .attr("y", function(d) { return yScale(d.value); })
+            .attr("width", xSubGroup.bandwidth())
+            .attr("height", function(d) { return boxH - yScale(d.value); })
+            .attr("fill", function(d) { return color(d.key); })
+            .style('stroke-width', 0).style("stroke", "black")
+            .style("opacity", 0.8)
+            .on('mouseover', mOverEvent)
+            .on('mousemove', mMoveEvent)
+            .on('mouseout', mOutEvent)
+            .transition()
+
+      //Axis
+      const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
+      const yAxisGroup = box.append("g")
+      xAxisGroup.append('text')
+        .attr('x', boxW / 2)
+        .attr('y', dimensions.margin.bottom - 10)
+        .attr('fill', 'black')
+        .text(scoreType)
+        .style('text-anchor', 'middle')
+        .transition()
+      yAxisGroup.append('text')
+        .attr('x', -boxH / 2)
+        .attr('y', -dimensions.margin.left + 15) // have - when you rotate
+        .attr('fill', 'black')
+        .text('Score')
+        .style('transform', 'rotate(270deg)')
+        .style('text-anchor', 'middle')
+        .transition()
+
+      const tooltip = d3.select('#tooltip')
+      const tooltipMain = d3.select('#tooltip2')
+      
+      //event
+      function mOverMain(e: any, d: any) {
+        console.log(e)
+        tooltipMain.select('.name')
+          .html(
+            `<b>${d.name}</b> <br/> `
+          )
+      }
+      function mMoveMain(e: any, d: any) {
+        let scrolls = document.getElementById("chartDiv").scrollLeft; // check scroll length
+        tooltipMain.style('display','block')
+        .style('top', e.layerY-45 +'px').style('left', e.layerX+20-scrolls +'px')
+      }
+      function mOverEvent(e: any, d: any) { //event, data
+        d3.select(this).style('opacity', 1)
+        d3.select(this).style('stroke-width', 1)
+        box.append('line')
+          .attr('x1', 0).attr('y1', d3.select(this).attr('y'))
+          .attr('x2', dimensions.w).attr('y2', d3.select(this).attr('y'))
+          .style('stroke', 'black').classed('temp', true).style('opacity', '0.25')
+        //tooltip
+        tooltip.select('.name')
+          .html(
+            `<b>${d.key}</b> <br/> 
+            Score ${d.value} <br/>`
+          )
+      }
+
+      function mMoveEvent(e: any, d: any) {
+        let scrolls = document.getElementById("chartDiv").scrollLeft; 
+        tooltip.style('display','block')
+        .style('top', e.layerY +'px').style('left', e.layerX+20-scrolls +'px')
+      }
+      function mOutEvent() {
+        d3.select(this).style('opacity', 0.8)
+        d3.select(this).style('stroke-width', 0)
+        d3.select('svg').selectAll('.temp').remove()
+        tooltip.style('display','none')
+        tooltipMain.style('display','none')
+      }
+    }
+  }, [allScore])
+
+  return <div /*style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}*/>
+    <div style={{"overflow":"scroll", "overflowY": "hidden"}} id="chartDiv">
+      <svg ref={ref} style={{"width": datas.length * 50}} >
+      </svg>
+      <Tooltip id='tooltip'>
+        <div className='name'></div>
+        <div className='score'></div>
+      </Tooltip>
+      <Tooltip id='tooltip2'>
+        <div className='name'></div>
+      </Tooltip>
+    </div>
+  </div>
+}
 
 const Tooltip = styled.div`
   border: 1px solid #ccc;
