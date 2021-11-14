@@ -1,25 +1,46 @@
-import Link from 'next/link';
-import { ApolloProvider } from '@apollo/client';
 import { AppProps } from 'next/app';
-import './styles.css'
+import 'react-toastify/dist/ReactToastify.css';
+import './styles.css';
+import { ApolloProvider } from '@apollo/client';
 import client from '../apollo-client';
+import { Provider } from 'next-auth/client';
+import SiteLayout from '../components/SiteLayout';
+import { PageTransition } from 'next-page-transitions';
 
-function MyApp({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps: {session, ...pageProps} }: AppProps) {
   return <ApolloProvider client={client}>
-    <div className="min-h-screen flex flex-col w-100">
-      <nav className="text-white pl-10 bg-blue-700">
-        <Link href="/">LO Tracker</Link>
-      </nav>
-      <main
-        style={{
-          maxWidth: 960,
-          padding: `0.5rem 1.0875rem 1.45rem`
-        }}
-        className="mx-auto flex-grow w-screen">
-        <Component {...pageProps} />
-      </main>
-      <footer className="mx-auto py-3">Footer</footer>
-    </div>
+    <Provider session={session}>
+      <SiteLayout>
+        <PageTransition
+          timeout={160}
+          classNames="page-transition"
+          loadingComponent={<p>Loading...</p>}
+          loadingDelay={200}
+          loadingTimeout={{
+            enter: 160,
+            exit: 0,
+          }}
+          loadingClassNames="loading-indicator">
+            <Component {...pageProps} />
+        </PageTransition>
+        <style jsx global>{`
+          .page-transition-enter {
+            opacity: 0;
+          }
+          .page-transition-enter-active {
+            opacity: 1;
+            transition: opacity 300ms;
+          }
+          .page-transition-exit {
+            opacity: 1;
+          }
+          .page-transition-exit-active {
+            opacity: 0;
+            transition: opacity 300ms;
+          }
+        `}</style>
+      </SiteLayout>
+    </Provider>
   </ApolloProvider>;
 }
 

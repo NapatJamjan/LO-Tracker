@@ -1,7 +1,8 @@
 package main
 
 import (
-	_ "context"
+	"context"
+	"log"
 	"os"
 
 	_ "lo-tracker/apps/api/auth"
@@ -13,17 +14,27 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
 )
 
-func main() {
+func init() {
 	viper.SetConfigFile("../../.env")
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}
 	os.Setenv("DATABASE_URL", viper.GetString("DATABASE_URL"))
+}
 
+var rdb *redis.Client
+
+func init() {
+	rdb = redis.NewClient(&redis.Options{
+		Addr: viper.GetString("REDIS_URL"),
+	})
+}
+
+func main() {
 	client := db.NewClient()
 	if err := client.Prisma.Connect(); err != nil {
 		panic(err)
@@ -35,12 +46,10 @@ func main() {
 		}
 	}()
 
-	// rdb := redis.NewClient(&redis.Options{
-	// 	Addr:     viper.GetString("REDIS_URL"),
-	// 	Password: "",
-	// 	DB:       0,
-	// })
-	// ctx := context.Background()
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Println(err)
+	}
 
 	r := gin.Default()
 	r.Use(cors.Default())
