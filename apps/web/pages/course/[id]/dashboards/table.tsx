@@ -56,13 +56,11 @@ export function ScoreTablePLO() {
     calculatePLO()
   }, [dashboardFlat]) //probably work
 
-
   function calculatePLO() {
     let score = dashboardFlat;
     let plolink = dashboardPLO;
     const std = []; // score index will be based on student in this response
     const stdname = []; // name for the table
-    //object entries can be replaced by foreach now
     score.students.forEach((v, k) => {
       std.push(k); stdname.push(v);
     })
@@ -238,7 +236,7 @@ export function ScoreTablePLO() {
       <ExportOutcome2 datas={tableData} head={tableHead}/>
       <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
-      <div style={{display:"inline"}}>
+      <div style={{display: "inline"}}>
         <select value={dataType} onChange={handleDataType} className="border rounded-md border-2 ">
           <option value="PLO">PLO</option>
           <option value="LO">LO</option>
@@ -262,7 +260,7 @@ export function ScoreTablePLO() {
             <tr>
               <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
               <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
-              {data.scores.map(scores => ( // map score of this student's id
+              {data.scores.map(scores => (
                 <td>{scores}</td>
               ))}
             </tr>
