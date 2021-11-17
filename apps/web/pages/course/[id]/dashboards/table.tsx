@@ -77,13 +77,11 @@ export function ScoreTablePLO() {
         loData.push({name: v, id: k});
       }
     })
-    console.log("pre", loData.slice())
     loData.sort((a: any, b: any) => {
       if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
       if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
       return 0;
     })
-    console.log("post", loData.slice())
     ploData.sort((a: any, b: any) => {
       if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
       if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
@@ -122,7 +120,6 @@ export function ScoreTablePLO() {
         loScoreC[i].push(Array.from({length: loArr[j].length}, () => 0));
       }
     }
-    console.log(questions) // lo seem to calculate error when the order got changed, loArr is wrong /////
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loData.indexOf(loData.find(e => e.id == questions[i].linkedLOs[k].split(',')[0]))
@@ -259,28 +256,29 @@ export function ScoreTablePLO() {
           </select>
         </div>
       </div>
-      <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
-        <thead>
-          <tr>
-            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-          </tr>
-        </thead>
-        <tbody>
-          {tableData.map(data => (
+      <TableScrollDiv>
+        <TableScrollable striped bordered hover className="table" style={{ margin: 0}}>
+          <thead>
             <tr>
-              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
-              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
-              {data.scores.map(scores => (
-                <td>{scores}</td>
-              ))}
+              {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {tableData.map(data => (
+              <tr>
+                <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+                <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+                {data.scores.map(scores => (
+                  <td>{scores}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </TableScrollable>
+      </TableScrollDiv>
     </div>
   )
 }
-
 
 export function ScoreTable() {
   const courseID = router.query.id as string;
@@ -338,24 +336,26 @@ export function ScoreTable() {
           <option value="all">Student Scores</option>
         </select>
       </div>
-    <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>
-      <thead>
-        <tr>
-          {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-        </tr>
-      </thead>
-      <tbody>
-        {tableData.map(data => (
+    <TableScrollDiv>
+      <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
+        <thead>
           <tr>
-            <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
-            <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
-            {data.scores.map(scores => (
-              <td>{scores}</td>
-            ))}
+            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
           </tr>
-        ))}
-      </tbody>
-    </Table>
+        </thead>
+        <tbody>
+          {tableData.map(data => (
+            <tr>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+              {data.scores.map(scores => (
+                <td>{scores}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </TableScrollable>
+    </TableScrollDiv>
   </div>
 }
 
@@ -363,3 +363,13 @@ const LinkedCol = styled(Link)`
   text-decoration:none;
   color:black;
 `;
+
+export const TableScrollDiv = styled.div`
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 60%;
+  transform: rotateX(180deg);
+`
+export const TableScrollable = styled(Table)`
+  transform: rotateX(180deg);
+`

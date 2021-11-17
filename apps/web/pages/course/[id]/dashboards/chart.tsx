@@ -754,7 +754,7 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
       // dataset.push({name:"61130501001",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
       //chart area
       let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
-      let boxH = dataset.length * 50 - dimensions.margin.bottom - dimensions.margin.top
+      let boxH = dataset.length * 60 - dimensions.margin.bottom - dimensions.margin.top
       svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
         .style("background-color", "transparent")
       svgElement.append('text')
@@ -876,7 +876,7 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
 
   return <div /*style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}*/>
     <div>
-      <svg ref={ref} style={{"height": datas.length * 50}}>
+      <svg ref={ref} style={{"height": datas.length * 60}}>
       </svg>
       <Tooltip id='tooltip'>
         <div className='name'></div>

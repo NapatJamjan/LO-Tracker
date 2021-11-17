@@ -4,7 +4,8 @@ import router, { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import ClientOnly from '../../../../../components/ClientOnly';
-import { ChartBarCompare } from './stdchart';
+import { TableScrollable, TableScrollDiv } from '../table';
+import { ChartBarCompare, ChartPie } from './stdchart';
 
 // path => /course/[id]/dashboards/[studentID]/stdtable
 export default function Index() {
@@ -91,21 +92,30 @@ export function IndividualPLO(props: { studentID: string }) {
       return 0;
     })
 
+    score.los.forEach((v, k) => { // make loArr
+      if(k.split(',').length === 1){ loArr.push([]) }
+    })
+
     let lotemp = 0;
-    // for (var key in score.los) { // create lo lvl scoring
-    score.los.forEach((v, k) => {
-      let temp = k.split(',')
+    let temp = []
+    let tempprev = "";
+    score.los.forEach((v, k) => {  // create lo lvl scoring
+      temp = k.split(',')
       if (temp.length === 1){
-        if (lotemp!=0) {
-          loArr.push(Array.from({length: lotemp}, () => 0));
+        if (lotemp!=0) { // end current lo
+          let loidx = loData.indexOf(loData.find(e => e.id == tempprev))
+          loArr[loidx] = Array.from({length: lotemp}, () => 0);
           lotemp = 0;
         }
       }else{ 
-        if(lotemp < parseInt(temp[1])) { lotemp += parseInt(temp[1])-lotemp }
+        // if(lotemp < parseInt(temp[1])) { lotemp += parseInt(temp[1])-lotemp; } // broke if level is like 1 2 9
+        lotemp += 1;
+        tempprev = temp[0]
       }
     })
-    if (lotemp!=0) {
-      loArr.push(Array.from({length: lotemp}, () => 0))
+    if (lotemp!=0) { // end when loop stopped
+      let loidx = loData.indexOf(loData.find(e => e.id == temp[0]))
+      loArr[loidx] = Array.from({length: lotemp}, () => 0)
       lotemp = 0;
     } // end lvl scoring creation
  
@@ -273,7 +283,7 @@ export function IndividualPLO(props: { studentID: string }) {
   }, [compareID])
 
   return (
-    <div>
+    <div >
       <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
       <br/>
       <div style={{display:"inline-block"}}>
@@ -289,25 +299,28 @@ export function IndividualPLO(props: { studentID: string }) {
         ))}
         </select>
       </div>
-      <br />
-      <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
-        <thead>
-          <tr>
-            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-          </tr>
-        </thead>
-        <tbody>
-          {tableData.map(data => (
+      <br/>
+      <TableScrollDiv>
+        <TableScrollable striped bordered className="table" style={{ margin: 0 }} >
+          <thead>
             <tr>
-              <td>{data.studentID}</td>
-              <td>{data.studentName}</td>
-              {data.scores.map(scores => ( // map score of this student's id 
-                <td>{scores}</td>
-              ))}
+              {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {tableData.map(data => (
+              <tr>
+                <td>{data.studentID}</td>
+                <td>{data.studentName}</td>
+                {data.scores.map(scores => ( // map score of this student's id 
+                  <td>{scores}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </TableScrollable>
+      </TableScrollDiv>
+      <ChartPie stdData={tableData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
     </div>
   )
 }
@@ -379,7 +392,7 @@ export function IndividualQuiz (props: { studentID: string }) {
     }
   }, [compareID])
 
-  return <div>
+  return <div > 
     <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz" tableHead={tableHead.slice(2)}/><br/>
     <span>Compare to</span>
       <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
@@ -389,24 +402,27 @@ export function IndividualQuiz (props: { studentID: string }) {
         ))}
         </select>
       <br/>
-    <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>
-      <thead>
-        <tr>
-          {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-        </tr>
-      </thead>
-      <tbody>
-        {tableData.map(data => (
+    <TableScrollDiv>
+      <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
+        <thead>
           <tr>
-            <td>{data.studentID}</td>
-            <td>{data.studentName}</td>
-            {data.scores.map(scores => ( // map score of this student's id
-              <td>{scores}</td>
-            ))}
+            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
           </tr>
-        ))}
-      </tbody>
-    </Table>
+        </thead>
+        <tbody>
+          {tableData.map(data => (
+            <tr>
+              <td>{data.studentID}</td>
+              <td>{data.studentName}</td>
+              {data.scores.map(scores => ( // map score of this student's id
+                <td>{scores}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </TableScrollable>
+    </TableScrollDiv>
+    <ChartPie stdData={tableData} scoreType="Quiz" tableHead={tableHead.slice(2)} />
   </div>
 }
 
