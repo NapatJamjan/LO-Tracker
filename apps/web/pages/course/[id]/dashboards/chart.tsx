@@ -18,15 +18,9 @@ export default function Index() {
       <title>Dashboard</title>
     </Head>
     <ClientOnly> 
-      <ChartPage/> 
+      {/* <ChartPage/>  */}
     </ClientOnly>
   </div>);
-};
-
-function ChartPage() {
-  const router = useRouter();
-  const {id: courseID} = router.query; // extract id from router.query and rename to courseID
-  return <div> Hello {courseID} </div>;
 };
 
 export function AllStudentChart(props: { data: studentResult[], chartType: string, scoreType: string, tableHead: string[] }) {
@@ -66,7 +60,7 @@ function AllChart(props: { data: studentResult[], scoreType: string, tableHead: 
         <span style={{ marginRight: 5 }}>Graph Type</span>
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="bar">Bar Chart</option>
-          <option value="bar2">Bar Scroll</option>
+          <option value="bar2">Bar Scrollable</option>
           <option value="barVerti">Bar Vertical</option>
         </select>
       </div>
@@ -544,7 +538,7 @@ export function ChartPieAverage(props: { data: studentResult[], scoreType: strin
 }
 
 
-//http://bl.ocks.org/cdagli/728e1f4509671b7de16d5f7f6bfee6f0 for actual scroll, hard tho
+//http://bl.ocks.org/cdagli/728e1f4509671b7de16d5f7f6bfee6f0 for scroll example
 
 export function ChartBarAllScroll(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
@@ -568,7 +562,7 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
   //Charting
   let dimensions = {
     w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+    margin:{ top: 50, bottom: 50, left: 50, right: 50 }
   }
   //boxW now in useEffect
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
@@ -671,9 +665,7 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
       //event
       function mOverMain(e: any, d: any) {
         tooltipMain.select('.name')
-          .html(
-            `<b>${d.name}</b> <br/> `
-          )
+          .html( `<b>${d.name}</b> <br/> `)
       }
       function mMoveMain(e: any, d: any) {
         let scrolls = document.getElementById("chartDiv").scrollLeft; // check scroll length
