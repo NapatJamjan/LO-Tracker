@@ -62,7 +62,7 @@ export function CourseSubMenu({courseID, selected}: {courseID: string, selected:
   const linkTo = (target: 'los' | 'quizzes' | 'students' | 'dashboards' | 'settings') => selected !== target?router.push(`/course/${courseID}/${target}`):null;
   return <p className="my-3 flex gap-x-3">
     <span className={`${buttonStyle} ${highlight('main')}`} onClick={() => selected !== 'main'?router.push(`/course/${courseID}`):null}>Courses</span>
-    <span className={`${buttonStyle} ${highlight('los')}`} onClick={() => linkTo('los')}>PLOs</span>
+    <span className={`${buttonStyle} ${highlight('los')}`} onClick={() => linkTo('los')}>LOs</span>
     <span className={`${buttonStyle} ${highlight('quizzes')}`} onClick={() => linkTo('quizzes')}>Quizzes</span>
     <span className={`${buttonStyle} ${highlight('students')}`} onClick={() => linkTo('students')}>Students</span>
     <span className={`${buttonStyle} ${highlight('dashboards')}`} onClick={() => linkTo('dashboards')}>Dashboards</span>
