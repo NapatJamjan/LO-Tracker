@@ -27,11 +27,13 @@ export function ProgramMainMenu({programID}: {programID: string}) {
   </p>;
 }
 
-export function ProgramSubMenu({programID, selected}: {programID: string, selected: 'courses' | 'plos' | 'settings'}) {
+export function ProgramSubMenu({programID, selected}: {programID: string, selected: 'courses' | 'plos' | 'dashboards' | 'settings'}) {
   return <p className="my-3">
     {selected === 'courses'? <span className="underline">Courses</span>: <Link href={`/program/${programID}/courses`}>Courses</Link>}
     <span className="mx-3"></span>
     {selected === 'plos'? <span className="underline">PLOs</span>: <Link href={`/program/${programID}/plos`}>PLOs</Link>}
+    <span className="mx-3"></span>
+    {selected === 'dashboards'? <span className="underline">Dashboards</span>: <Link href={`/program/${programID}/dashboards`}>Dashboards</Link>}
     <span className="mx-3"></span>
     {selected === 'settings'? <span className="underline">Settings</span>: <Link href={`/program/${programID}/settings`}>Settings</Link>}
   </p>;

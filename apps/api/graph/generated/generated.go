@@ -196,18 +196,21 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Course           func(childComplexity int, courseID string) int
-		Courses          func(childComplexity int, programID string) int
-		FlatSummary      func(childComplexity int, courseID string) int
-		Los              func(childComplexity int, courseID string) int
-		PloGroups        func(childComplexity int, programID string) int
-		PloSummary       func(childComplexity int, courseID string) int
-		Plos             func(childComplexity int, ploGroupID string) int
-		Program          func(childComplexity int, programID string) int
-		Programs         func(childComplexity int) int
-		QuizResults      func(childComplexity int, courseID string) int
-		Quizzes          func(childComplexity int, courseID string) int
-		StudentsInCourse func(childComplexity int, courseID string) int
+		Course            func(childComplexity int, courseID string) int
+		Courses           func(childComplexity int, programID string) int
+		FlatSummary       func(childComplexity int, courseID string) int
+		Los               func(childComplexity int, courseID string) int
+		PloGroups         func(childComplexity int, programID string) int
+		PloSummary        func(childComplexity int, courseID string) int
+		Plos              func(childComplexity int, ploGroupID string) int
+		Program           func(childComplexity int, programID string) int
+		Programs          func(childComplexity int) int
+		QuizResults       func(childComplexity int, courseID string) int
+		Quizzes           func(childComplexity int, courseID string) int
+		Student           func(childComplexity int, studentID string) int
+		Students          func(childComplexity int) int
+		StudentsInCourse  func(childComplexity int, courseID string) int
+		StudentsInProgram func(childComplexity int, programID string) int
 	}
 
 	Question struct {
@@ -289,6 +292,9 @@ type QueryResolver interface {
 	Program(ctx context.Context, programID string) (*model.Program, error)
 	PloGroups(ctx context.Context, programID string) ([]*model.PLOGroup, error)
 	Plos(ctx context.Context, ploGroupID string) ([]*model.Plo, error)
+	StudentsInProgram(ctx context.Context, programID string) ([]*model.User, error)
+	Students(ctx context.Context) ([]*model.User, error)
+	Student(ctx context.Context, studentID string) (*model.User, error)
 	Quizzes(ctx context.Context, courseID string) ([]*model.Quiz, error)
 }
 
@@ -1102,6 +1108,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Quizzes(childComplexity, args["courseID"].(string)), true
 
+	case "Query.student":
+		if e.complexity.Query.Student == nil {
+			break
+		}
+
+		args, err := ec.field_Query_student_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Student(childComplexity, args["studentID"].(string)), true
+
+	case "Query.students":
+		if e.complexity.Query.Students == nil {
+			break
+		}
+
+		return e.complexity.Query.Students(childComplexity), true
+
 	case "Query.studentsInCourse":
 		if e.complexity.Query.StudentsInCourse == nil {
 			break
@@ -1113,6 +1138,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.StudentsInCourse(childComplexity, args["courseID"].(string)), true
+
+	case "Query.studentsInProgram":
+		if e.complexity.Query.StudentsInProgram == nil {
+			break
+		}
+
+		args, err := ec.field_Query_studentsInProgram_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StudentsInProgram(childComplexity, args["programID"].(string)), true
 
 	case "Question.id":
 		if e.complexity.Question.ID == nil {
@@ -1485,6 +1522,9 @@ extend type Query {
   program(programID: ID!): Program!
   ploGroups(programID: ID!): [PLOGroup!]!
   plos(ploGroupID: ID!): [PLO!]!
+  studentsInProgram(programID: ID!): [User!]!
+  students: [User!]!
+  student(studentID: ID!): User!
 }
 
 input CreateProgramInput {
@@ -2283,6 +2323,21 @@ func (ec *executionContext) field_Query_quizzes_args(ctx context.Context, rawArg
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_student_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["studentID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("studentID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["studentID"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_studentsInCourse_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2295,6 +2350,21 @@ func (ec *executionContext) field_Query_studentsInCourse_args(ctx context.Contex
 		}
 	}
 	args["courseID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_studentsInProgram_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["programID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("programID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["programID"] = arg0
 	return args, nil
 }
 
@@ -5715,6 +5785,125 @@ func (ec *executionContext) _Query_plos(ctx context.Context, field graphql.Colle
 	res := resTmp.([]*model.Plo)
 	fc.Result = res
 	return ec.marshalNPLO2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐPloᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_studentsInProgram(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_studentsInProgram_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StudentsInProgram(rctx, args["programID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_students(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Students(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_student(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_student_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Student(rctx, args["studentID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_quizzes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9239,6 +9428,48 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "studentsInProgram":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_studentsInProgram(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "students":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_students(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "student":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_student(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "quizzes":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11145,6 +11376,10 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNUser2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {

@@ -212,3 +212,64 @@ func (r *queryResolver) Plos(ctx context.Context, ploGroupID string) ([]*model.P
 	}
 	return plos, nil
 }
+
+func (r *queryResolver) StudentsInProgram(ctx context.Context, programID string) ([]*model.User, error) {
+	allStudents, err := r.Client.User.FindMany(
+		db.User.Student.Where(
+			db.Student.QuestionResults.Some(
+				db.QuestionResult.Question.Where(
+					db.Question.Quiz.Where(
+						db.Quiz.Course.Where(
+							db.Course.ProgramID.Equals(programID),
+						),
+					),
+				),
+			),
+		),
+	).Exec(ctx)
+	if err != nil {
+		return []*model.User{}, err
+	}
+	students := []*model.User{}
+	for _, student := range allStudents {
+		students = append(students, &model.User{
+			ID:      student.ID,
+			Email:   student.Email,
+			Name:    student.Name,
+			Surname: student.Surname,
+		})
+	}
+	return students, nil
+}
+
+func (r *queryResolver) Students(ctx context.Context) ([]*model.User, error) {
+	allStudents, err := r.Client.Student.FindMany().With(db.Student.User.Fetch()).Exec(ctx)
+	if err != nil {
+		return []*model.User{}, err
+	}
+	students := []*model.User{}
+	for _, student := range allStudents {
+		students = append(students, &model.User{
+			ID:      student.User().ID,
+			Email:   student.User().Email,
+			Name:    student.User().Name,
+			Surname: student.User().Surname,
+		})
+	}
+	return students, nil
+}
+
+func (r *queryResolver) Student(ctx context.Context, studentID string) (*model.User, error) {
+	student, err := r.Client.Student.FindUnique(
+		db.Student.ID.Equals(studentID),
+	).With(db.Student.User.Fetch()).Exec(ctx)
+	if err != nil {
+		return &model.User{}, err
+	}
+	return &model.User{
+		ID:      student.User().ID,
+		Email:   student.User().Email,
+		Name:    student.User().Name,
+		Surname: student.User().Surname,
+	}, nil
+}

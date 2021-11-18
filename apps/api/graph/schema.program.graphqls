@@ -21,6 +21,9 @@ extend type Query {
   program(programID: ID!): Program!
   ploGroups(programID: ID!): [PLOGroup!]!
   plos(ploGroupID: ID!): [PLO!]!
+  studentsInProgram(programID: ID!): [User!]!
+  students: [User!]!
+  student(studentID: ID!): User!
 }
 
 input CreateProgramInput {
