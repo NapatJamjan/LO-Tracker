@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useSession } from 'next-auth/client';
 import { useState, useEffect } from 'react';
 import router from 'next/router';
+import { ToastContainer, toast } from 'react-toastify';
 
 export default function Page() {
   const [submitting, setSubmitting] = useState<boolean>(false)
@@ -14,17 +15,26 @@ export default function Page() {
   if (loading || session) {
     return null;
   }
-  return <form onSubmit={handleSubmit((form) => {
-      if (submitting) return;
-      setSubmitting(true);
-      signIn("credentials", form).finally(() => setSubmitting(false));
-    })}>
-    <span>Username</span>
-    <br />
-    <input {...register('username', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
-    <span>Password</span>
-    <br />
-    <input type="password" {...register('username', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
-    <input type="submit" value="sign in" className={`py-2 px-4 bg-gray-900 hover:bg-gray-800 text-white rounded-lg ${submitting?'disabled:opacity-50':''}`}/>
-  </form>;
+  return <div className="flex justify-center" style={{paddingTop: '30vh'}}>
+    <ToastContainer/>
+    <form onSubmit={handleSubmit((form) => {
+        if (form.username === '') {
+          toast('Please complete the form', { type: 'info' });
+          return;
+        }
+        if (submitting) return;
+        setSubmitting(true);
+        signIn("credentials", form).catch(err => toast(`Error: ${JSON.stringify(err)}`, { type: 'error' })).finally(() => setSubmitting(false));
+      })} className="flex flex-column items-center gap-y-4">
+      <div>
+        <span>Username</span><br/>
+        <input {...register('username', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+      </div>
+      <div>
+        <span>Password</span><br/>
+        <input type="password" {...register('password', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+      </div>
+      <input type="submit" value="sign in" className={`py-1 px-3 bg-gray-900 hover:bg-gray-600 text-white rounded-lg ${submitting?'disabled:opacity-50':''}`}/>
+    </form>
+  </div>;
 }
