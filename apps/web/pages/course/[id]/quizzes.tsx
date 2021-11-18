@@ -134,7 +134,7 @@ function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[],
       .questions.filter((question) => question.id === selectedQuestionID)[0].loLinks;
   }
   const removeQuestionLink = (loID: string, level: number) => {
-    if (submitting) return;
+    if (!confirm('Delete this mapping?') ||submitting) return;
     deleteQuestionLink({
       variables: {
         input: {
@@ -143,10 +143,10 @@ function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[],
           level
         }
       }
-    }).then(() => router.replace(router.asPath));
+    }).finally(() => router.replace(router.asPath));
   };
   const removeQuiz = (id: string) => {
-    if (deleting) return;
+    if (!confirm('Delete this quiz?') ||deleting) return;
     deleteQuiz({
       variables: {id}
     }).then(() => {

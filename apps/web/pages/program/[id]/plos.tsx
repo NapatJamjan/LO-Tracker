@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import xlsx from 'xlsx';
 import { useRouter } from 'next/router';
+import { ToastContainer, toast } from 'react-toastify';
 
 interface CreatePLOGroupResponse {
   id: string;
@@ -80,6 +81,7 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
     <ProgramMainMenu programID={programID} />
     <ProgramSubMenu programID={programID} selected={'plos'}/>
     <PLOs/>
+    <ToastContainer/>
   </PLOContext.Provider>;
 };
 
@@ -160,8 +162,12 @@ function CreatePLOGroupForm() {
 
 const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
   if (ploGroupID === '') return <p></p>;
-  const { removePLO } = useContext(PLOContext);
+  const { removePLO, submitting } = useContext(PLOContext);
   const { data, loading, refetch } = useQuery<{plos: PLOModel[]}, {ploGroupID: string}>(GET_PLOS, { variables: { ploGroupID } });
+  const deletePLO = (ploID: string) => {
+    if (!confirm('Are you sure?') || submitting) return;
+    removePLO(ploID).then(() => toast('Deleted successfully', {type: 'success', delay: 800, hideProgressBar: true})).finally(() => refetch());
+  }
   if (loading) return <p>Loading...</p>;
   return <div>
     <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>
@@ -170,7 +176,7 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
         <p className="text-xl text-bold">
           <span>{plo.title}</span>
           <EditPLOForm ploID={plo.id} initTitle={plo.title} initDesc={plo.description} callback={refetch}/>
-          <span className="text-sm cursor-pointer underline text-red-500" onClick={() => removePLO(plo.id).then(() => refetch())}>delete</span>
+          <span className="text-sm cursor-pointer underline text-red-500" onClick={() => deletePLO(plo.id)}>delete</span>
         </p>
         <span className="m-0">{plo.description}</span>
       </div>

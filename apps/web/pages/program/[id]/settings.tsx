@@ -3,10 +3,10 @@ import client from '../../../apollo-client';
 import { gql, useMutation } from '@apollo/client';
 import { GetServerSideProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
-import { KnownProgramMainMenu, ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
+import { KnownProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
 
 interface ProgramModel {
   id: string;
@@ -30,15 +30,17 @@ export default ({program}: {program: ProgramModel}) => {
   });
   const saveProgram = (form: EditProgramModel) => {
     if (submitting) return;
+    if (form.name === program.name && form.description === program.description) {
+      toast('No data changed', {type: 'info', delay: 800, hideProgressBar: true});
+      return;
+    }
     editProgram({
       variables: {
         id: program.id,
         input: form
       }
-    }).then(() => {
-      alert('updated');
-      router.replace(router.asPath);
-    });
+    }).then(() => toast('Data updated!', {type: 'success'}))
+    .finally(() => router.replace(router.asPath));
   };
   return <div>
     <Head>
@@ -58,6 +60,7 @@ export default ({program}: {program: ProgramModel}) => {
       <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
     </div>
     </form>
+    <ToastContainer/>
   </div>;
 };
 

@@ -87,16 +87,16 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
   const [deleteLOLink, {loading: submitting}] = useMutation<{deleteLOLink: DeleteLOLinkResponse}, {loID: string, ploID: string}>(DELETE_LOLINK);
   const [selectedLOID, setSelectedLOID] = useState<string>('');
   const deleteLinkedPLO = (ploID: string) => {
-    if (submitting) return;
+    if (!confirm('Delete this mapping?') || submitting) return;
     deleteLOLink({
       variables: {
         loID: selectedLOID,
         ploID
       }
-    }).then(() => router.replace(router.asPath));
+    }).finally(() => router.replace(router.asPath));
   };
   const removeLO = (id: string) => {
-    if (deleting) return;
+    if (!confirm('Delete this LO (include sub LO levels)?') ||deleting) return;
     deleteLO({
       variables: { id }
     }).then(() => {
