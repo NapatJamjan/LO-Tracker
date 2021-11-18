@@ -62,13 +62,15 @@ func SetAuthRouter(r *gin.RouterGroup, rdb *redis.Client, ctx context.Context) {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "to create refresh failed"})
 		}
-		if err := rdb.Set(ctx, accessUUID, loginForm.UserID, access_lifetime).Err(); err != nil {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "to save access failed"})
-			return
-		}
-		if err := rdb.Set(ctx, refreshUUID, loginForm.UserID, refresh_lifetime).Err(); err != nil {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "to save refresh failed"})
-			return
+		if rdb != nil {
+			if err := rdb.Set(ctx, accessUUID, loginForm.UserID, access_lifetime).Err(); err != nil {
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "to save access failed"})
+				return
+			}
+			if err := rdb.Set(ctx, refreshUUID, loginForm.UserID, refresh_lifetime).Err(); err != nil {
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "to save refresh failed"})
+				return
+			}
 		}
 		c.JSON(http.StatusOK, map[string]interface{}{
 			"access_token":  accessToken,

@@ -1,6 +1,14 @@
 import NextAuth from 'next-auth';
 import Providers from 'next-auth/providers';
 
+interface TokenFormat {
+  username: string;
+  access_token: string;
+  refresh_token: string;
+  access_exp: number;
+  refresh_exp: number;
+}
+
 export default NextAuth({
   providers: [
     Providers.Credentials({
@@ -10,8 +18,17 @@ export default NextAuth({
         password: { label: "password", type: "password", placeholder: "password" },
       },
       async authorize(credentials) {
+        const response: TokenFormat = await fetch('http://localhost:8080/auth/login', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({userid: credentials.username, password: credentials.password}),
+        }).then(res => res.json());
         return {
-          name: credentials.username
+          ...response,
+          username: credentials.username
         }
       }
     })
@@ -27,25 +44,22 @@ export default NextAuth({
       else if (url.startsWith("/")) return new URL(url, baseUrl).toString();
       return baseUrl;
     },
-    async jwt(token, user, account) {
-      if (account && user) {
+    async jwt(token, user) {
+      if (user) {
         return {
-          accessToken: 'access',
-          refreshToken: 'refresh',
-          accessExpire: 0,
-          refreshExpire: 0,
-          username: user.name,
+          accessToken: user.access_token,
+          refreshToken: user.refresh_token,
+          accessExpire: user.refresh_exp,
+          refreshExpire: user.refresh_exp,
+          username: user.username,
         }
       }
       return token;
     },
     async session(session, token) {
-      return {
-        user: {
-          name: token.username as string
-        },
-        error: null
-      };
+      session.user.name = token.username as string;
+      session.error = null;
+      return session
     }
   }
 });

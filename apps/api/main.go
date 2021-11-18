@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	_ "lo-tracker/apps/api/auth"
+	"lo-tracker/apps/api/auth"
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph"
 	"lo-tracker/apps/api/graph/generated"
@@ -58,7 +58,11 @@ func main() {
 			playground.Handler("GraphQL playground", "/query").ServeHTTP(c.Writer, c.Request)
 		}
 	}())
-	//auth.SetAuthRouter(r.Group("/auth"), rdb, ctx)
+	ctx := context.Background()
+	if _, err := rdb.Ping(ctx).Result(); err != nil {
+		rdb = nil
+	}
+	auth.SetAuthRouter(r.Group("/auth"), rdb, ctx)
 	r.POST("/query" /**auth.GetMiddleware(rdb, ctx),*/, func(c *gin.Context) {
 		handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}})).ServeHTTP(c.Writer, c.Request)
 	})
