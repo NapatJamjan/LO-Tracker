@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import router from 'next/router';
 import { CourseNameLink, ProgramNameLink } from './ConvertIDName';
 
 function MainMenuWithOnlyProgram({programID}: {programID: string}) {
@@ -28,14 +29,14 @@ export function ProgramMainMenu({programID}: {programID: string}) {
 }
 
 export function ProgramSubMenu({programID, selected}: {programID: string, selected: 'courses' | 'plos' | 'dashboards' | 'settings'}) {
-  return <p className="my-3">
-    {selected === 'courses'? <span className="underline">Courses</span>: <Link href={`/program/${programID}/courses`}>Courses</Link>}
-    <span className="mx-3"></span>
-    {selected === 'plos'? <span className="underline">PLOs</span>: <Link href={`/program/${programID}/plos`}>PLOs</Link>}
-    <span className="mx-3"></span>
-    {selected === 'dashboards'? <span className="underline">Dashboards</span>: <Link href={`/program/${programID}/dashboards`}>Dashboards</Link>}
-    <span className="mx-3"></span>
-    {selected === 'settings'? <span className="underline">Settings</span>: <Link href={`/program/${programID}/settings`}>Settings</Link>}
+  const buttonStyle = "cursor-pointer inline-block py-1 px-2 rounded-md border-1 border-transparent hover:border-black";
+  const highlight = (highlightTarget: 'courses' | 'plos' | 'dashboards' | 'settings') => selected === highlightTarget?'text-white bg-black':'';
+  const linkTo = (target: 'courses' | 'plos' | 'dashboards' | 'settings') => selected !== target?router.push(`/program/${programID}/${target}`):null;
+  return <p className="my-3 flex gap-x-3">
+    <span className={`${buttonStyle} ${highlight('courses')}`} onClick={() => linkTo('courses')}>Courses</span>
+    <span className={`${buttonStyle} ${highlight('plos')}`} onClick={() => linkTo('plos')}>PLOs</span>
+    <span className={`${buttonStyle} ${highlight('dashboards')}`} onClick={() => linkTo('dashboards')}>Dashboards</span>
+    <span className={`${buttonStyle} ${highlight('settings')}`} onClick={() => linkTo('settings')}>Settings</span>
   </p>;
 }
 
@@ -56,18 +57,15 @@ export function KnownCourseMainMenu({programID, courseID, courseName}: {programI
 }
 
 export function CourseSubMenu({courseID, selected}: {courseID: string, selected: 'main' | 'los' | 'quizzes' | 'students' | 'dashboards' | 'settings'}) {
-  return <p className="my-3">
-    {selected === 'main'? <span className="underline">Home</span>: <Link href={`/course/${courseID}`}>Home</Link>}
-    <span className="mx-3"></span>
-    {selected === 'los'? <span className="underline">LOs</span>: <Link href={`/course/${courseID}/los`}>LOs</Link>}
-    <span className="mx-3"></span>
-    {selected === 'quizzes'? <span className="underline">Quizzes</span>: <Link href={`/course/${courseID}/quizzes`}>Quizzes</Link>}
-    <span className="mx-3"></span>
-    {selected === 'students'? <span className="underline">Students</span>: <Link href={`/course/${courseID}/students`}>Students</Link>}
-    <span className="mx-3"></span>
-    {selected === 'dashboards'? <span className="underline">Dashboards</span>: <Link href={`/course/${courseID}/dashboards`}>Dashboards</Link>}
-    <span className="mx-3"></span>
-    {selected === 'settings'? <span className="underline">Settings</span>: <Link href={`/course/${courseID}/settings`}>Settings</Link>}
-    <span className="mx-3"></span>
+  const buttonStyle = "cursor-pointer inline-block py-1 px-2 rounded-md border-1 border-transparent hover:border-black";
+  const highlight = (highlightTarget: 'main' | 'los' | 'quizzes' | 'students' | 'dashboards' | 'settings') => selected === highlightTarget?'text-white bg-black':'';
+  const linkTo = (target: 'los' | 'quizzes' | 'students' | 'dashboards' | 'settings') => selected !== target?router.push(`/course/${courseID}/${target}`):null;
+  return <p className="my-3 flex gap-x-3">
+    <span className={`${buttonStyle} ${highlight('main')}`} onClick={() => selected !== 'main'?router.push(`/course/${courseID}`):null}>Courses</span>
+    <span className={`${buttonStyle} ${highlight('los')}`} onClick={() => linkTo('los')}>PLOs</span>
+    <span className={`${buttonStyle} ${highlight('quizzes')}`} onClick={() => linkTo('quizzes')}>Quizzes</span>
+    <span className={`${buttonStyle} ${highlight('students')}`} onClick={() => linkTo('students')}>Students</span>
+    <span className={`${buttonStyle} ${highlight('dashboards')}`} onClick={() => linkTo('dashboards')}>Dashboards</span>
+    <span className={`${buttonStyle} ${highlight('settings')}`} onClick={() => linkTo('settings')}>Settings</span>
   </p>;
 }
