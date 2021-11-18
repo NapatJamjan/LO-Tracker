@@ -414,7 +414,7 @@ export function IndividualQuiz (props: { studentID: string }) {
             <tr>
               <td>{data.studentID}</td>
               <td>{data.studentName}</td>
-              {data.scores.map(scores => ( // map score of this student's id
+              {data.scores.map(scores => (
                 <td>{scores}</td>
               ))}
             </tr>
@@ -428,7 +428,6 @@ export function IndividualQuiz (props: { studentID: string }) {
 
 export function InfoPage(props: { studentID: string }){
   const courseID = router.query.id as string;
-  // const [dashboardPLO] = useDashboardPLOSummary(courseID);
   return <div>
     <br/>
     <h1>Information Page</h1>

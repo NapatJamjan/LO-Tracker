@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../components/ClientOnly';
-import ProgramAnchor from '../../../../components/ProgramAnchor';
+import ProgramNameLink from '../../../../components/ProgramAnchor';
 import { ScoreTable, ScoreTablePLO } from './table';
 
 // path => /course/[id]/dashboards
@@ -67,7 +67,7 @@ function NavHistory({courseID}: {courseID: string}) {
     {' '}&#12297;{' '}
     <Link href="/programs">Programs</Link>
     {' '}&#12297;{' '}
-    <ProgramAnchor programID={data.course.programID} href={`/program/${data.course.programID}/courses`}/>
+    <ProgramNameLink programID={data.course.programID} href={`/program/${data.course.programID}/courses`}/>
     {' '}&#12297;{' '}
     <Link href={`/course/${data.course.id}`}>{data.course.name}</Link>
     {' '}&#12297;{' '}
