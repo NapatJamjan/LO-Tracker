@@ -221,6 +221,124 @@ export function ChartBarCompare(props: { data: studentResult[], stdData: student
   )
 }
 
+export function ChartPie(props: { stdData: studentResult[], scoreType: string, tableHead: string[] }) {
+  const ref = useRef();
+  const scoreType = props.scoreType;
+  const tableHead = props.tableHead;
+  const scoreDomain = [];
+  let totalScore = 0;
+  //Scoring
+  interface averageScore { name: string, score: number }
+  let datas = props.stdData; let dataLength = 0;
+  let dataScore: averageScore[] = [];
+  let ltemp = 0;
+  if(datas.length != 0){
+    let scores = datas[0].scores;
+    for (var j in datas[0].scores) { ltemp +=1; } 
+    if(ltemp > dataLength) { dataLength = ltemp;}
+    for (let i = 0; i < scores.length; i++) {
+      dataScore.push({ name: tableHead[i], score: scores[i] as number });
+      totalScore += scores[i] as number
+      scoreDomain.push(tableHead[i])
+    }
+  }
+  
+
+  //Charting
+  let dimensions = {
+    w: 600, h: 300,
+    margin:{ top: 30, bottom: 50, left: 50, right: 50 }
+  }
+  let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
+  let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
+  var radius = Math.min(dimensions.w, dimensions.h) / 2 - dimensions.margin.top
+
+  useEffect(() => {
+    if (dataScore.length != 0) {
+      d3.selectAll("svg2 > *").remove();
+      const svgElement = d3.select(ref.current)
+      let dataset = dataScore;
+      //chart area
+      svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
+        .style("background-color", "transparent")
+      svgElement.append('text')
+        .attr('x', dimensions.w / 2).attr('y', 60)
+        .style('text-anchor', 'middle').style('font-size', 16)
+        .text(`Graph of ${scoreType} Score Ratio`)
+      const box = svgElement.append('g')
+        .attr('transform', `translate(${dimensions.margin.left+250}, ${dimensions.margin.top+150})`)
+
+      //scale
+      const color = d3.scaleOrdinal<any>()
+        .domain(scoreDomain)
+        .range(d3.schemeDark2);
+
+      const pie = d3.pie<averageScore>()
+        .value(function(d) {return d.score; })
+      const data_ready = pie(dataset)
+      
+      const arc = d3.arc<any>()
+        .innerRadius(radius * 0.4)        
+        .outerRadius(radius * 0.8)
+      const outerArc = d3.arc<any>()
+        .innerRadius(radius * 0.9)
+        .outerRadius(radius * 0.9)
+      
+      box.selectAll('allSlices')
+        .data(data_ready)
+        .enter()
+        .append('path')
+        .attr('d', arc)
+        .attr('fill', function(d) { return(color(d.data.name)) })
+        .attr("stroke", "white")
+        .style("stroke-width", "2px")
+        .style("opacity", 0.8)
+
+      box.selectAll('allPolylines')
+        .data(data_ready)
+        .enter()
+        .append('polyline')
+          .attr("stroke", "black")
+          .style("fill", "none")
+          .attr("stroke-width", 1)
+          .attr('points', function(d) {
+            const posA: any = arc.centroid(d)
+            const posB: any = outerArc.centroid(d)
+            const posC: any = outerArc.centroid(d);
+            const midangle: any = d.startAngle + (d.endAngle - d.startAngle) / 2 
+            posC[0] = radius * 0.95 * (midangle < Math.PI ? 1 : -1);
+            return [posA, posB, posC] as any
+          })
+
+        box.selectAll('allLabels')
+          .data(data_ready)
+          .enter()
+          .append('text') // score/total for %
+            .text( function(d) { return `${d.data.name} (${((d.data.score*100/totalScore)).toFixed(0)} %)` } )
+            .attr('transform', function(d) {
+              var pos = outerArc.centroid(d);
+              var midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+              pos[0] = radius * 0.99 * (midangle < Math.PI ? 1 : -1);
+              return 'translate(' + pos + ')';
+            })
+            .style('text-anchor', function(d) {
+              var midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+              return (midangle < Math.PI ? 'start' : 'end')
+            })
+            
+    }
+  }, [dataScore])
+
+  return <div>
+    <svg ref={ref} id="svg2">
+    </svg>
+    <Tooltip id='tooltip2'>
+      <div className='name'></div>
+      <div className='score'></div>
+    </Tooltip>
+  </div>
+}
+
 const Tooltip = styled.div`
   border: 1px solid #ccc;
   position: absolute;

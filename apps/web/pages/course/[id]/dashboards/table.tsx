@@ -56,13 +56,11 @@ export function ScoreTablePLO() {
     calculatePLO()
   }, [dashboardFlat]) //probably work
 
-
   function calculatePLO() {
     let score = dashboardFlat;
     let plolink = dashboardPLO;
     const std = []; // score index will be based on student in this response
     const stdname = []; // name for the table
-    //object entries can be replaced by foreach now
     score.students.forEach((v, k) => {
       std.push(k); stdname.push(v);
     })
@@ -88,26 +86,33 @@ export function ScoreTablePLO() {
       if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
       if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
       return 0;
+    }) 
+    score.los.forEach((v, k) => { // make loArr
+      if(k.split(',').length === 1){ loArr.push([]) }
     })
-
     let lotemp = 0;
-    // for (var key in score.los) { // create lo lvl scoring
-    score.los.forEach((v, k) => {
-      let temp = k.split(',')
+    let temp = []
+    let tempprev = "";
+    score.los.forEach((v, k) => {  // create lo lvl scoring
+      temp = k.split(',')
       if (temp.length === 1){
-        if (lotemp!=0) {
-          loArr.push(Array.from({length: lotemp}, () => 0));
+        if (lotemp!=0) { // end current lo
+          let loidx = loData.indexOf(loData.find(e => e.id == tempprev))
+          loArr[loidx] = Array.from({length: lotemp}, () => 0);
           lotemp = 0;
         }
       }else{ 
-        if(lotemp < parseInt(temp[1])) { lotemp += parseInt(temp[1])-lotemp }
+        // if(lotemp < parseInt(temp[1])) { lotemp += parseInt(temp[1])-lotemp; } // broke if level is like 1 2 9
+        lotemp += 1;
+        tempprev = temp[0]
       }
     })
-    if (lotemp!=0) {
-      loArr.push(Array.from({length: lotemp}, () => 0))
+    if (lotemp!=0) { // end when loop stopped
+      let loidx = loData.indexOf(loData.find(e => e.id == temp[0]))
+      loArr[loidx] = Array.from({length: lotemp}, () => 0)
       lotemp = 0;
     } // end lvl scoring creation
- 
+
     for (var i in std) {
       loScore.push([]); loScoreC.push([]);
       for(var j in loArr) {
@@ -115,11 +120,11 @@ export function ScoreTablePLO() {
         loScoreC[i].push(Array.from({length: loArr[j].length}, () => 0));
       }
     }
-    
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loData.indexOf(loData.find(e => e.id == questions[i].linkedLOs[k].split(',')[0]))
         let lvlidx = parseInt(questions[i].linkedLOs[k].split(',')[1])-1;
+        // console.log("hh", loidx, lvlidx)
         // index of level, all combined will be [student][lo][level]
         for (let j = 0; j < questions[i].results.length; j++) { // might have to loop after link check
           let currentScore = 0;
@@ -132,7 +137,7 @@ export function ScoreTablePLO() {
           if(stdidx != -1){
             if(loScore[stdidx][loidx][lvlidx] != null){
             loScore[stdidx][loidx][lvlidx] += currentScore;
-            loScoreC[stdidx][loidx][lvlidx] += 1;
+            loScoreC[stdidx][loidx][lvlidx] += 1;        
             }
           }
         }
@@ -238,7 +243,7 @@ export function ScoreTablePLO() {
       <ExportOutcome2 datas={tableData} head={tableHead}/>
       <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
-      <div style={{display:"inline"}}>
+      <div style={{display: "inline"}}>
         <select value={dataType} onChange={handleDataType} className="border rounded-md border-2 ">
           <option value="PLO">PLO</option>
           <option value="LO">LO</option>
@@ -251,28 +256,29 @@ export function ScoreTablePLO() {
           </select>
         </div>
       </div>
-      <Table striped bordered hover className="table" style={{margin: 0, width: "60%"}}>
-        <thead>
-          <tr>
-            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-          </tr>
-        </thead>
-        <tbody>
-          {tableData.map(data => (
+      <TableScrollDiv>
+        <TableScrollable striped bordered hover className="table" style={{ margin: 0}}>
+          <thead>
             <tr>
-              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
-              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
-              {data.scores.map(scores => ( // map score of this student's id
-                <td>{scores}</td>
-              ))}
+              {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {tableData.map(data => (
+              <tr>
+                <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+                <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+                {data.scores.map(scores => (
+                  <td>{scores}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </TableScrollable>
+      </TableScrollDiv>
     </div>
   )
 }
-
 
 export function ScoreTable() {
   const courseID = router.query.id as string;
@@ -330,24 +336,26 @@ export function ScoreTable() {
           <option value="all">Student Scores</option>
         </select>
       </div>
-    <Table striped bordered hover className="table" style={{ margin: 0, width: "60%" }}>
-      <thead>
-        <tr>
-          {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-        </tr>
-      </thead>
-      <tbody>
-        {tableData.map(data => (
+    <TableScrollDiv>
+      <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
+        <thead>
           <tr>
-            <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
-            <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
-            {data.scores.map(scores => (
-              <td>{scores}</td>
-            ))}
+            {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
           </tr>
-        ))}
-      </tbody>
-    </Table>
+        </thead>
+        <tbody>
+          {tableData.map(data => (
+            <tr>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+              {data.scores.map(scores => (
+                <td>{scores}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </TableScrollable>
+    </TableScrollDiv>
   </div>
 }
 
@@ -355,3 +363,13 @@ const LinkedCol = styled(Link)`
   text-decoration:none;
   color:black;
 `;
+
+export const TableScrollDiv = styled.div`
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 60%;
+  transform: rotateX(180deg);
+`
+export const TableScrollable = styled(Table)`
+  transform: rotateX(180deg);
+`
