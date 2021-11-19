@@ -26,13 +26,14 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, i
 	if err != nil {
 		return &model.Course{}, err
 	}
+	ploGroupID, _ := createdCourse.PloGroupID()
 	return &model.Course{
 		ID:          createdCourse.ID,
 		Name:        createdCourse.Name,
 		Description: createdCourse.Description,
 		Semester:    createdCourse.Semester,
 		Year:        createdCourse.Year,
-		PloGroupID:  createdCourse.PloGroupID,
+		PloGroupID:  ploGroupID,
 		ProgramID:   createdCourse.ProgramID,
 	}, nil
 }
@@ -42,7 +43,8 @@ func (r *mutationResolver) EditCourse(ctx context.Context, id string, input mode
 	if err != nil {
 		return &model.Course{}, err
 	}
-	if course.PloGroupID != input.PloGroupID {
+	ploGroupID, _ := course.PloGroupID()
+	if ploGroupID != input.PloGroupID {
 		_, err := r.Client.LOlink.FindMany(
 			db.LOlink.Lo.Where(
 				db.LO.Course.Where(
@@ -68,13 +70,14 @@ func (r *mutationResolver) EditCourse(ctx context.Context, id string, input mode
 	if err != nil {
 		return &model.Course{}, err
 	}
+	ploGroupID, _ = updated.PloGroupID()
 	return &model.Course{
 		ID:          updated.ID,
 		Name:        updated.Name,
 		Description: updated.Description,
 		Semester:    updated.Semester,
 		Year:        updated.Year,
-		PloGroupID:  updated.PloGroupID,
+		PloGroupID:  ploGroupID,
 	}, nil
 }
 
@@ -231,13 +234,14 @@ func (r *queryResolver) Courses(ctx context.Context, programID string) ([]*model
 	}
 	courses := []*model.Course{}
 	for _, course := range allCourses {
+		ploGroupID, _ := course.PloGroupID()
 		courses = append(courses, &model.Course{
 			ID:          course.ID,
 			Name:        course.Name,
 			Description: course.Description,
 			Semester:    course.Semester,
 			Year:        course.Year,
-			PloGroupID:  course.PloGroupID,
+			PloGroupID:  ploGroupID,
 			ProgramID:   course.ProgramID,
 		})
 	}
@@ -251,13 +255,14 @@ func (r *queryResolver) Course(ctx context.Context, courseID string) (*model.Cou
 	if err != nil {
 		return &model.Course{}, err
 	}
+	ploGroupID, _ := course.PloGroupID()
 	return &model.Course{
 		ID:          course.ID,
 		Name:        course.Name,
 		Description: course.Description,
 		Semester:    course.Semester,
 		Year:        course.Year,
-		PloGroupID:  course.PloGroupID,
+		PloGroupID:  ploGroupID,
 		ProgramID:   course.ProgramID,
 	}, nil
 }
