@@ -53,7 +53,7 @@ export const ExportOutcome2: React.FC<{datas: studentResult[], head: string[]}> 
   }, [show]);
 
   return(
-    <div style={{display: "inline", position: "absolute", right: 50, top: 75}}>
+    <div style={{display: "inline", position: "absolute", right: 50, top: 150}}>
       <button onClick={() => setShow(true)} className="underline ">Export Outcome</button>
       <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w"> 
         <form onSubmit={handleSubmit((data) => {

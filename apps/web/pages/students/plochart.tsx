@@ -63,7 +63,7 @@ export function ChartBarPLO(props: { data: studentResult, scoreType: string, tab
         .attr('width', xScale.bandwidth).attr('height', function (d) { return boxH - yScale(d.score); })
         .attr("x", function (d) { return xScale(d.name); })
         .attr("y", function (d) { return yScale(d.score); })
-        .attr("fill", "#69b3a2")
+        .attr("fill", "#3033d3")
         .style("stroke-width", "0px").style("stroke", "black")
         .on('mouseover', mOverEvent)
         .on('mousemove', mMoveEvent)
@@ -102,13 +102,14 @@ export function ChartBarPLO(props: { data: studentResult, scoreType: string, tab
       }
 
       function mMoveEvent(e: any, d: any) {
+        console.log(e)
         tooltip.style('display', 'block')
-          .style('top', e.layerY + 250 + 'px').style('left', e.layerX + 400 + 'px')
+          .style('top', e.clientY + 'px').style('left', e.clientX + 20 + 'px')
       }
 
       function mOutEvent() {
         d3.select(this).style('stroke-width', 0)
-        d3.select(this).attr('fill', '#69b3a2')
+        d3.select(this).attr('fill', '#3033d3')
         d3.select('svg').selectAll('.temp').remove()
         tooltip.style('display', 'none')
       }
