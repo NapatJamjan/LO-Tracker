@@ -7,6 +7,12 @@ interface TokenFormat {
   refresh_token: string;
   access_exp: number;
   refresh_exp: number;
+  is_teacher: boolean;
+  role_level: number;
+}
+
+interface ErrorFormat {
+  error: string;
 }
 
 export default NextAuth({
@@ -18,18 +24,22 @@ export default NextAuth({
         password: { label: "password", type: "password", placeholder: "password" },
       },
       async authorize(credentials) {
-        const response: TokenFormat = await fetch('http://localhost:8080/auth/login', {
+        const response = await fetch('http://localhost:8080/auth/login', {
           method: 'POST',
           mode: 'cors',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({userid: credentials.username, password: credentials.password}),
-        }).then(res => res.json());
-        return {
-          ...response,
-          username: credentials.username
+        });
+        if (!response.ok || response.status >= 400) {
+          const err: ErrorFormat = await response.json();
+          throw err.error;
         }
+        const token: TokenFormat = await response.json()
+        return {
+          ...token,
+        };
       }
     })
   ],
@@ -39,7 +49,6 @@ export default NextAuth({
   callbacks: {
     redirect(url) {
       let baseUrl = 'http://localhost:4200';
-      console.log('url: ', url);
       if (url.startsWith(baseUrl)) return url;
       else if (url.startsWith("/")) return new URL(url, baseUrl).toString();
       return baseUrl;
@@ -51,6 +60,8 @@ export default NextAuth({
           refreshToken: user.refresh_token,
           accessExpire: user.refresh_exp,
           refreshExpire: user.refresh_exp,
+          isTeacher: user.is_teacher,
+          roleLevel: user.role_level,
           username: user.username,
         }
       }
@@ -58,7 +69,10 @@ export default NextAuth({
     },
     async session(session, token) {
       session.user.name = token.username as string;
+      session.isTeacher = token.isTeacher as boolean;
+      session.roleLevel = token.roleLevel as number;
       session.error = null;
+      console.log(session);
       return session
     }
   }

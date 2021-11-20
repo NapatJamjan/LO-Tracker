@@ -38,7 +38,7 @@ func extractToken(header http.Header) (string, error) {
 	authToken := header.Get("Authorization")
 	splitted := strings.Split(authToken, " ")
 	if len(splitted) != 2 {
-		return "", errors.New("Wrong format")
+		return "", errors.New("wrong format")
 	}
 	return splitted[1], nil
 }

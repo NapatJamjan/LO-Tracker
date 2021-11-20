@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"lo-tracker/apps/api/db"
 	"net/http"
 	"time"
 
@@ -39,7 +40,7 @@ func GetMiddleware(rdb *redis.Client, ctx context.Context) gin.HandlerFunc {
 	}
 }
 
-func SetAuthRouter(r *gin.RouterGroup, rdb *redis.Client, ctx context.Context) {
+func SetAuthRouter(r *gin.RouterGroup, client *db.PrismaClient, rdb *redis.Client, ctx context.Context) {
 	r.POST("/login", func(c *gin.Context) {
 		loginForm := struct {
 			UserID   string `json:"userid"`
@@ -49,7 +50,26 @@ func SetAuthRouter(r *gin.RouterGroup, rdb *redis.Client, ctx context.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "wrong format"})
 			return
 		}
-		// +todo: check if loginForm.UserID exists in the database
+		userID := loginForm.UserID
+		teacher, _ := client.Teacher.FindUnique(
+			db.Teacher.ID.Equals(userID),
+		).With(db.Teacher.User.Fetch()).Exec(ctx)
+		student, _ := client.Student.FindUnique(
+			db.Student.ID.Equals(userID),
+		).With(db.Student.User.Fetch()).Exec(ctx)
+		username := ""
+		isTeacher := false
+		level := 0
+		if teacher == nil && student == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		} else if teacher != nil {
+			isTeacher = true
+			level = teacher.Role
+			username = teacher.User().Name
+		} else {
+			username = student.User().Name
+		}
 		accessUUID := uuid.New().String()
 		refreshUUID := uuid.New().String()
 		now := time.Now()
@@ -77,6 +97,9 @@ func SetAuthRouter(r *gin.RouterGroup, rdb *redis.Client, ctx context.Context) {
 			"refresh_token": refreshToken,
 			"access_exp":    now.Add(access_lifetime).Unix(),
 			"refresh_exp":   now.Add(refresh_lifetime).Unix(),
+			"is_teacher":    isTeacher,
+			"role_level":    level,
+			"username":      username,
 		})
 	})
 }

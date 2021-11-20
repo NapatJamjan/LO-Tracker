@@ -26,28 +26,31 @@ func init() {
 	os.Setenv("DATABASE_URL", viper.GetString("DATABASE_URL"))
 }
 
-var rdb *redis.Client
+var (
+	client *db.PrismaClient
+	rdb    *redis.Client
+)
 
 func init() {
+	client = db.NewClient()
 	rdb = redis.NewClient(&redis.Options{
 		Addr: viper.GetString("REDIS_URL"),
 	})
 }
 
 func main() {
-	client := db.NewClient()
 	if err := client.Prisma.Connect(); err != nil {
 		panic(err)
 	}
-
 	defer func() {
 		if err := client.Prisma.Disconnect(); err != nil {
 			panic(err)
 		}
 	}()
 
-	_, err := rdb.Ping(context.Background()).Result()
-	if err != nil {
+	ctx := context.Background()
+	if _, err := rdb.Ping(ctx).Result(); err != nil {
+		rdb = nil
 		log.Println(err)
 	}
 
@@ -58,11 +61,8 @@ func main() {
 			playground.Handler("GraphQL playground", "/query").ServeHTTP(c.Writer, c.Request)
 		}
 	}())
-	ctx := context.Background()
-	if _, err := rdb.Ping(ctx).Result(); err != nil {
-		rdb = nil
-	}
-	auth.SetAuthRouter(r.Group("/auth"), rdb, ctx)
+
+	auth.SetAuthRouter(r.Group("/auth"), client, rdb, ctx)
 	r.POST("/query" /**auth.GetMiddleware(rdb, ctx),*/, func(c *gin.Context) {
 		handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}})).ServeHTTP(c.Writer, c.Request)
 	})

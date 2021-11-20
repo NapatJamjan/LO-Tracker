@@ -24,7 +24,13 @@ export default function Page() {
         }
         if (submitting) return;
         setSubmitting(true);
-        signIn("credentials", form).catch(err => toast(`Error: ${JSON.stringify(err)}`, { type: 'error' })).finally(() => setSubmitting(false));
+        signIn("credentials", {
+          redirect: false,
+          ...form
+        }).then(res => {
+          if (res.error) throw res.error;
+          router.replace('/programs');
+        }).catch(_ => toast(`Error: User not found`, { type: 'error' })).finally(() => setSubmitting(false));
       })} className="flex flex-column items-center gap-y-4">
       <div>
         <span>Username</span><br/>
