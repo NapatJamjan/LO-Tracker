@@ -13,9 +13,6 @@ export default function Page() {
   const [submitting, setSubmitting] = useState<boolean>(false)
   const { register, handleSubmit } = useForm<UserLoginForm>();
   const {data: session, status} = useSession();
-  useEffect(() => {
-    if (status !== 'loading' && session) router.replace('/programs');
-  }, [status]);
   if (status === 'loading' || session) {
     return null;
   }
