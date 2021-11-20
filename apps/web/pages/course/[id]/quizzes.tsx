@@ -215,7 +215,7 @@ function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
               <div className="flex flex-row-reverse space-x-2">
                 <button
                   onClick={() => setSelectedQuestionID(question.id)}
-                  className={`bg-gray-200 hover:bg-gray-400 py-1 px-2 rounded text-sm ${"selectedQuestionID"===question.id?'bg-blue-400 hover:bg-blue-300':''}`}>
+                  className={`bg-gray-200 hover:bg-gray-400 py-1 px-2 rounded text-sm ${selectedQuestionID===question.id?'bg-blue-400 hover:bg-blue-300':''}`}>
                   Manage LOs <span className="text-xl text-green-800">&#9874;</span>
                 </button>
               </div>
