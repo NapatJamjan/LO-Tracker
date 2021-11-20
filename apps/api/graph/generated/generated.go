@@ -51,6 +51,7 @@ type ComplexityRoot struct {
 		PloGroupID  func(childComplexity int) int
 		ProgramID   func(childComplexity int) int
 		Semester    func(childComplexity int) int
+		TeacherID   func(childComplexity int) int
 		Year        func(childComplexity int) int
 	}
 
@@ -193,6 +194,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
+		TeacherID   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -354,6 +356,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Course.Semester(childComplexity), true
+
+	case "Course.teacherID":
+		if e.complexity.Course.TeacherID == nil {
+			break
+		}
+
+		return e.complexity.Course.TeacherID(childComplexity), true
 
 	case "Course.year":
 		if e.complexity.Course.Year == nil {
@@ -981,6 +990,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Program.Name(childComplexity), true
 
+	case "Program.teacherID":
+		if e.complexity.Program.TeacherID == nil {
+			break
+		}
+
+		return e.complexity.Program.TeacherID(childComplexity), true
+
 	case "Query.course":
 		if e.complexity.Query.Course == nil {
 			break
@@ -1365,6 +1381,7 @@ type Course {
   year: Int!
   ploGroupID: String!
   programID: String!
+  teacherID: String!
 }
 
 type LO {
@@ -1503,6 +1520,7 @@ extend type Query {
   id: ID!
   name: String!
   description: String!
+  teacherID: String!
 }
 
 type PLOGroup {
@@ -2653,6 +2671,41 @@ func (ec *executionContext) _Course_programID(ctx context.Context, field graphql
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ProgramID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Course_teacherID(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TeacherID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5334,6 +5387,41 @@ func (ec *executionContext) _Program_description(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Program_teacherID(ctx context.Context, field graphql.CollectedField, obj *model.Program) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Program",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TeacherID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8396,6 +8484,11 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "teacherID":
+			out.Values[i] = ec._Course_teacherID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9263,6 +9356,11 @@ func (ec *executionContext) _Program(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec._Program_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "teacherID":
+			out.Values[i] = ec._Program_teacherID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

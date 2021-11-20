@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Head from 'next/head';
 import client from '../../../apollo-client';
 import { gql, useMutation } from '@apollo/client';
@@ -61,6 +62,10 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
       });
     }
   };
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (session && (+session.roleLevel !== 1 && +session.roleLevel !== 2)) router.replace(`/program/${programID}/courses`);
+  }, [session, status]);
   return <div>
     <Head>
       <title>Create a course</title>

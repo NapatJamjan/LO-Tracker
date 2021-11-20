@@ -7,6 +7,7 @@ import { GetStaticProps, GetStaticPaths } from 'next';
 import { ParsedUrlQuery } from 'querystring';
 import { ProgramStaticPaths } from '../../../utils/staticpaths';
 import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
+import { useSession } from 'next-auth/react';
 
 interface CourseModel {
   id: string;
@@ -15,13 +16,20 @@ interface CourseModel {
   semester: number;
   year: number;
   ploGroupID: string;
+  teacherID: string;
 };
 
-const FilterContext = createContext<{filter: string, changeFilter: (string) => any}>({filter: '', changeFilter: (s) => {}});
+const FilterContext = createContext<{filter: string, changeFilter: (string) => any, mine: boolean, setMine: (boolean) => any}>({filter: '', changeFilter: (s) => {}, mine: false, setMine: (v) => {}});
 
 export default ({programID, courses}: {programID: string, courses: CourseModel[]}) => {
+  const {data: session, status} = useSession();
   const [filter, setFilter] = useState<string>('');
-  return (<FilterContext.Provider value={{filter, changeFilter: payload => setFilter(payload)}}>
+  const [mine, setMine] = useState<boolean>(false);
+  let teacherID = '';
+  if (session) {
+    teacherID = String(session.id);
+  }
+  return <FilterContext.Provider value={{filter, changeFilter: payload => setFilter(payload), mine, setMine}}>
     <Head>
       <title>Courses</title>
     </Head>
@@ -29,13 +37,13 @@ export default ({programID, courses}: {programID: string, courses: CourseModel[]
     <ProgramSubMenu programID={programID} selected={'courses'}/>
     <div className="flex justify-between items-end mt-4 mb-3">
       <FilterTextField/>
-      <Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+      {status !== 'loading' && session && (+session.roleLevel === 1 || +session.roleLevel === 3)?<Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
         Create a new course <span className="text-xl text-green-800">+</span>
-      </button></Link>
+      </button></Link>:<p></p>}
     </div>
     <FilterOwner/>
-    <Courses courses={courses}/>
-  </FilterContext.Provider>);
+    <Courses courses={courses} teacherID={teacherID}/>
+  </FilterContext.Provider>;
 };
 
 function FilterTextField() {
@@ -44,22 +52,23 @@ function FilterTextField() {
 }
 
 function FilterOwner() {
-  const [checked, setChecked] = useState<boolean>(false)
-  return <div onClick={() => setChecked(!checked)} className="cursor-pointer">
-    <input type="checkbox" defaultChecked={checked} className="border-4 rounded-md mr-2"/>
+  const {mine, setMine} = useContext(FilterContext);
+  return <div onClick={() => setMine(!mine)} className="cursor-pointer">
+    <input type="checkbox" defaultChecked={mine} className="border-4 rounded-md mr-2"/>
     <span>Show only my courses</span>
   </div>;
 }
 
-function Courses({courses}: {courses: CourseModel[]}) {
-  const { filter } = useContext(FilterContext);
+function Courses({courses, teacherID}: {courses: CourseModel[], teacherID: string}) {
+  const { filter, mine } = useContext(FilterContext);
   let courseGroups = new Map<string, CourseModel[]>();
   for (let i = 0; i < courses.length; ++i) {
+    if (mine && courses[i].teacherID !== teacherID) continue;
     if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue;
     let groupName: string = `${courses[i].semester},${courses[i].year}`;
     courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}]);
   }
-  if (courseGroups.size === 0) return <p>No course available</p>;
+  if (courseGroups.size === 0) return <p className="mt-4">No course available</p>;
   return <>{
     Array.from(courseGroups).sort((group1, group2) => {
       let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
@@ -124,4 +133,5 @@ const GET_COURSES = gql`
       semester
       year
       ploGroupID
+      teacherID
 }}`;

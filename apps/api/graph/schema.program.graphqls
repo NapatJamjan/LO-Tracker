@@ -2,6 +2,7 @@ type Program {
   id: ID!
   name: String!
   description: String!
+  teacherID: String!
 }
 
 type PLOGroup {

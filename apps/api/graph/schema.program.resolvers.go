@@ -26,6 +26,7 @@ func (r *mutationResolver) CreateProgram(ctx context.Context, teacherID string, 
 		ID:          createdProgram.ID,
 		Name:        createdProgram.Name,
 		Description: createdProgram.Description,
+		TeacherID:   teacherID,
 	}, nil
 }
 
@@ -39,10 +40,12 @@ func (r *mutationResolver) EditProgram(ctx context.Context, id string, input mod
 	if err != nil {
 		return &model.Program{}, err
 	}
+	teacherID, _ := updated.TeacherID()
 	return &model.Program{
 		ID:          updated.ID,
 		Name:        updated.Name,
 		Description: updated.Description,
+		TeacherID:   teacherID,
 	}, nil
 }
 
@@ -158,10 +161,12 @@ func (r *queryResolver) Programs(ctx context.Context) ([]*model.Program, error) 
 	}
 	programs := []*model.Program{}
 	for _, program := range allPrograms {
+		teacherID, _ := program.TeacherID()
 		programs = append(programs, &model.Program{
 			ID:          program.ID,
 			Name:        program.Name,
 			Description: program.Description,
+			TeacherID:   teacherID,
 		})
 	}
 	return programs, nil
@@ -174,10 +179,12 @@ func (r *queryResolver) Program(ctx context.Context, programID string) (*model.P
 	if err != nil {
 		return &model.Program{}, err
 	}
+	teacherID, _ := program.TeacherID()
 	return &model.Program{
 		ID:          program.ID,
 		Name:        program.Name,
 		Description: program.Description,
+		TeacherID:   teacherID,
 	}, nil
 }
 

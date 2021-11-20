@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { useEffect } from 'react';
 import client from '../../../apollo-client';
 import { gql, useMutation } from '@apollo/client';
 import { GetServerSideProps } from 'next';
@@ -6,6 +7,7 @@ import { ParsedUrlQuery } from 'querystring';
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 
 interface CourseModel {
   id: string;
@@ -15,6 +17,7 @@ interface CourseModel {
   year: number;
   ploGroupID: string;
   programID: string;
+  teacherID: string;
 };
 
 interface PLOGroupModel {
@@ -30,8 +33,9 @@ interface CreateCourseModel {
   ploGroupID: string;
 };
 
-export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupModel[]}) => {
+export default function Page({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupModel[]}) {
   const router = useRouter();
+  const {data: session, status} = useSession();
   const { register, handleSubmit } = useForm<CreateCourseModel>({
     defaultValues: {
       name: course.name,
@@ -64,6 +68,10 @@ export default ({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupMo
       router.push(`/program/${course.programID}/courses`);
     });
   };
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (session && session.id !== course.teacherID) router.replace(`/course/${course.id}`);
+  }, [session, status]);
   return <div>
     <Head>
       <title>Course Settings</title>
@@ -145,6 +153,7 @@ const GET_COURSE = gql`
       year
       ploGroupID
       programID
+      teacherID
 }}`;
 const GET_PLOGROUPS = gql`
   query PLOGroups($programID: ID!) {

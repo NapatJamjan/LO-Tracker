@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 import xlsx from 'xlsx';
 import { useRouter } from 'next/router';
 import { ToastContainer, toast } from 'react-toastify';
+import { useSession } from 'next-auth/react';
 
 interface CreatePLOGroupResponse {
   id: string;
@@ -48,6 +49,7 @@ const PLOContext = createContext<{
   removePLOGroup: (id: string) => Promise<any>,
   removePLO: (id: string) => Promise<any>,
   submitting: boolean,
+  isOwner: boolean,
   }>({
   ploGroups: [],
   savePLOGroup: () => null,
@@ -57,10 +59,13 @@ const PLOContext = createContext<{
   removePLOGroup: () => null,
   removePLO: () => null,
   submitting: false,
+  isOwner: false,
 });
 
-export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) => {
+export default function Page({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) {
   const router = useRouter();
+  const {data: session, status} = useSession();
+  const [teacherID, setTeacherID] = useState<string>('');
   const [createPLOGroup, { loading: submitPLOGroup }] = useMutation<{createPLOGroup: CreatePLOGroupResponse}, {programID: string, name: string, input: CreatePLOModel[]}>(CREATE_PLOGROUP);
   const [deletePLOGroup, { loading: withdrawPLOGroup}] = useMutation<{deletePLOGroup: {id: string}}, {id: string}>(DELETE_PLOGROUP);
   const [createPLO, { loading: submitPLO }] = useMutation<{createPLO: PLOModel}, {ploGroupID: string, input: CreatePLOModel}>(CREATE_PLO);
@@ -73,23 +78,24 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
   const modifyPLO = (id: string, title: string, description: string) => editPLO({variables: {id, title, description}});
   const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath));
   const removePLO = (id: string) => deletePLO({variables: {id}});
+  const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false);
   const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO;
-  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, submitting}}>
+  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, submitting, isOwner}}>
     <Head>
       <title>Manage PLOs</title>
     </Head>
-    <ProgramMainMenu programID={programID} />
-    <ProgramSubMenu programID={programID} selected={'plos'}/>
+    <ProgramMainMenu programID={programID} callback={(program) => setTeacherID(program.teacherID)}/>
+    <ProgramSubMenu programID={programID} selected={'plos'} showSetting={isOwner}/>
     <PLOs/>
     <ToastContainer/>
   </PLOContext.Provider>;
 };
 
 export function PLOs() {
-  const { ploGroups, removePLOGroup } = useContext(PLOContext);
+  const { ploGroups, removePLOGroup, isOwner } = useContext(PLOContext);
   const [selectedPLOGroupID, setSelectedPLOGroupID] = useState<string>('');
   return <div>
-    <CreatePLOGroupForm />
+    {isOwner && <CreatePLOGroupForm />}
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
       <div className="flex flex-column space-y-2">
         {[...ploGroups].sort((p1, p2) => p1.name.localeCompare(p2.name)).map((ploGroup) => (
@@ -104,8 +110,9 @@ export function PLOs() {
       <div>
         {selectedPLOGroupID !== '' && <p className="mb-3">
           <span>{ploGroups.find(g => g.id === selectedPLOGroupID).name}</span>
+          {isOwner && <>
           <EditPLOGroupForm ploGroupID={selectedPLOGroupID} initName={ploGroups.find(g => g.id === selectedPLOGroupID).name}/>
-          <span className="cursor-pointer underline text-red-500" onClick={() => removePLOGroup(selectedPLOGroupID).then(() => setSelectedPLOGroupID(''))}>delete</span>
+          <span className="cursor-pointer underline text-red-500" onClick={() => removePLOGroup(selectedPLOGroupID).then(() => setSelectedPLOGroupID(''))}>delete</span></>}
         </p>}
         {selectedPLOGroupID !== '' && <PLOSub ploGroupID={selectedPLOGroupID}/>}
       </div>
@@ -162,7 +169,7 @@ function CreatePLOGroupForm() {
 
 const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
   if (ploGroupID === '') return <p></p>;
-  const { removePLO, submitting } = useContext(PLOContext);
+  const { removePLO, submitting, isOwner } = useContext(PLOContext);
   const { data, loading, refetch } = useQuery<{plos: PLOModel[]}, {ploGroupID: string}>(GET_PLOS, { variables: { ploGroupID } });
   const deletePLO = (ploID: string) => {
     if (!confirm('Are you sure?') || submitting) return;
@@ -170,13 +177,14 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
   }
   if (loading) return <p>Loading...</p>;
   return <div>
-    <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>
+    {isOwner && <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>}
     {[...data.plos].sort((p1, p2) => p1.title.localeCompare(p2.title)).map((plo) => (
       <div key={plo.id} className="flex flex-column rounded shadow-lg p-3 mb-3 -space-y-4">
         <p className="text-xl text-bold">
           <span>{plo.title}</span>
+          {isOwner && <>
           <EditPLOForm ploID={plo.id} initTitle={plo.title} initDesc={plo.description} callback={refetch}/>
-          <span className="text-sm cursor-pointer underline text-red-500" onClick={() => deletePLO(plo.id)}>delete</span>
+          <span className="text-sm cursor-pointer underline text-red-500" onClick={() => deletePLO(plo.id)}>delete</span></>}
         </p>
         <span className="m-0">{plo.description}</span>
       </div>

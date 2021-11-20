@@ -37,6 +37,7 @@ interface StudentExcel {
 
 
 export default function Page({programs}: {programs: ProgramModel[]}) {
+  const {data: session, status} = useSession();
   return <div>
     <Head>
       <title>Program</title>
@@ -48,7 +49,7 @@ export default function Page({programs}: {programs: ProgramModel[]}) {
     </p>
     <div className="flex flex-row-reverse pt-2 pb-1">
       <ClientOnly>
-        <CreateProgramButton />
+        {status !== 'loading' && session && !!session.isTeacher && +session.roleLevel > 1 && <CreateProgramButton />}
         <UploadStudents />
       </ClientOnly>
     </div>

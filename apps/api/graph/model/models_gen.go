@@ -14,6 +14,7 @@ type Course struct {
 	Year        int    `json:"year"`
 	PloGroupID  string `json:"ploGroupID"`
 	ProgramID   string `json:"programID"`
+	TeacherID   string `json:"teacherID"`
 }
 
 type CreateCourseInput struct {
@@ -204,6 +205,7 @@ type Program struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	TeacherID   string `json:"teacherID"`
 }
 
 type Question struct {

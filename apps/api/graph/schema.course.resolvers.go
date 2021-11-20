@@ -38,6 +38,7 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, t
 		Year:        createdCourse.Year,
 		PloGroupID:  ploGroupID,
 		ProgramID:   createdCourse.ProgramID,
+		TeacherID:   teacherID,
 	}, nil
 }
 
@@ -74,6 +75,7 @@ func (r *mutationResolver) EditCourse(ctx context.Context, id string, input mode
 		return &model.Course{}, err
 	}
 	ploGroupID, _ = updated.PloGroupID()
+	teacherID, _ := updated.TeacherID()
 	return &model.Course{
 		ID:          updated.ID,
 		Name:        updated.Name,
@@ -81,6 +83,7 @@ func (r *mutationResolver) EditCourse(ctx context.Context, id string, input mode
 		Semester:    updated.Semester,
 		Year:        updated.Year,
 		PloGroupID:  ploGroupID,
+		TeacherID:   teacherID,
 	}, nil
 }
 
@@ -238,6 +241,7 @@ func (r *queryResolver) Courses(ctx context.Context, programID string) ([]*model
 	courses := []*model.Course{}
 	for _, course := range allCourses {
 		ploGroupID, _ := course.PloGroupID()
+		teacherID, _ := course.TeacherID()
 		courses = append(courses, &model.Course{
 			ID:          course.ID,
 			Name:        course.Name,
@@ -246,6 +250,7 @@ func (r *queryResolver) Courses(ctx context.Context, programID string) ([]*model
 			Year:        course.Year,
 			PloGroupID:  ploGroupID,
 			ProgramID:   course.ProgramID,
+			TeacherID:   teacherID,
 		})
 	}
 	return courses, nil
@@ -259,6 +264,7 @@ func (r *queryResolver) Course(ctx context.Context, courseID string) (*model.Cou
 		return &model.Course{}, err
 	}
 	ploGroupID, _ := course.PloGroupID()
+	teacherID, _ := course.TeacherID()
 	return &model.Course{
 		ID:          course.ID,
 		Name:        course.Name,
@@ -267,6 +273,7 @@ func (r *queryResolver) Course(ctx context.Context, courseID string) (*model.Cou
 		Year:        course.Year,
 		PloGroupID:  ploGroupID,
 		ProgramID:   course.ProgramID,
+		TeacherID:   teacherID,
 	}, nil
 }
 

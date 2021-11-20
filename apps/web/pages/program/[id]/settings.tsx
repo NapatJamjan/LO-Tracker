@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { useEffect } from 'react';
 import client from '../../../apollo-client';
 import { gql, useMutation } from '@apollo/client';
 import { GetServerSideProps } from 'next';
@@ -7,11 +8,13 @@ import { KnownProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import { ToastContainer, toast } from 'react-toastify';
+import { useSession } from 'next-auth/react';
 
 interface ProgramModel {
   id: string;
   name: string;
   description: string;
+  teacherID: string;
 };
 
 interface EditProgramModel {
@@ -21,6 +24,7 @@ interface EditProgramModel {
 
 export default ({program}: {program: ProgramModel}) => {
   const router = useRouter();
+  const {data: session, status} = useSession();
   const [editProgram, { loading: submitting }] = useMutation<{editProgram: {id: string}}, {id: string, input: EditProgramModel}>(EDIT_PROGRAM);
   const { register, handleSubmit } = useForm<EditProgramModel>({
     defaultValues: {
@@ -42,12 +46,16 @@ export default ({program}: {program: ProgramModel}) => {
     }).then(() => toast('Data updated!', {type: 'success'}))
     .finally(() => router.replace(router.asPath));
   };
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (session && session.id !== program.teacherID) router.replace(`/program/${program.id}/courses`);
+  }, [session, status]);
   return <div>
     <Head>
       <title>Program Settings</title>
     </Head>
     <KnownProgramMainMenu programID={program.id} programName={program.name}/>
-    <ProgramSubMenu programID={program.id} selected={'settings'}/>
+    <ProgramSubMenu programID={program.id} selected={'settings'} showSetting={true}/>
     <p className="mt-4 mb-2 underline">Program Settings</p>
     <form onSubmit={handleSubmit(saveProgram)}>
     <div className="grid grid-cols-2 gap-4">
@@ -89,6 +97,7 @@ const GET_PROGRAM = gql`
       id
       name
       description
+      teacherID
 }}`;
 const EDIT_PROGRAM = gql`
   mutation EditProgram($id: ID!, $input: CreateProgramInput!) {

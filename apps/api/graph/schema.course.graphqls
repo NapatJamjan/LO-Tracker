@@ -8,6 +8,7 @@ type Course {
   year: Int!
   ploGroupID: String!
   programID: String!
+  teacherID: String!
 }
 
 type LO {
