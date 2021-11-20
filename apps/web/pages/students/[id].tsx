@@ -8,8 +8,10 @@ import router from 'next/router';
 import { Table } from 'react-bootstrap';
 import { useState } from 'react';
 import { ChartBarPLO } from './plochart';
+import { getSession, useSession } from 'next-auth/react';
 
 export default function Page({student}: {student: StudentModel}) {
+  const {data: session, status} = useSession();
   const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name'])
   const [tableData, setData] = useState<studentResult>(
     {studentID: student.id, studentName:(student.name+" "+student.surname), scores: []}
@@ -21,6 +23,9 @@ export default function Page({student}: {student: StudentModel}) {
       tableData.scores.push(Math.floor(Math.random() * 90 + 10))
     }
   }
+  if (status === 'loading') return null;
+  const noPermission = !session.isTeacher && String(session.id) !== student.id;
+  if (noPermission) return <p className="text-center">No permission</p>;
   return <div>
     <Head>
       <title>{student.name}'s Dashboard</title>
@@ -35,7 +40,6 @@ export default function Page({student}: {student: StudentModel}) {
       <h6>Email: {student.email}</h6>
       <h6>Name: {student.name} {student.surname}</h6>
       </div><br/>
-      
       <TableScrollDiv>
         <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
           <thead>

@@ -52,12 +52,6 @@ export default NextAuth({
     secret: 'jwt------secret',
   },
   callbacks: {
-    redirect({url}) {
-      let baseUrl = 'http://localhost:4200';
-      if (url.startsWith(baseUrl)) return url;
-      else if (url.startsWith("/")) return new URL(url, baseUrl).toString();
-      return baseUrl;
-    },
     async jwt({token, user}) {
       if (user) {
         return {

@@ -13,12 +13,16 @@ export default function Index() {
     </Head>
     <h1 onClick={notify} className="cursor-pointer mb-2">Welcome 🦄</h1>
     <ToastContainer/>
-    {status !== 'loading' && session && <Link href="/programs"><h4 className="underline cursor-pointer"> Go to Programs page </h4></Link>}
+    {status !== 'loading' && session && <>
+      {!!session.isTeacher && <Link href="/programs"><h4 className="underline cursor-pointer"> Go to Programs page </h4></Link>}
+      {!session.isTeacher && <Link href="/me"><h4 className="underline cursor-pointer"> Check my dashboard </h4></Link>}
+    </>}
     <p>A Capstone project about tracking learning outcome of each and all students in your course.</p>
     <div className="my-3"></div>
-    {status !== 'loading' && !session && <Link href="/login">Login</Link>}
-    {status !== 'loading' && session && <p className="cursor-pointer" onClick={() => signOut()}>Logout</p>}
-    
+    {status !== 'loading' && <>
+      {!session && <Link href="/login">Login</Link>}
+      {session && <p className="cursor-pointer" onClick={() => signOut()}>Logout</p>}
+    </>}
   </div>);
 };
 

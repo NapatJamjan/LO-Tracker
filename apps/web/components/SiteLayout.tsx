@@ -9,11 +9,11 @@ export default function SiteLayout({children}) {
   useEffect(() => {
     if (router.isReady && status !== 'loading') {
       const pathname = router.pathname.replace('/', '');
-      if (session && pathname === 'login') {
-        router.replace('/');
-      }
       if (!session && !(pathname === 'login' || pathname === '')) {
         router.replace('/login');
+      }
+      if (session && !session.isTeacher && (pathname.indexOf('program') !== -1 || pathname.indexOf('course') !== -1)) {
+        router.replace('/');
       }
     }
   }, [router, status]);
