@@ -8,6 +8,7 @@ import ClientOnly from '../components/ClientOnly';
 import { GetStaticProps } from 'next';
 import client from '../apollo-client';
 import { useRouter } from 'next/router';
+import xlsx from 'xlsx';
 
 interface ProgramModel {
   id: string;
@@ -26,6 +27,14 @@ export interface CreateProgramRepsonse {
   description: string;
 };
 
+interface StudentExcel {
+  id: string;
+  email: string;
+  name: string;
+  surname: string;
+}
+
+
 export default function Page({programs}: {programs: ProgramModel[]}) {
   return <div>
     <Head>
@@ -39,6 +48,7 @@ export default function Page({programs}: {programs: ProgramModel[]}) {
     <div className="flex flex-row-reverse pt-2 pb-1">
       <ClientOnly>
         <CreateProgramButton />
+        <UploadStudents />
       </ClientOnly>
     </div>
     <Programs programs={[...programs]}/>
@@ -108,6 +118,55 @@ function CreateProgramModal({show, setShow}: {show: boolean, setShow: Dispatch<S
       </Modal.Footer>
     </form>
   </Modal>;
+};
+
+const UploadStudents: React.FC = () => {
+  const CREATE_STUDENTS = gql`
+    mutation CreateStudents($input: [CreateStudentInput!]!) {
+      createStudents(input: $input) {
+        id
+      }
+    }
+  `;
+  const [createStudents, {loading: submitting}] = useMutation<{createStudent: {id: string}}, {input: StudentExcel[]}>(CREATE_STUDENTS);
+  const uploadToDB = (students: StudentExcel[]) => {
+    createStudents({
+      variables: {
+        input: students
+      }
+    }).then(() => {
+      setShow(false);
+      alert('Students import success');
+    }).catch((err) => {
+      alert(JSON.stringify(err))
+    });
+  };
+  const excelJSON = (file) => {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      let data = e.target.result;
+      let workbook = xlsx.read(data, {type: 'binary'});
+      uploadToDB(xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
+    }
+    reader.onerror = console.log;
+    reader.readAsBinaryString(file);
+  };
+  const [show, setShow] = useState(false);
+  return (<div>
+    <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm" style={{marginRight: 10}}>
+      Upload new students <span className="text-xl text-blue-800">+</span>
+    </button>
+    <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w">
+      <Modal.Header>
+        <Modal.Title>Upload new students</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p>Please upload an excel file that contain 'id', 'email', 'name' and 'surname' column.</p> <br/>
+        <input type="file" onChange={e => excelJSON(e.target.files[0])} className="p-1 mx-2 text-sm"/> <br/>
+        {submitting && <p>Uploading...</p>}
+      </Modal.Body>
+    </Modal>
+  </div>);
 };
 
 export const getStaticProps: GetStaticProps<{programs: ProgramModel[]}> = async (_) => {
