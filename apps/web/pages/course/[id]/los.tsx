@@ -112,7 +112,10 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
       <div className="flex flex-column space-y-2">
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
         <div key={lo.id} className="rounded shadow-lg p-3">
-          {lo.title} <span className="underline cursor-pointer text-red-400" onClick={() => removeLO(lo.id)}>delete</span>
+          {lo.title} &nbsp;
+          <span className="cursor-pointer text-red-600 bg-red-200 hover:bg-red-300 py-1 px-1 rounded" onClick={() => removeLO(lo.id)}>
+            delete&#9747;
+          </span>
           <ul>
           {[...lo.levels].sort((l1, l2) => l1.level - l2.level).map((level) => (
             <li key={`${lo.id}-${level.level}`}>
@@ -142,9 +145,11 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
             {[...los.find((lo) => lo.id == selectedLOID).ploLinks]
               .sort((p1, p2) => p1.title.localeCompare(p2.title))
               .map((plo) => <li key={plo.id}>
-                <span>{plo.title}</span><br/>
+                <span>{plo.title}</span>&nbsp;
+                <span className="underline cursor-pointer text-red-600" onClick={() => deleteLinkedPLO(plo.id)}>delete</span>
+                <br/>
                 <span>{plo.description}</span>&nbsp;
-                <span className="cursor-pointer text-red-600" onClick={() => deleteLinkedPLO(plo.id)}>&#9747;</span>
+                
               </li>)
             }
             {los[los.findIndex((lo) => lo.id == selectedLOID)].ploLinks.length === 0 && <span>No linked PLOs</span>}
@@ -215,7 +220,9 @@ function CreateLOForm({courseID, callback}: {courseID: string, callback: () => a
     });
   };
   return <div>
-    <button onClick={() => setShow(true)}>Create a new LO</button>
+    <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+      Create a new LO <span className="text-xl text-green-900">+</span>
+    </button>
     <Modal show={show} onHide={() => resetForm()}>
       <form onSubmit={handleSubmit((form) => loading? null: submitForm(form))}>
         <Modal.Header>

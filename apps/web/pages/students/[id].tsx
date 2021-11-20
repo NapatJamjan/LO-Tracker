@@ -6,7 +6,7 @@ import { gql } from '@apollo/client';
 import client from '../../apollo-client';
 import router from 'next/router';
 import { Table } from 'react-bootstrap';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChartBarPLO } from './plochart';
 import { getSession, useSession } from 'next-auth/react';
 
@@ -26,6 +26,14 @@ export default function Page({student}: {student: StudentModel}) {
   if (status === 'loading') return null;
   const noPermission = !session.isTeacher && String(session.id) !== student.id;
   if (noPermission) return <p className="text-center">No permission</p>;
+  const [dataType, setType] = useState("plo");
+  function handleType(e: any) { setType(e.target.value) }
+
+  useEffect(() => {
+    for (let i = 0; i < tableData.scores.length; i++) {
+     tableData.scores[i] = Math.floor(Math.random() * 90 + 10);
+    }
+  }, [dataType])
   return <div>
     <Head>
       <title>{student.name}'s Dashboard</title>
@@ -40,6 +48,11 @@ export default function Page({student}: {student: StudentModel}) {
       <h6>Email: {student.email}</h6>
       <h6>Name: {student.name} {student.surname}</h6>
       </div><br/>
+      <span>Select view type: </span>
+      <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
+        <option value="plo">My Program Learning Outcome</option>
+        <option value="coruseid1">CSC209: Data Structures</option>
+      </select>
       <TableScrollDiv>
         <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
           <thead>
