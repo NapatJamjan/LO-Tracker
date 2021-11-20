@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useState } from 'react';
+import { useEffect, useState, Key, createContext, useContext } from 'react';
 import client from '../../../apollo-client';
 import { gql, useMutation } from '@apollo/client';
 import { GetServerSideProps } from 'next';
@@ -9,6 +9,8 @@ import { useForm } from 'react-hook-form';
 import xlsx from 'xlsx';
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 import { useRouter } from 'next/router';
+import Collapse, { Panel } from 'rc-collapse';
+import { useSession } from 'next-auth/react';
 
 interface CourseModel {
   id: string;
@@ -112,44 +114,32 @@ interface DeleteQuestionLinkResponse {
   loID: string;
 };
 
-export default ({course, quizzes, los}: {course: CourseModel, quizzes: QuizModel[], los: LOModel[]}) => {
-  return <div>
-    <Head>
-      <title>Manage quizzes</title>
-    </Head>
-    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
-    <CourseSubMenu courseID={course.id} selected={'quizzes'}/>
-    <Quiz courseID={course.id} quizzes={quizzes} los={los}/>
-  </div>;
-};
+const QuizContext = createContext<{
+  selectedQuestionID: string;
+  setSelectedQuestionID: (s: string) => any,
+  removeQuiz: (id: string) => Promise<any>,
+  removeQuestionLink: (input: DeleteQuestionLinkModel) => Promise<any>,
+  submitting: boolean,
+  isOwner: boolean,
+}>({
+  selectedQuestionID: '',
+  setSelectedQuestionID: () => null,
+  removeQuiz: () => null,
+  removeQuestionLink: () => null,
+  submitting: false,
+  isOwner: false,
+});
 
-function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[], los: LOModel[]}) {
+export default function Page({course, quizzes, los}: {course: CourseModel, quizzes: QuizModel[], los: LOModel[]}) {
   const router = useRouter();
+  const {data: session, status} = useSession();
+  const [teacherID, setTeacherID] = useState<string>('');
   const [selectedQuestionID, setSelectedQuestionID] = useState<string>('');
-  const [deleteQuiz, { loading: deleting}] = useMutation<{deleteQuiz: {id: string}}, {id: string}>(DELETE_QUIZ);
-  const [deleteQuestionLink, {loading: submitting}] = useMutation<{deleteQuestionLink: DeleteQuestionLinkResponse}, {input: DeleteQuestionLinkModel}>(DELETE_QUESTIONLINK);
-  let questionLinks: QuestionLinkModel[] = [];
-  if (selectedQuestionID !== '') {
-    questionLinks = [...quizzes].filter((quiz) => quiz.questions.findIndex((question) => question.id === selectedQuestionID) !== -1)[0]
-      .questions.filter((question) => question.id === selectedQuestionID)[0].loLinks;
-  }
-  const removeQuestionLink = (loID: string, level: number) => {
-    if (!confirm('Delete this mapping?') ||submitting) return;
-    deleteQuestionLink({
-      variables: {
-        input: {
-          questionID: selectedQuestionID,
-          loID,
-          level
-        }
-      }
-    }).finally(() => router.replace(router.asPath));
-  };
+  const [deleteQuiz, { loading: Qdeleting}] = useMutation<{deleteQuiz: {id: string}}, {id: string}>(DELETE_QUIZ);
+  const [deleteQuestionLink, {loading: QLdeleting}] = useMutation<{deleteQuestionLink: DeleteQuestionLinkResponse}, {input: DeleteQuestionLinkModel}>(DELETE_QUESTIONLINK);
+  const submitting = Qdeleting || QLdeleting;
   const removeQuiz = (id: string) => {
-    if (!confirm('Delete this quiz?') ||deleting) return;
-    deleteQuiz({
-      variables: {id}
-    }).then(() => {
+    return deleteQuiz({variables: {id}}).finally(() => {
       let isSelected = quizzes.find(quiz => quiz.id === id).questions.findIndex(question => question.id === selectedQuestionID) !== -1
       if (isSelected) {
         setSelectedQuestionID('');
@@ -157,55 +147,112 @@ function Quiz({courseID, quizzes, los}: {courseID: string, quizzes: QuizModel[],
       router.replace(router.asPath);
     });
   }
-  return <>
-    <CreateQuizForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
-    <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
-      <div className="flex flex-column space-y-2">
-        {quizzes.sort((q1, q2) => q1.name.localeCompare(q2.name)).map((quiz) => (
-        <div key={quiz.id} className="rounded shadow-lg p-3">
-          <div className="flex justify-between items-center">
-            <span className="font-bold">{quiz.name}</span>
-            <span className="underline cursor-pointer text-red-400" onClick={() => removeQuiz(quiz.id)}>delete</span>
-          </div>
-          <ul>
-          {[...quiz.questions].sort((q1, q2) => q1.title.localeCompare(q2.title)).map((question, index) => (
-            <li key={question.id}>
-              Q{index + 1}) {question.title} (max score: {question.maxScore})
+  const removeQuestionLink = (input: DeleteQuestionLinkModel) => {
+    return deleteQuestionLink({variables: {input}}).finally(() => router.replace(router.asPath));
+  }
+  const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false);
+  useEffect(() => {
+    if (!!course) return;
+    (async() => {
+      const {data, error} = await client.query<{course: {teacherID: string}}, {courseID: string}>({
+        query: gql`
+          query CourseTeacher($courseID: ID!) {
+            course(courseID: $courseID) {
+              teacherID
+        }}`,
+        variables: {courseID: course.id}
+      });
+      if (!error) setTeacherID(data.course.teacherID);
+    })()
+  }, [course]);
+  return <div>
+    <Head>
+      <title>Manage quizzes</title>
+    </Head>
+    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+    <CourseSubMenu courseID={course.id} selected={'quizzes'}/>
+    <QuizContext.Provider value={{selectedQuestionID, setSelectedQuestionID, removeQuiz, removeQuestionLink, submitting, isOwner}}>
+      <CreateQuizForm courseID={course.id} callback={() => router.replace(router.asPath)}/>
+      <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
+        <div className="flex flex-column space-y-2">
+          <Quizzes quizzes={quizzes}/>
+        </div>
+        <div>
+          {selectedQuestionID !== '' && 
+          <div className="flex flex-column divide-y-4 gap-y-3">
+            <CreateQuestionLinkForm los={[...los]} questionID={selectedQuestionID} callback={() => router.replace(router.asPath)}/>
+            <LinkedLOContainer quizzes={quizzes}/>  
+          </div>}
+        </div>
+      </div>
+    </QuizContext.Provider>
+  </div>;
+};
+
+function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
+  const { selectedQuestionID, setSelectedQuestionID, removeQuiz, submitting } = useContext(QuizContext);
+  const deleteQuiz = (id: string) => {
+    if (submitting || !confirm('Delete this quiz?')) return;
+    removeQuiz(id).then(() => {
+      let isSelected = quizzes.find(quiz => quiz.id === id).questions.findIndex(question => question.id === selectedQuestionID) !== -1
+      if (isSelected) {
+        setSelectedQuestionID('');
+      }
+    })
+  }
+  const [activeKey, setActiveKey] = useState<Key | Key[]>([]);
+  return <Collapse activeKey={activeKey} onChange={setActiveKey}>
+    {quizzes.sort((q1, q2) => q1.name.localeCompare(q2.name)).map((quiz) => (
+      <Panel key={quiz.id} header={<p>{quiz.name}</p>}>
+        <ul>
+        {[...quiz.questions].sort((q1, q2) => q1.title.localeCompare(q2.title)).map((question, index) => (
+          <li key={question.id} className="p-3">
+            <div className="grid justify-between items-center" style={{gridTemplateColumns: '1fr auto'}}>
+              <div>
+                <p>Q{index + 1}) {question.title}</p>
+                <p>(max score: {question.maxScore})</p>
+              </div>
               <div className="flex flex-row-reverse space-x-2">
                 <button
-                  onClick={() => {setSelectedQuestionID(question.id)}}
-                  className={`bg-gray-200 hover:bg-gray-400 py-1 px-2 rounded text-sm ${selectedQuestionID===question.id?'bg-blue-400 hover:bg-blue-300':''}`}>
+                  onClick={() => setSelectedQuestionID(question.id)}
+                  className={`bg-gray-200 hover:bg-gray-400 py-1 px-2 rounded text-sm ${"selectedQuestionID"===question.id?'bg-blue-400 hover:bg-blue-300':''}`}>
                   Manage LOs <span className="text-xl text-green-800">&#9874;</span>
                 </button>
               </div>
-            </li>
-          ))}
-          </ul>
-          <br/>
-        </div>
+            </div>
+          </li>
         ))}
-      </div>
-      <div>
-        {selectedQuestionID !== '' && 
-        <div className="flex flex-column divide-y-4">
-          <CreateQuestionLinkForm los={[...los]} questionID={selectedQuestionID} callback={() => router.replace(router.asPath)}/>
-          <div className="pt-3">
-            <span>Linked LOs: </span><br/>
-            <ul>
-            {[...questionLinks].sort((l1, l2) => l1.description.localeCompare(l2.description)).map((lo) => (
-              <li key={`${lo.loID}-${lo.level}`}>
-                {lo.description}&nbsp;
-                <span className="cursor-pointer text-red-600" onClick={() => removeQuestionLink(lo.loID, lo.level)}>&#9747;</span>
-              </li>
-            ))}
-            {questionLinks.length === 0 && <span>No linked LOs</span>}
-            </ul>
-          </div>  
-        </div>}
-      </div>
-    </div>
-  </>;
-};
+        </ul>
+        <p className="cursor-pointer text-red-400 text-sm pt-3" onClick={() => deleteQuiz(quiz.id)}>Delete this quiz record</p>
+      </Panel>
+    ))}
+  </Collapse>
+}
+
+function LinkedLOContainer({quizzes}: {quizzes: QuizModel[]}) {
+  const { selectedQuestionID, removeQuestionLink, submitting } = useContext(QuizContext);
+  let questionLinks: QuestionLinkModel[] = [];
+  if (selectedQuestionID !== '') {
+    questionLinks = [...quizzes].filter((quiz) => quiz.questions.findIndex((question) => question.id === selectedQuestionID) !== -1)[0]
+      .questions.filter((question) => question.id === selectedQuestionID)[0].loLinks;
+  }
+  const deleteQuestionLink = (loID: string, level: number) => {
+    if (submitting || !confirm('Delete this mapping?')) return;
+    removeQuestionLink({questionID: selectedQuestionID, loID, level})
+  }
+  return <div className="pt-3">
+    <span>Linked LOs: </span><br/>
+    <ul>
+    {[...questionLinks].sort((l1, l2) => l1.description.localeCompare(l2.description)).map((lo) => (
+      <li key={`${lo.loID}-${lo.level}`}>
+        {lo.description}&nbsp;
+        <span className="cursor-pointer text-red-600" onClick={() => deleteQuestionLink(lo.loID, lo.level)}>&#9747;</span>
+      </li>
+    ))}
+    {questionLinks.length === 0 && <span>No linked LOs</span>}
+    </ul>
+  </div>;
+}
 
 function CreateQuizForm({courseID, callback}: {courseID: string, callback: () => any}) {
   const [createQuiz, {loading: submitting}] = useMutation<{createQuiz: CreateQuizResponse}, {courseID: string, input: CreateQuizModel}>(CREATE_QUIZ);

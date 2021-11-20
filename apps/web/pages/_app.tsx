@@ -1,5 +1,6 @@
 import { AppProps } from 'next/app';
 import 'react-toastify/dist/ReactToastify.css';
+import 'rc-collapse/assets/index.css';
 import './styles.css';
 import { ApolloProvider } from '@apollo/client';
 import client from '../apollo-client';
@@ -7,7 +8,7 @@ import { SessionProvider } from 'next-auth/react';
 import SiteLayout from '../components/SiteLayout';
 import { PageTransition } from 'next-page-transitions';
 
-function MyApp({ Component, pageProps: {session, ...pageProps} }: AppProps) {
+function MyApp({ Component, pageProps: {session, ...pageProps}, router }: AppProps) {
   return <ApolloProvider client={client}>
     <SessionProvider session={session}>
       <SiteLayout>
@@ -21,7 +22,7 @@ function MyApp({ Component, pageProps: {session, ...pageProps} }: AppProps) {
             exit: 0,
           }}
           loadingClassNames="loading-indicator">
-            <Component {...pageProps} />
+            <Component {...pageProps} key={router.route}/>
         </PageTransition>
         <style jsx global>{`
           .page-transition-enter {
