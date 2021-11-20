@@ -10,7 +10,7 @@ import (
 	"lo-tracker/apps/api/graph/model"
 )
 
-func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, input model.CreateCourseInput) (*model.Course, error) {
+func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, teacherID string, input model.CreateCourseInput) (*model.Course, error) {
 	createdCourse, err := r.Client.Course.CreateOne(
 		db.Course.Name.Set(input.Name),
 		db.Course.Description.Set(input.Description),
@@ -21,6 +21,9 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, i
 		),
 		db.Course.PloGroup.Link(
 			db.PLOgroup.ID.Equals(input.PloGroupID),
+		),
+		db.Course.Teacher.Link(
+			db.Teacher.ID.Equals(teacherID),
 		),
 	).Exec(ctx)
 	if err != nil {

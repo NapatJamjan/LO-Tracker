@@ -152,14 +152,14 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateCourse       func(childComplexity int, programID string, input model.CreateCourseInput) int
+		CreateCourse       func(childComplexity int, programID string, teacherID string, input model.CreateCourseInput) int
 		CreateLOLevel      func(childComplexity int, loID string, input model.CreateLOLevelInput) int
 		CreateLOLink       func(childComplexity int, loID string, ploID string) int
 		CreateLOs          func(childComplexity int, courseID string, input []*model.CreateLOsInput) int
 		CreateLo           func(childComplexity int, courseID string, input model.CreateLOInput) int
 		CreatePLOGroup     func(childComplexity int, programID string, name string, input []*model.CreatePLOsInput) int
 		CreatePlo          func(childComplexity int, ploGroupID string, input model.CreatePLOInput) int
-		CreateProgram      func(childComplexity int, input model.CreateProgramInput) int
+		CreateProgram      func(childComplexity int, teacherID string, input model.CreateProgramInput) int
 		CreateQuestionLink func(childComplexity int, input *model.CreateQuestionLinkInput) int
 		CreateQuiz         func(childComplexity int, courseID string, input *model.CreateQuizInput) int
 		CreateStudents     func(childComplexity int, input []*model.CreateStudentInput) int
@@ -256,7 +256,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateCourse(ctx context.Context, programID string, input model.CreateCourseInput) (*model.Course, error)
+	CreateCourse(ctx context.Context, programID string, teacherID string, input model.CreateCourseInput) (*model.Course, error)
 	EditCourse(ctx context.Context, id string, input model.CreateCourseInput) (*model.Course, error)
 	DeleteCourse(ctx context.Context, id string) (*model.DeleteCourseResult, error)
 	CreateLOs(ctx context.Context, courseID string, input []*model.CreateLOsInput) ([]*model.CreateLOResult, error)
@@ -266,7 +266,7 @@ type MutationResolver interface {
 	DeleteLo(ctx context.Context, id string) (*model.DeleteLOResult, error)
 	DeleteLOLevel(ctx context.Context, id string, level int) (*model.DeleteLOLevelResult, error)
 	DeleteLOLink(ctx context.Context, loID string, ploID string) (*model.DeleteLOLinkResult, error)
-	CreateProgram(ctx context.Context, input model.CreateProgramInput) (*model.Program, error)
+	CreateProgram(ctx context.Context, teacherID string, input model.CreateProgramInput) (*model.Program, error)
 	EditProgram(ctx context.Context, id string, input model.CreateProgramInput) (*model.Program, error)
 	CreatePLOGroup(ctx context.Context, programID string, name string, input []*model.CreatePLOsInput) (*model.PLOGroup, error)
 	EditPLOGroup(ctx context.Context, id string, name string) (*model.PLOGroup, error)
@@ -652,7 +652,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateCourse(childComplexity, args["programID"].(string), args["input"].(model.CreateCourseInput)), true
+		return e.complexity.Mutation.CreateCourse(childComplexity, args["programID"].(string), args["teacherID"].(string), args["input"].(model.CreateCourseInput)), true
 
 	case "Mutation.createLOLevel":
 		if e.complexity.Mutation.CreateLOLevel == nil {
@@ -736,7 +736,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProgram(childComplexity, args["input"].(model.CreateProgramInput)), true
+		return e.complexity.Mutation.CreateProgram(childComplexity, args["teacherID"].(string), args["input"].(model.CreateProgramInput)), true
 
 	case "Mutation.createQuestionLink":
 		if e.complexity.Mutation.CreateQuestionLink == nil {
@@ -1444,7 +1444,7 @@ type DeleteLOLinkResult {
 }
 
 type Mutation {
-  createCourse(programID: ID!, input: CreateCourseInput!): Course!
+  createCourse(programID: ID!, teacherID: ID!, input: CreateCourseInput!): Course!
   editCourse(id: ID!, input: CreateCourseInput!): Course!
   deleteCourse(id: ID!): DeleteCourseResult!
   createLOs(courseID: ID!, input: [CreateLOsInput!]!): [CreateLOResult!]!
@@ -1551,7 +1551,7 @@ type deletePLOResult {
 }
 
 extend type Mutation {
-  createProgram(input: CreateProgramInput!): Program!
+  createProgram(teacherID: ID!, input: CreateProgramInput!): Program!
   editProgram(id: ID!, input: CreateProgramInput!): Program!
   createPLOGroup(programID: ID!, name: String!, input: [CreatePLOsInput!]!): PLOGroup!
   editPLOGroup(id: ID!, name: String!): PLOGroup!
@@ -1681,15 +1681,24 @@ func (ec *executionContext) field_Mutation_createCourse_args(ctx context.Context
 		}
 	}
 	args["programID"] = arg0
-	var arg1 model.CreateCourseInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNCreateCourseInput2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateCourseInput(ctx, tmp)
+	var arg1 string
+	if tmp, ok := rawArgs["teacherID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teacherID"))
+		arg1, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg1
+	args["teacherID"] = arg1
+	var arg2 model.CreateCourseInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg2, err = ec.unmarshalNCreateCourseInput2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateCourseInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg2
 	return args, nil
 }
 
@@ -1849,15 +1858,24 @@ func (ec *executionContext) field_Mutation_createPLO_args(ctx context.Context, r
 func (ec *executionContext) field_Mutation_createProgram_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.CreateProgramInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateProgramInput2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateProgramInput(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["teacherID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teacherID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["teacherID"] = arg0
+	var arg1 model.CreateProgramInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNCreateProgramInput2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateProgramInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -4076,7 +4094,7 @@ func (ec *executionContext) _Mutation_createCourse(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateCourse(rctx, args["programID"].(string), args["input"].(model.CreateCourseInput))
+		return ec.resolvers.Mutation().CreateCourse(rctx, args["programID"].(string), args["teacherID"].(string), args["input"].(model.CreateCourseInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4496,7 +4514,7 @@ func (ec *executionContext) _Mutation_createProgram(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateProgram(rctx, args["input"].(model.CreateProgramInput))
+		return ec.resolvers.Mutation().CreateProgram(rctx, args["teacherID"].(string), args["input"].(model.CreateProgramInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

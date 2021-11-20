@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import { ProgramStaticPaths } from '../../../utils/staticpaths';
 import { ProgramMainMenu } from '../../../components/Menu';
+import { useSession } from 'next-auth/react';
 
 interface PLOGroupModel {
   id: string;
@@ -30,20 +31,20 @@ interface CreateCourseResponse {
   ploGroupID: string;
 };
 
-export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) => {
-  const CREATE_COURSE = gql`
-    mutation CreateCourse($programID: ID!, $input: CreateCourseInput!) {
-      createCourse(programID: $programID, input: $input) {
-        id
-        name
-        description
-        semester
-        year
-        ploGroupID
-      }
-    }
-  `;
-  const [createCourse, { loading: submitting } ] = useMutation<{createCourse: CreateCourseResponse}, {programID: string, input: CreateCourseModel}>(CREATE_COURSE);
+const CREATE_COURSE = gql`
+  mutation CreateCourse($programID: ID!, $teacherID: ID!, $input: CreateCourseInput!) {
+    createCourse(programID: $programID, teacherID: $teacherID, input: $input) {
+      id
+      name
+      description
+      semester
+      year
+      ploGroupID
+}}`;
+
+export default function Page({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) {
+  const {data: session, status} = useSession();
+  const [createCourse, { loading: submitting } ] = useMutation<{createCourse: CreateCourseResponse}, {programID: string, teacherID: string, input: CreateCourseModel}>(CREATE_COURSE);
   const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<CreateCourseModel>();
   const router = useRouter();
   const submitForm = (form: CreateCourseModel) => {
@@ -51,6 +52,7 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
       createCourse({
         variables: {
           programID,
+          teacherID: String(session.id),
           input: form
         }
       }).then((res) => res.data.createCourse).then((course) => {
@@ -65,7 +67,7 @@ export default ({programID, ploGroups}: {programID: string, ploGroups: PLOGroupM
     </Head>
     <ProgramMainMenu programID={programID} />
     <div>
-      <form onSubmit={handleSubmit((form) => submitting? null: submitForm(form))}>
+      <form onSubmit={handleSubmit((form) => submitting || status === 'loading'? null: submitForm(form))}>
         <span>Course name:</span>
         <br />
         <input {...register('name', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/>

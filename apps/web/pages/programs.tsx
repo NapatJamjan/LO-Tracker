@@ -9,6 +9,7 @@ import { GetStaticProps } from 'next';
 import client from '../apollo-client';
 import { useRouter } from 'next/router';
 import xlsx from 'xlsx';
+import { useSession } from 'next-auth/react';
 
 interface ProgramModel {
   id: string;
@@ -84,26 +85,27 @@ function CreateProgramButton() {
 }
 
 function CreateProgramModal({show, setShow}: {show: boolean, setShow: Dispatch<SetStateAction<boolean>>}) {
+  const {data: session, status} = useSession();
   const router = useRouter();
   const { register, handleSubmit, reset, formState: { errors, touchedFields } } = useForm<CreateProgramModel>();
   const resetForm = () => {
     reset({ name: '', description: '' }); setShow(false);
   };
   const CREATE_PROGRAM = gql`
-    mutation CreateProgram($input: CreateProgramInput!) {
-      createProgram(input: $input) {
+    mutation CreateProgram($teacherID: ID!, $input: CreateProgramInput!) {
+      createProgram(teacherID: $teacherID, input: $input) {
         id
         name
         description
   }}`;
-  const [createProgram, { loading: submitting } ] = useMutation<{createProgram: CreateProgramRepsonse}, {input: CreateProgramModel}>(CREATE_PROGRAM);
+  const [createProgram, { loading: submitting } ] = useMutation<{createProgram: CreateProgramRepsonse}, {teacherID: string, input: CreateProgramModel}>(CREATE_PROGRAM);
   const submitForm = (form: CreateProgramModel) => createProgram({ 
-    variables: {input: form} 
+    variables: {teacherID: String(session.id), input: form} 
   }).then((res) => {
     resetForm(); router.push(`/program/${res.data.createProgram.id}/courses`);
   });
   return <Modal show={show} onHide={() => resetForm()}>
-    <form onSubmit={handleSubmit((form) => submitting ? null: submitForm(form))}>
+    <form onSubmit={handleSubmit((form) => submitting || status === 'loading' ? null: submitForm(form))}>
       <Modal.Header>
         <Modal.Title className="font-bold">Create a new program</Modal.Title>
       </Modal.Header>

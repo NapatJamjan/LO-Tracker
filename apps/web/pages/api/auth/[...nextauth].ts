@@ -40,6 +40,7 @@ export default NextAuth({
         const token: TokenFormat = await response.json()
         return {
           ...token,
+          id: credentials.username,
         };
       }
     })
@@ -68,6 +69,7 @@ export default NextAuth({
           roleLevel: user.role_level,
           username: user.username,
           email: user.email,
+          id: user.id,
         };
       }
       return token;
@@ -77,6 +79,7 @@ export default NextAuth({
       session.user.email = token.email as string;
       session.isTeacher = token.isTeacher as boolean;
       session.roleLevel = token.roleLevel as number;
+      session.id = token.id as string;
       session.error = null;
       console.log(session);
       return session;

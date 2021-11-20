@@ -11,10 +11,13 @@ import (
 	"github.com/prisma/prisma-client-go/runtime/transaction"
 )
 
-func (r *mutationResolver) CreateProgram(ctx context.Context, input model.CreateProgramInput) (*model.Program, error) {
+func (r *mutationResolver) CreateProgram(ctx context.Context, teacherID string, input model.CreateProgramInput) (*model.Program, error) {
 	createdProgram, err := r.Client.Program.CreateOne(
 		db.Program.Name.Set(input.Name),
 		db.Program.Description.Set(input.Description),
+		db.Program.Teacher.Link(
+			db.Teacher.ID.Equals(teacherID),
+		),
 	).Exec(ctx)
 	if err != nil {
 		return &model.Program{}, err

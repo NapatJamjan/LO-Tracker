@@ -87,7 +87,7 @@ type DeleteLOLinkResult {
 }
 
 type Mutation {
-  createCourse(programID: ID!, input: CreateCourseInput!): Course!
+  createCourse(programID: ID!, teacherID: ID!, input: CreateCourseInput!): Course!
   editCourse(id: ID!, input: CreateCourseInput!): Course!
   deleteCourse(id: ID!): DeleteCourseResult!
   createLOs(courseID: ID!, input: [CreateLOsInput!]!): [CreateLOResult!]!
