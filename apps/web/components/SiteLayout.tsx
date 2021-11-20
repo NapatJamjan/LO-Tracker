@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { useSession } from 'next-auth/client';
+import { useSession } from 'next-auth/react';
 
 export default function SiteLayout({children}) {
-  const [session] = useSession();
+  const {data: session} = useSession();
   return <div className="min-h-screen flex flex-col w-100">
     <nav className="flex text-white bg-black justify-around py-2">
       <Link href="/">LO Tracker</Link>

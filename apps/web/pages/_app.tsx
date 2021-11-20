@@ -3,13 +3,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles.css';
 import { ApolloProvider } from '@apollo/client';
 import client from '../apollo-client';
-import { Provider } from 'next-auth/client';
+import { SessionProvider } from 'next-auth/react';
 import SiteLayout from '../components/SiteLayout';
 import { PageTransition } from 'next-page-transitions';
 
 function MyApp({ Component, pageProps: {session, ...pageProps} }: AppProps) {
   return <ApolloProvider client={client}>
-    <Provider session={session}>
+    <SessionProvider session={session}>
       <SiteLayout>
         <PageTransition
           timeout={160}
@@ -40,7 +40,7 @@ function MyApp({ Component, pageProps: {session, ...pageProps} }: AppProps) {
           }
         `}</style>
       </SiteLayout>
-    </Provider>
+    </SessionProvider>
   </ApolloProvider>;
 }
 

@@ -57,7 +57,7 @@ func SetAuthRouter(r *gin.RouterGroup, client *db.PrismaClient, rdb *redis.Clien
 		student, _ := client.Student.FindUnique(
 			db.Student.ID.Equals(userID),
 		).With(db.Student.User.Fetch()).Exec(ctx)
-		username := ""
+		var username, email string
 		isTeacher := false
 		level := 0
 		if teacher == nil && student == nil {
@@ -67,8 +67,10 @@ func SetAuthRouter(r *gin.RouterGroup, client *db.PrismaClient, rdb *redis.Clien
 			isTeacher = true
 			level = teacher.Role
 			username = teacher.User().Name
+			email = teacher.User().Email
 		} else {
 			username = student.User().Name
+			email = student.User().Email
 		}
 		accessUUID := uuid.New().String()
 		refreshUUID := uuid.New().String()
@@ -100,6 +102,7 @@ func SetAuthRouter(r *gin.RouterGroup, client *db.PrismaClient, rdb *redis.Clien
 			"is_teacher":    isTeacher,
 			"role_level":    level,
 			"username":      username,
+			"email":         email,
 		})
 	})
 }

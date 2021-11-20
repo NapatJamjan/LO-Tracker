@@ -1,37 +1,42 @@
-import { signIn } from 'next-auth/client';
 import { useForm } from 'react-hook-form';
-import { useSession } from 'next-auth/client';
+import { signIn, useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import router from 'next/router';
 import { ToastContainer, toast } from 'react-toastify';
 
+interface UserLoginForm {
+  username: string;
+  password: string;
+}
+
 export default function Page() {
   const [submitting, setSubmitting] = useState<boolean>(false)
-  const { register, handleSubmit } = useForm<{username: string, password: string}>();
-  const [session, loading] = useSession();
+  const { register, handleSubmit } = useForm<UserLoginForm>();
+  const {data: session, status} = useSession();
   useEffect(() => {
-    if (!loading && session) router.replace('/programs');
-  }, [loading]);
-  if (loading || session) {
+    if (status !== 'loading' && session) router.replace('/programs');
+  }, [status]);
+  if (status === 'loading' || session) {
     return null;
+  }
+  const submitForm = (form: UserLoginForm) => {
+    if (form.username === '') {
+      toast('Please complete the form', { type: 'info' });
+      return;
+    }
+    if (submitting) return;
+    setSubmitting(true);
+    signIn("credentials", {
+      redirect: false,
+      ...form
+    }).then(res => {
+      if (res.error) throw res.error;
+      router.replace('/programs');
+    }).catch(_ => toast(`Error: User not found`, { type: 'error' })).finally(() => setSubmitting(false));
   }
   return <div className="flex justify-center" style={{paddingTop: '30vh'}}>
     <ToastContainer/>
-    <form onSubmit={handleSubmit((form) => {
-        if (form.username === '') {
-          toast('Please complete the form', { type: 'info' });
-          return;
-        }
-        if (submitting) return;
-        setSubmitting(true);
-        signIn("credentials", {
-          redirect: false,
-          ...form
-        }).then(res => {
-          if (res.error) throw res.error;
-          router.replace('/programs');
-        }).catch(_ => toast(`Error: User not found`, { type: 'error' })).finally(() => setSubmitting(false));
-      })} className="flex flex-column items-center gap-y-4">
+    <form onSubmit={handleSubmit(submitForm)} className="flex flex-column items-center gap-y-4">
       <div>
         <span>Username</span><br/>
         <input {...register('username', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>

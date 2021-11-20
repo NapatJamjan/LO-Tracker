@@ -1,8 +1,9 @@
 import NextAuth from 'next-auth';
-import Providers from 'next-auth/providers';
+import Credentials from 'next-auth/providers/credentials';
 
 interface TokenFormat {
   username: string;
+  email: string;
   access_token: string;
   refresh_token: string;
   access_exp: number;
@@ -17,7 +18,7 @@ interface ErrorFormat {
 
 export default NextAuth({
   providers: [
-    Providers.Credentials({
+    Credentials({
       name: "custom provider",
       credentials: {
         username: { label: "username", type: "text", placeholder: "username" },
@@ -44,16 +45,19 @@ export default NextAuth({
     })
   ],
   session: {
-    jwt: true
+    strategy: 'jwt',
+  },
+  jwt: {
+    secret: 'jwt------secret',
   },
   callbacks: {
-    redirect(url) {
+    redirect({url}) {
       let baseUrl = 'http://localhost:4200';
       if (url.startsWith(baseUrl)) return url;
       else if (url.startsWith("/")) return new URL(url, baseUrl).toString();
       return baseUrl;
     },
-    async jwt(token, user) {
+    async jwt({token, user}) {
       if (user) {
         return {
           accessToken: user.access_token,
@@ -63,17 +67,19 @@ export default NextAuth({
           isTeacher: user.is_teacher,
           roleLevel: user.role_level,
           username: user.username,
-        }
+          email: user.email,
+        };
       }
       return token;
     },
-    async session(session, token) {
+    async session({session, token}) {
       session.user.name = token.username as string;
+      session.user.email = token.email as string;
       session.isTeacher = token.isTeacher as boolean;
       session.roleLevel = token.roleLevel as number;
       session.error = null;
       console.log(session);
-      return session
+      return session;
     }
   }
 });
