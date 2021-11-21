@@ -12,8 +12,14 @@ import (
 func (r *mutationResolver) CreateStudents(ctx context.Context, input []*model.CreateStudentInput) ([]*model.CreateStudentResult, error) {
 	createdStudents := []*model.CreateStudentResult{}
 	for _, student := range input {
-		created, err := r.Client.User.CreateOne(
+		created, err := r.Client.User.UpsertOne(
+			db.User.ID.Equals(student.ID),
+		).Create(
 			db.User.ID.Set(student.ID),
+			db.User.Email.Set(student.Email),
+			db.User.Name.Set(student.Name),
+			db.User.Surname.Set(student.Surname),
+		).Update(
 			db.User.Email.Set(student.Email),
 			db.User.Name.Set(student.Name),
 			db.User.Surname.Set(student.Surname),

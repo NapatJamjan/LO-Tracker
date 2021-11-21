@@ -92,8 +92,12 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
 };
 
 export function PLOs() {
-  const { ploGroups, removePLOGroup, isOwner } = useContext(PLOContext);
+  const { ploGroups, removePLOGroup, isOwner, submitting } = useContext(PLOContext);
   const [selectedPLOGroupID, setSelectedPLOGroupID] = useState<string>('');
+  const deletePLOGroup = () => {
+    if (submitting || !confirm('Delete this PLO group?')) return;
+    removePLOGroup(selectedPLOGroupID).then(() => setSelectedPLOGroupID(''))
+  }
   return <div>
     {isOwner && <CreatePLOGroupForm />}
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
@@ -109,10 +113,10 @@ export function PLOs() {
       </div>
       <div>
         {selectedPLOGroupID !== '' && <p className="mb-3">
-          <span>{ploGroups.find(g => g.id === selectedPLOGroupID).name}</span>
+          <span>{ploGroups.find(g => g.id === selectedPLOGroupID)?.name}</span>
           {isOwner && <>
-          <EditPLOGroupForm ploGroupID={selectedPLOGroupID} initName={ploGroups.find(g => g.id === selectedPLOGroupID).name}/>
-          <span className="cursor-pointer underline text-red-500" onClick={() => removePLOGroup(selectedPLOGroupID).then(() => setSelectedPLOGroupID(''))}>delete</span></>}
+          <EditPLOGroupForm ploGroupID={selectedPLOGroupID} initName={ploGroups.find(g => g.id === selectedPLOGroupID)?.name}/>
+          <span className="cursor-pointer underline text-red-500" onClick={deletePLOGroup}>delete</span></>}
         </p>}
         {selectedPLOGroupID !== '' && <PLOSub ploGroupID={selectedPLOGroupID}/>}
       </div>

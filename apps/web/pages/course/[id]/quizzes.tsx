@@ -119,6 +119,7 @@ const QuizContext = createContext<{
   setSelectedQuestionID: (s: string) => any,
   removeQuiz: (id: string) => Promise<any>,
   removeQuestionLink: (input: DeleteQuestionLinkModel) => Promise<any>,
+  changeQuizName: (id: string, name: string) => Promise<any>,
   submitting: boolean,
   isOwner: boolean,
 }>({
@@ -126,6 +127,7 @@ const QuizContext = createContext<{
   setSelectedQuestionID: () => null,
   removeQuiz: () => null,
   removeQuestionLink: () => null,
+  changeQuizName: () => null,
   submitting: false,
   isOwner: false,
 });
@@ -137,7 +139,8 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
   const [selectedQuestionID, setSelectedQuestionID] = useState<string>('');
   const [deleteQuiz, { loading: Qdeleting}] = useMutation<{deleteQuiz: {id: string}}, {id: string}>(DELETE_QUIZ);
   const [deleteQuestionLink, {loading: QLdeleting}] = useMutation<{deleteQuestionLink: DeleteQuestionLinkResponse}, {input: DeleteQuestionLinkModel}>(DELETE_QUESTIONLINK);
-  const submitting = Qdeleting || QLdeleting;
+  const [editQuiz, {loading: Quizediting}] = useMutation<{editQuiz: {id: string}}, {id: string, name: string}>(EDIT_QUIZ);
+  const submitting = Qdeleting || QLdeleting || Quizediting;
   const removeQuiz = (id: string) => {
     return deleteQuiz({variables: {id}}).finally(() => {
       let isSelected = quizzes.find(quiz => quiz.id === id).questions.findIndex(question => question.id === selectedQuestionID) !== -1
@@ -150,6 +153,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
   const removeQuestionLink = (input: DeleteQuestionLinkModel) => {
     return deleteQuestionLink({variables: {input}}).finally(() => router.replace(router.asPath));
   }
+  const changeQuizName = (id: string, name: string) => editQuiz({variables: {id, name}}).finally(() => router.replace(router.asPath));
   const isOwner = status !== 'loading' && session && session.id === teacherID;
   useEffect(() => {
     if (!course) return;
@@ -171,7 +175,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
     </Head>
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'quizzes'}/>
-    <QuizContext.Provider value={{selectedQuestionID, setSelectedQuestionID, removeQuiz, removeQuestionLink, submitting, isOwner}}>
+    <QuizContext.Provider value={{selectedQuestionID, setSelectedQuestionID, removeQuiz, removeQuestionLink, submitting, isOwner, changeQuizName}}>
       {isOwner && <CreateQuizForm courseID={course.id} callback={() => router.replace(router.asPath)}/>}
       <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
         <div className="flex flex-column space-y-2">
@@ -203,7 +207,7 @@ function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
   const [activeKey, setActiveKey] = useState<Key | Key[]>([]);
   return <Collapse activeKey={activeKey} onChange={setActiveKey}>
     {quizzes.sort((q1, q2) => q1.name.localeCompare(q2.name)).map((quiz) => (
-      <Panel key={quiz.id} header={<p>{quiz.name}</p>}>
+      <Panel key={quiz.id} header={<p>{quiz.name} <span onClick={e => e.stopPropagation()}><EditQuizForm quizID={quiz.id} quizName={quiz.name}/></span></p>}>
         <ul>
         {[...quiz.questions].sort((q1, q2) => q1.title.localeCompare(q2.title)).map((question, index) => (
           <li key={question.id} className="p-3">
@@ -229,6 +233,30 @@ function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
   </Collapse>
 }
 
+function EditQuizForm({quizID, quizName}: {quizID: string, quizName: string}) {
+  const {submitting, changeQuizName} = useContext(QuizContext);
+  const [show, setShow] = useState<boolean>(false);
+  const { register, handleSubmit } = useForm<{ name: string }>({defaultValues: {name: quizName}});
+  return <>
+    <span className="text-red-500 hover:underline" onClick={() => setShow(true)}>edit</span>
+    <Modal show={show} onHide={() => setShow(false)}>
+      <form
+        onSubmit={handleSubmit(({name}) => submitting?null:changeQuizName(quizID, name).finally(() => setShow(false)))}>
+        <Modal.Header>
+          <Modal.Title>Update the quiz name</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <span>Quiz name:</span><br/>
+          <input type="text" {...register('name')} placeholder="quiz name" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+        </Modal.Body>
+        <Modal.Footer>
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        </Modal.Footer>
+      </form>
+    </Modal>
+  </>;
+}
+
 function LinkedLOContainer({quizzes}: {quizzes: QuizModel[]}) {
   const { selectedQuestionID, removeQuestionLink, submitting, isOwner } = useContext(QuizContext);
   let questionLinks: QuestionLinkModel[] = [];
@@ -238,7 +266,7 @@ function LinkedLOContainer({quizzes}: {quizzes: QuizModel[]}) {
   }
   const deleteQuestionLink = (loID: string, level: number) => {
     if (submitting || !confirm('Delete this mapping?')) return;
-    removeQuestionLink({questionID: selectedQuestionID, loID, level})
+    removeQuestionLink({questionID: selectedQuestionID, loID, level});
   }
   return <div className="pt-3">
     <span>Linked LOs: </span><br/>
@@ -449,6 +477,11 @@ const GET_QUIZZES = gql`
 const CREATE_QUIZ = gql`
   mutation CreateQuiz($courseID: ID!, $input: CreateQuizInput!) {
     createQuiz(courseID: $courseID, input: $input) {
+      id
+}}`;
+const EDIT_QUIZ = gql`
+  mutation EditQuiz($id: ID!, $name: String!) {
+    editQuiz(id: $id, name: $name) {
       id
 }}`;
 const DELETE_QUIZ = gql`
