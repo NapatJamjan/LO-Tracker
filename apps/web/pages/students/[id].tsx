@@ -12,28 +12,30 @@ import { getSession, useSession } from 'next-auth/react';
 
 export default function Page({student}: {student: StudentModel}) {
   const {data: session, status} = useSession();
+  const [dataType, setType] = useState("plo");
+  function handleType(e: any) { setType(e.target.value) }
   const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name'])
   const [tableData, setData] = useState<studentResult>(
     {studentID: student.id, studentName:(student.name+" "+student.surname), scores: []}
   );
   const MockCount = 5; // change number of Mock PLO
+  // tableData.scores = Array.from({length: MockCount}, () => Math.floor(Math.random() * 90 + 10))
   if(tableData.scores.length == 0){
     for (let i = 0; i < MockCount; i++) {
       tableHead.push(`PLO ${i+1}`)
       tableData.scores.push(Math.floor(Math.random() * 90 + 10))
     }
   }
-  if (status === 'loading') return null;
-  const noPermission = !session.isTeacher && String(session.id) !== student.id;
-  if (noPermission) return <p className="text-center">No permission</p>;
-  const [dataType, setType] = useState("plo");
-  function handleType(e: any) { setType(e.target.value) }
-
   useEffect(() => {
     for (let i = 0; i < tableData.scores.length; i++) {
      tableData.scores[i] = Math.floor(Math.random() * 90 + 10);
     }
   }, [dataType])
+  if (status === 'loading') return null;
+  const noPermission = !session.isTeacher && String(session.id) !== student.id;
+  if (noPermission) return <p className="text-center">No permission</p>;
+
+ 
   return <div>
     <Head>
       <title>{student.name}'s Dashboard</title>
@@ -41,7 +43,10 @@ export default function Page({student}: {student: StudentModel}) {
     <div>
       <p style={{fontSize: 20}}>Program Learning Outcome Dashboard</p>
       <div>
-      <BackButton onClick={() => router.back()}>
+      <BackButton onClick={() => {
+        if(session.isTeacher) router.back();
+        else router.replace('/');
+        }}>
         &#12296;Back
       </BackButton>
       <h6>ID: {student.id}</h6>
@@ -50,7 +55,7 @@ export default function Page({student}: {student: StudentModel}) {
       </div><br/>
       <span>Select view type: </span>
       <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
-        <option value="plo">My Program Learning Outcome</option>
+        <option value="plo">Program Learning Outcome</option>
         <option value="coruseid1">CSC209: Data Structures</option>
       </select>
       <TableScrollDiv>
