@@ -77,9 +77,14 @@ type DeleteQuestionLinkResult {
   loID: ID!
 }
 
+type EditQuizResult {
+  id: ID!
+}
+
 extend type Mutation {
   createQuiz(courseID: ID!, input: CreateQuizInput): CreateQuizResult!
   createQuestionLink(input: CreateQuestionLinkInput): CreateQuestionLinkResult!
+  editQuiz(id: ID!, name: String!): EditQuizResult!
   deleteQuiz(id: ID!): DeleteQuizResult!
   deleteQuestionLink(input: DeleteQuestionLinkInput!): DeleteQuestionLinkResult!
 }

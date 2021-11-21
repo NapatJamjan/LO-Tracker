@@ -121,6 +121,38 @@ func (r *mutationResolver) CreateLOs(ctx context.Context, courseID string, input
 	return result, nil
 }
 
+func (r *mutationResolver) EditLo(ctx context.Context, id string, title string) (*model.EditLOResult, error) {
+	updated, err := r.Client.LO.FindUnique(
+		db.LO.ID.Equals(id),
+	).Update(
+		db.LO.Title.Set(title),
+	).Exec(ctx)
+	if err != nil {
+		return &model.EditLOResult{}, err
+	}
+	return &model.EditLOResult{
+		ID: updated.ID,
+	}, nil
+}
+
+func (r *mutationResolver) EditLOLevel(ctx context.Context, id string, level int, description string) (*model.EditLOLevelResult, error) {
+	updated, err := r.Client.LOlevel.FindUnique(
+		db.LOlevel.LoIDLevel(
+			db.LOlevel.LoID.Equals(id),
+			db.LOlevel.Level.Equals(level),
+		),
+	).Update(
+		db.LOlevel.Description.Set(description),
+	).Exec(ctx)
+	if err != nil {
+		return &model.EditLOLevelResult{}, err
+	}
+	return &model.EditLOLevelResult{
+		ID:    updated.LoID,
+		Level: updated.Level,
+	}, nil
+}
+
 func (r *mutationResolver) CreateLOLink(ctx context.Context, loID string, ploID string) (*model.CreateLOLinkResult, error) {
 	createdLO, err := r.Client.LOlink.CreateOne(
 		db.LOlink.Lo.Link(

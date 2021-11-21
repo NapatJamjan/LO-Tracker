@@ -50,10 +50,15 @@ type deletePLOResult {
   id: ID!
 }
 
+type addPLOsResult {
+  id: ID!
+}
+
 extend type Mutation {
   createProgram(teacherID: ID!, input: CreateProgramInput!): Program!
   editProgram(id: ID!, input: CreateProgramInput!): Program!
   createPLOGroup(programID: ID!, name: String!, input: [CreatePLOsInput!]!): PLOGroup!
+  addPLOs(ploGroupID: ID!, input: [CreatePLOInput!]!): addPLOsResult!
   editPLOGroup(id: ID!, name: String!): PLOGroup!
   createPLO(ploGroupID: ID!, input: CreatePLOInput!): PLO!
   editPLO(id: ID!, title: String!, description: String!): PLO!

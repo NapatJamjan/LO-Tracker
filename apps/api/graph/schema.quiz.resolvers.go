@@ -72,6 +72,20 @@ func (r *mutationResolver) CreateQuestionLink(ctx context.Context, input *model.
 	}, nil
 }
 
+func (r *mutationResolver) EditQuiz(ctx context.Context, id string, name string) (*model.EditQuizResult, error) {
+	updated, err := r.Client.Quiz.FindUnique(
+		db.Quiz.ID.Equals(id),
+	).Update(
+		db.Quiz.Name.Set(name),
+	).Exec(ctx)
+	if err != nil {
+		return &model.EditQuizResult{}, err
+	}
+	return &model.EditQuizResult{
+		ID: updated.ID,
+	}, nil
+}
+
 func (r *mutationResolver) DeleteQuiz(ctx context.Context, id string) (*model.DeleteQuizResult, error) {
 	deleted, err := r.Client.Quiz.FindUnique(
 		db.Quiz.ID.Equals(id),

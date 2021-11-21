@@ -78,6 +78,25 @@ func (r *mutationResolver) CreatePLOGroup(ctx context.Context, programID string,
 	}, nil
 }
 
+func (r *mutationResolver) AddPLOs(ctx context.Context, ploGroupID string, input []*model.CreatePLOInput) (*model.AddPLOsResult, error) {
+	transactions := []transaction.Param{}
+	for _, plo := range input {
+		transactions = append(transactions, r.Client.PLO.CreateOne(
+			db.PLO.Title.Set(plo.Title),
+			db.PLO.Description.Set(plo.Description),
+			db.PLO.PloGroup.Link(
+				db.PLOgroup.ID.Equals(ploGroupID),
+			),
+		).Tx())
+	}
+	if err := r.Client.Prisma.Transaction(transactions...).Exec(ctx); err != nil {
+		return &model.AddPLOsResult{}, err
+	}
+	return &model.AddPLOsResult{
+		ID: ploGroupID,
+	}, nil
+}
+
 func (r *mutationResolver) EditPLOGroup(ctx context.Context, id string, name string) (*model.PLOGroup, error) {
 	updated, err := r.Client.PLOgroup.FindUnique(
 		db.PLOgroup.ID.Equals(id),

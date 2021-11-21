@@ -140,6 +140,19 @@ type ComplexityRoot struct {
 		ID func(childComplexity int) int
 	}
 
+	EditLOLevelResult struct {
+		ID    func(childComplexity int) int
+		Level func(childComplexity int) int
+	}
+
+	EditLOResult struct {
+		ID func(childComplexity int) int
+	}
+
+	EditQuizResult struct {
+		ID func(childComplexity int) int
+	}
+
 	Lo struct {
 		ID       func(childComplexity int) int
 		Levels   func(childComplexity int) int
@@ -153,6 +166,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddPLOs            func(childComplexity int, ploGroupID string, input []*model.CreatePLOInput) int
 		CreateCourse       func(childComplexity int, programID string, teacherID string, input model.CreateCourseInput) int
 		CreateLOLevel      func(childComplexity int, loID string, input model.CreateLOLevelInput) int
 		CreateLOLink       func(childComplexity int, loID string, ploID string) int
@@ -173,9 +187,12 @@ type ComplexityRoot struct {
 		DeleteQuestionLink func(childComplexity int, input model.DeleteQuestionLinkInput) int
 		DeleteQuiz         func(childComplexity int, id string) int
 		EditCourse         func(childComplexity int, id string, input model.CreateCourseInput) int
+		EditLOLevel        func(childComplexity int, id string, level int, description string) int
+		EditLo             func(childComplexity int, id string, title string) int
 		EditPLOGroup       func(childComplexity int, id string, name string) int
 		EditPlo            func(childComplexity int, id string, title string, description string) int
 		EditProgram        func(childComplexity int, id string, input model.CreateProgramInput) int
+		EditQuiz           func(childComplexity int, id string, name string) int
 	}
 
 	Plo struct {
@@ -248,6 +265,10 @@ type ComplexityRoot struct {
 		Surname func(childComplexity int) int
 	}
 
+	AddPLOsResult struct {
+		ID func(childComplexity int) int
+	}
+
 	DeletePLOGroupResult struct {
 		ID func(childComplexity int) int
 	}
@@ -262,6 +283,8 @@ type MutationResolver interface {
 	EditCourse(ctx context.Context, id string, input model.CreateCourseInput) (*model.Course, error)
 	DeleteCourse(ctx context.Context, id string) (*model.DeleteCourseResult, error)
 	CreateLOs(ctx context.Context, courseID string, input []*model.CreateLOsInput) ([]*model.CreateLOResult, error)
+	EditLo(ctx context.Context, id string, title string) (*model.EditLOResult, error)
+	EditLOLevel(ctx context.Context, id string, level int, description string) (*model.EditLOLevelResult, error)
 	CreateLOLink(ctx context.Context, loID string, ploID string) (*model.CreateLOLinkResult, error)
 	CreateLo(ctx context.Context, courseID string, input model.CreateLOInput) (*model.CreateLOResult, error)
 	CreateLOLevel(ctx context.Context, loID string, input model.CreateLOLevelInput) (*model.CreateLOResult, error)
@@ -271,6 +294,7 @@ type MutationResolver interface {
 	CreateProgram(ctx context.Context, teacherID string, input model.CreateProgramInput) (*model.Program, error)
 	EditProgram(ctx context.Context, id string, input model.CreateProgramInput) (*model.Program, error)
 	CreatePLOGroup(ctx context.Context, programID string, name string, input []*model.CreatePLOsInput) (*model.PLOGroup, error)
+	AddPLOs(ctx context.Context, ploGroupID string, input []*model.CreatePLOInput) (*model.AddPLOsResult, error)
 	EditPLOGroup(ctx context.Context, id string, name string) (*model.PLOGroup, error)
 	CreatePlo(ctx context.Context, ploGroupID string, input model.CreatePLOInput) (*model.Plo, error)
 	EditPlo(ctx context.Context, id string, title string, description string) (*model.Plo, error)
@@ -278,6 +302,7 @@ type MutationResolver interface {
 	DeletePlo(ctx context.Context, id string) (*model.DeletePLOResult, error)
 	CreateQuiz(ctx context.Context, courseID string, input *model.CreateQuizInput) (*model.CreateQuizResult, error)
 	CreateQuestionLink(ctx context.Context, input *model.CreateQuestionLinkInput) (*model.CreateQuestionLinkResult, error)
+	EditQuiz(ctx context.Context, id string, name string) (*model.EditQuizResult, error)
 	DeleteQuiz(ctx context.Context, id string) (*model.DeleteQuizResult, error)
 	DeleteQuestionLink(ctx context.Context, input model.DeleteQuestionLinkInput) (*model.DeleteQuestionLinkResult, error)
 	CreateStudents(ctx context.Context, input []*model.CreateStudentInput) ([]*model.CreateStudentResult, error)
@@ -609,6 +634,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeleteQuizResult.ID(childComplexity), true
 
+	case "EditLOLevelResult.id":
+		if e.complexity.EditLOLevelResult.ID == nil {
+			break
+		}
+
+		return e.complexity.EditLOLevelResult.ID(childComplexity), true
+
+	case "EditLOLevelResult.level":
+		if e.complexity.EditLOLevelResult.Level == nil {
+			break
+		}
+
+		return e.complexity.EditLOLevelResult.Level(childComplexity), true
+
+	case "EditLOResult.id":
+		if e.complexity.EditLOResult.ID == nil {
+			break
+		}
+
+		return e.complexity.EditLOResult.ID(childComplexity), true
+
+	case "EditQuizResult.id":
+		if e.complexity.EditQuizResult.ID == nil {
+			break
+		}
+
+		return e.complexity.EditQuizResult.ID(childComplexity), true
+
 	case "LO.id":
 		if e.complexity.Lo.ID == nil {
 			break
@@ -650,6 +703,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LOLevel.Level(childComplexity), true
+
+	case "Mutation.addPLOs":
+		if e.complexity.Mutation.AddPLOs == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addPLOs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddPLOs(childComplexity, args["ploGroupID"].(string), args["input"].([]*model.CreatePLOInput)), true
 
 	case "Mutation.createCourse":
 		if e.complexity.Mutation.CreateCourse == nil {
@@ -891,6 +956,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.EditCourse(childComplexity, args["id"].(string), args["input"].(model.CreateCourseInput)), true
 
+	case "Mutation.editLOLevel":
+		if e.complexity.Mutation.EditLOLevel == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editLOLevel_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditLOLevel(childComplexity, args["id"].(string), args["level"].(int), args["description"].(string)), true
+
+	case "Mutation.editLO":
+		if e.complexity.Mutation.EditLo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editLO_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditLo(childComplexity, args["id"].(string), args["title"].(string)), true
+
 	case "Mutation.editPLOGroup":
 		if e.complexity.Mutation.EditPLOGroup == nil {
 			break
@@ -926,6 +1015,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.EditProgram(childComplexity, args["id"].(string), args["input"].(model.CreateProgramInput)), true
+
+	case "Mutation.editQuiz":
+		if e.complexity.Mutation.EditQuiz == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editQuiz_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditQuiz(childComplexity, args["id"].(string), args["name"].(string)), true
 
 	case "PLO.description":
 		if e.complexity.Plo.Description == nil {
@@ -1293,6 +1394,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Surname(childComplexity), true
 
+	case "addPLOsResult.id":
+		if e.complexity.AddPLOsResult.ID == nil {
+			break
+		}
+
+		return e.complexity.AddPLOsResult.ID(childComplexity), true
+
 	case "deletePLOGroupResult.id":
 		if e.complexity.DeletePLOGroupResult.ID == nil {
 			break
@@ -1447,6 +1555,15 @@ type CreateLOResult {
   id: ID!
 }
 
+type EditLOResult {
+  id: ID!
+}
+
+type EditLOLevelResult {
+  id: ID!
+  level: Int!
+}
+
 type DeleteLOResult {
   id: ID!
 }
@@ -1465,6 +1582,8 @@ type Mutation {
   editCourse(id: ID!, input: CreateCourseInput!): Course!
   deleteCourse(id: ID!): DeleteCourseResult!
   createLOs(courseID: ID!, input: [CreateLOsInput!]!): [CreateLOResult!]!
+  editLO(id: ID!, title: String!): EditLOResult!
+  editLOLevel(id: ID!, level: Int!, description: String!): EditLOLevelResult!
   createLOLink(loID: ID!, ploID: ID!): CreateLOLinkResult!
   createLO(courseID: ID!, input: CreateLOInput!): CreateLOResult!
   createLOLevel(loID: ID!, input: CreateLOLevelInput!): CreateLOResult!
@@ -1568,10 +1687,15 @@ type deletePLOResult {
   id: ID!
 }
 
+type addPLOsResult {
+  id: ID!
+}
+
 extend type Mutation {
   createProgram(teacherID: ID!, input: CreateProgramInput!): Program!
   editProgram(id: ID!, input: CreateProgramInput!): Program!
   createPLOGroup(programID: ID!, name: String!, input: [CreatePLOsInput!]!): PLOGroup!
+  addPLOs(ploGroupID: ID!, input: [CreatePLOInput!]!): addPLOsResult!
   editPLOGroup(id: ID!, name: String!): PLOGroup!
   createPLO(ploGroupID: ID!, input: CreatePLOInput!): PLO!
   editPLO(id: ID!, title: String!, description: String!): PLO!
@@ -1658,9 +1782,14 @@ type DeleteQuestionLinkResult {
   loID: ID!
 }
 
+type EditQuizResult {
+  id: ID!
+}
+
 extend type Mutation {
   createQuiz(courseID: ID!, input: CreateQuizInput): CreateQuizResult!
   createQuestionLink(input: CreateQuestionLinkInput): CreateQuestionLinkResult!
+  editQuiz(id: ID!, name: String!): EditQuizResult!
   deleteQuiz(id: ID!): DeleteQuizResult!
   deleteQuestionLink(input: DeleteQuestionLinkInput!): DeleteQuestionLinkResult!
 }
@@ -1686,6 +1815,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_addPLOs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["ploGroupID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ploGroupID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ploGroupID"] = arg0
+	var arg1 []*model.CreatePLOInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNCreatePLOInput2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreatePLOInputᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createCourse_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -2113,6 +2266,63 @@ func (ec *executionContext) field_Mutation_editCourse_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_editLOLevel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["level"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("level"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["level"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["description"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["description"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editLO_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["title"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["title"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_editPLOGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2191,6 +2401,30 @@ func (ec *executionContext) field_Mutation_editProgram_args(ctx context.Context,
 		}
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editQuiz_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -3912,6 +4146,146 @@ func (ec *executionContext) _DeleteQuizResult_id(ctx context.Context, field grap
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _EditLOLevelResult_id(ctx context.Context, field graphql.CollectedField, obj *model.EditLOLevelResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EditLOLevelResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EditLOLevelResult_level(ctx context.Context, field graphql.CollectedField, obj *model.EditLOLevelResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EditLOLevelResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Level, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EditLOResult_id(ctx context.Context, field graphql.CollectedField, obj *model.EditLOResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EditLOResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EditQuizResult_id(ctx context.Context, field graphql.CollectedField, obj *model.EditQuizResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EditQuizResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _LO_id(ctx context.Context, field graphql.CollectedField, obj *model.Lo) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4288,6 +4662,90 @@ func (ec *executionContext) _Mutation_createLOs(ctx context.Context, field graph
 	res := resTmp.([]*model.CreateLOResult)
 	fc.Result = res
 	return ec.marshalNCreateLOResult2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateLOResultᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editLO(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editLO_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditLo(rctx, args["id"].(string), args["title"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EditLOResult)
+	fc.Result = res
+	return ec.marshalNEditLOResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditLOResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editLOLevel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editLOLevel_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditLOLevel(rctx, args["id"].(string), args["level"].(int), args["description"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EditLOLevelResult)
+	fc.Result = res
+	return ec.marshalNEditLOLevelResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditLOLevelResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createLOLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4668,6 +5126,48 @@ func (ec *executionContext) _Mutation_createPLOGroup(ctx context.Context, field 
 	return ec.marshalNPLOGroup2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐPLOGroup(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_addPLOs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addPLOs_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddPLOs(rctx, args["ploGroupID"].(string), args["input"].([]*model.CreatePLOInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AddPLOsResult)
+	fc.Result = res
+	return ec.marshalNaddPLOsResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐAddPLOsResult(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_editPLOGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4960,6 +5460,48 @@ func (ec *executionContext) _Mutation_createQuestionLink(ctx context.Context, fi
 	res := resTmp.(*model.CreateQuestionLinkResult)
 	fc.Result = res
 	return ec.marshalNCreateQuestionLinkResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreateQuestionLinkResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editQuiz(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editQuiz_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditQuiz(rctx, args["id"].(string), args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EditQuizResult)
+	fc.Result = res
+	return ec.marshalNEditQuizResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditQuizResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteQuiz(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7873,6 +8415,41 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _addPLOsResult_id(ctx context.Context, field graphql.CollectedField, obj *model.AddPLOsResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "addPLOsResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _deletePLOGroupResult_id(ctx context.Context, field graphql.CollectedField, obj *model.DeletePLOGroupResult) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -9044,6 +9621,92 @@ func (ec *executionContext) _DeleteQuizResult(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var editLOLevelResultImplementors = []string{"EditLOLevelResult"}
+
+func (ec *executionContext) _EditLOLevelResult(ctx context.Context, sel ast.SelectionSet, obj *model.EditLOLevelResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, editLOLevelResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EditLOLevelResult")
+		case "id":
+			out.Values[i] = ec._EditLOLevelResult_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "level":
+			out.Values[i] = ec._EditLOLevelResult_level(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var editLOResultImplementors = []string{"EditLOResult"}
+
+func (ec *executionContext) _EditLOResult(ctx context.Context, sel ast.SelectionSet, obj *model.EditLOResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, editLOResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EditLOResult")
+		case "id":
+			out.Values[i] = ec._EditLOResult_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var editQuizResultImplementors = []string{"EditQuizResult"}
+
+func (ec *executionContext) _EditQuizResult(ctx context.Context, sel ast.SelectionSet, obj *model.EditQuizResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, editQuizResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EditQuizResult")
+		case "id":
+			out.Values[i] = ec._EditQuizResult_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var lOImplementors = []string{"LO"}
 
 func (ec *executionContext) _LO(ctx context.Context, sel ast.SelectionSet, obj *model.Lo) graphql.Marshaler {
@@ -9153,6 +9816,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "editLO":
+			out.Values[i] = ec._Mutation_editLO(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "editLOLevel":
+			out.Values[i] = ec._Mutation_editLOLevel(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createLOLink":
 			out.Values[i] = ec._Mutation_createLOLink(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -9198,6 +9871,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "addPLOs":
+			out.Values[i] = ec._Mutation_addPLOs(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "editPLOGroup":
 			out.Values[i] = ec._Mutation_editPLOGroup(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -9230,6 +9908,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createQuestionLink":
 			out.Values[i] = ec._Mutation_createQuestionLink(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "editQuiz":
+			out.Values[i] = ec._Mutation_editQuiz(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -10061,6 +10744,33 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var addPLOsResultImplementors = []string{"addPLOsResult"}
+
+func (ec *executionContext) _addPLOsResult(ctx context.Context, sel ast.SelectionSet, obj *model.AddPLOsResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, addPLOsResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("addPLOsResult")
+		case "id":
+			out.Values[i] = ec._addPLOsResult_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var deletePLOGroupResultImplementors = []string{"deletePLOGroupResult"}
 
 func (ec *executionContext) _deletePLOGroupResult(ctx context.Context, sel ast.SelectionSet, obj *model.DeletePLOGroupResult) graphql.Marshaler {
@@ -10334,6 +11044,32 @@ func (ec *executionContext) unmarshalNCreateLOsInput2ᚖloᚑtrackerᚋappsᚋap
 func (ec *executionContext) unmarshalNCreatePLOInput2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreatePLOInput(ctx context.Context, v interface{}) (model.CreatePLOInput, error) {
 	res, err := ec.unmarshalInputCreatePLOInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreatePLOInput2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreatePLOInputᚄ(ctx context.Context, v interface{}) ([]*model.CreatePLOInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*model.CreatePLOInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCreatePLOInput2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreatePLOInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNCreatePLOInput2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreatePLOInput(ctx context.Context, v interface{}) (*model.CreatePLOInput, error) {
+	res, err := ec.unmarshalInputCreatePLOInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNCreatePLOsInput2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐCreatePLOsInputᚄ(ctx context.Context, v interface{}) ([]*model.CreatePLOsInput, error) {
@@ -10898,6 +11634,48 @@ func (ec *executionContext) marshalNDeleteQuizResult2ᚖloᚑtrackerᚋappsᚋap
 		return graphql.Null
 	}
 	return ec._DeleteQuizResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEditLOLevelResult2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditLOLevelResult(ctx context.Context, sel ast.SelectionSet, v model.EditLOLevelResult) graphql.Marshaler {
+	return ec._EditLOLevelResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEditLOLevelResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditLOLevelResult(ctx context.Context, sel ast.SelectionSet, v *model.EditLOLevelResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EditLOLevelResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEditLOResult2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditLOResult(ctx context.Context, sel ast.SelectionSet, v model.EditLOResult) graphql.Marshaler {
+	return ec._EditLOResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEditLOResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditLOResult(ctx context.Context, sel ast.SelectionSet, v *model.EditLOResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EditLOResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEditQuizResult2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditQuizResult(ctx context.Context, sel ast.SelectionSet, v model.EditQuizResult) graphql.Marshaler {
+	return ec._EditQuizResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEditQuizResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐEditQuizResult(ctx context.Context, sel ast.SelectionSet, v *model.EditQuizResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EditQuizResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -11807,6 +12585,20 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNaddPLOsResult2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐAddPLOsResult(ctx context.Context, sel ast.SelectionSet, v model.AddPLOsResult) graphql.Marshaler {
+	return ec._addPLOsResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNaddPLOsResult2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐAddPLOsResult(ctx context.Context, sel ast.SelectionSet, v *model.AddPLOsResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._addPLOsResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNdeletePLOGroupResult2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDeletePLOGroupResult(ctx context.Context, sel ast.SelectionSet, v model.DeletePLOGroupResult) graphql.Marshaler {

@@ -74,6 +74,15 @@ type CreateLOResult {
   id: ID!
 }
 
+type EditLOResult {
+  id: ID!
+}
+
+type EditLOLevelResult {
+  id: ID!
+  level: Int!
+}
+
 type DeleteLOResult {
   id: ID!
 }
@@ -92,6 +101,8 @@ type Mutation {
   editCourse(id: ID!, input: CreateCourseInput!): Course!
   deleteCourse(id: ID!): DeleteCourseResult!
   createLOs(courseID: ID!, input: [CreateLOsInput!]!): [CreateLOResult!]!
+  editLO(id: ID!, title: String!): EditLOResult!
+  editLOLevel(id: ID!, level: Int!, description: String!): EditLOLevelResult!
   createLOLink(loID: ID!, ploID: ID!): CreateLOLinkResult!
   createLO(courseID: ID!, input: CreateLOInput!): CreateLOResult!
   createLOLevel(loID: ID!, input: CreateLOLevelInput!): CreateLOResult!

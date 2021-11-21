@@ -177,6 +177,19 @@ type DeleteQuizResult struct {
 	ID string `json:"id"`
 }
 
+type EditLOLevelResult struct {
+	ID    string `json:"id"`
+	Level int    `json:"level"`
+}
+
+type EditLOResult struct {
+	ID string `json:"id"`
+}
+
+type EditQuizResult struct {
+	ID string `json:"id"`
+}
+
 type Lo struct {
 	ID       string     `json:"id"`
 	Title    string     `json:"title"`
@@ -239,6 +252,10 @@ type User struct {
 	Email   string `json:"email"`
 	Name    string `json:"name"`
 	Surname string `json:"surname"`
+}
+
+type AddPLOsResult struct {
+	ID string `json:"id"`
 }
 
 type DeletePLOGroupResult struct {
