@@ -1,7 +1,11 @@
 # LO Tracker
-
 This project was generated using [Nx](https://nx.dev). <br/>
-Tech stack: Next.js, Go, GraphQL, Prisma (PostgresQL), Redis (JWT)
+Tech stack: Next.js, Go, GraphQL, Prisma (PostgreSQL), Redis (JWT)
+
+![homepage](screenshots/home.png "homepage")
+
+## Project Background
+a Computer Science project about educational management
 
 ## Team members
 - 61130500208 Nuttawut Promsuk [GitHub](https://github.com/Nuttawut503) [LinkedIn](https://www.linkedin.com/in/nuttawut-promsuk)
