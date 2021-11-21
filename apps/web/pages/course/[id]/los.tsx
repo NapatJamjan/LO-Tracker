@@ -127,14 +127,23 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
         <div key={lo.id} className="rounded shadow-lg p-3">
           <span className="text-lg">{lo.title}</span> &nbsp;
-          {isOwner && <span className="cursor-pointer text-red-600 bg-red-200 hover:bg-red-300 py-1 px-1 rounded" onClick={() => removeLO(lo.id)}>
-            delete&#9747;
-          </span>}
+          {isOwner && <>
+            <EditLOForm loID={lo.id} title={lo.title} callback={() => router.replace(router.asPath)}/>
+            <span className="cursor-pointer text-red-600 bg-red-200 hover:bg-red-300 py-1 px-1 rounded" onClick={() => removeLO(lo.id)}>
+              delete&#9747;
+            </span>
+          </>}
           <p className="my-3"></p>
           <ul className="px-2">
           {[...lo.levels].sort((l1, l2) => l1.level - l2.level).map((level) => (
             <li key={`${lo.id}-${level.level}`}>
-              <p>Level {level.level} {isOwner && lo.levels.length > 1 && <span className="cursor-pointer text-red-600" onClick={() => removeLOLevel(lo.id, level.level)}>&#9747;</span>}</p>
+              <p>
+                Level {level.level} 
+                {isOwner && lo.levels.length > 1 && <>
+                  <EditLOLevelForm loID={lo.id} level={level.level} description={level.description} callback={() => router.replace(router.asPath)} />
+                  <span className="cursor-pointer text-red-600" onClick={() => removeLOLevel(lo.id, level.level)}>&#9747;</span>
+                </>}
+              </p>
               <p>{level.description}</p>
             </li>
           ))}
@@ -305,6 +314,87 @@ function CreateLOLevelForm({loID, initLevel, callback}: {loID: string, initLevel
   </>;
 }
 
+function EditLOForm({loID, title, callback}: {loID: string, title: string, callback: () => any}) {
+  const [show, setShow] = useState<boolean>(false);
+  const { register, handleSubmit, setValue } = useForm<{title: string}>({defaultValues: {title}});
+  const resetForm = () => {
+    setShow(false);
+    setValue('title', title);
+  };
+  const [editLO, {loading}] = useMutation<{editLO: {id: string}}, {id: string, title: string}>(EDIT_LO);
+  const updateLO = (newTitle: string) => {
+    if (loading || newTitle === title) return;
+    editLO({
+      variables: {
+        id: loID,
+        title: newTitle
+      }
+    }).finally(() => {
+      setShow(false);
+      callback();
+    })
+  }
+  return <>
+    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
+    <Modal show={show} onHide={resetForm}>
+      <form onSubmit={handleSubmit((form) => loading?null:updateLO(form.title))}>
+        <Modal.Header>
+          <Modal.Title>Update LO title</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <span>LO title</span><br/>
+          <input type="text" {...register('title', {required: true})} placeholder="type LO title" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+        </Modal.Body>
+        <Modal.Footer>
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        </Modal.Footer>
+      </form>
+    </Modal>
+  </>;
+}
+
+function EditLOLevelForm({loID, level, description, callback}: {loID: string, level: number, description: string, callback: () => any}) {
+  const [show, setShow] = useState<boolean>(false);
+  const { register, handleSubmit, setValue } = useForm<{description: string}>({defaultValues: {description}});
+  const resetForm = () => {
+    setShow(false);
+    setValue('description', description);
+  };
+  const [editLOLevel, {loading}] = useMutation<{editLO: {id: string, level: number}}, {id: string, level: number, description: string}>(EDIT_LOLEVEL);
+  const updateLOLevel = (newDescription: string) => {
+    if (loading || newDescription === description) return;
+    editLOLevel({
+      variables: {
+        id: loID,
+        level,
+        description: newDescription
+      }
+    }).finally(() => {
+      setShow(false);
+      callback();
+    })
+  }
+  return <>
+    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
+    <Modal show={show} onHide={resetForm}>
+      <form onSubmit={handleSubmit((form) => loading?null:updateLOLevel(form.description))}>
+        <Modal.Header>
+          <Modal.Title>Update LO Level</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <span>LO Level</span><br/>
+          <span className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 inline-block w-1/3">{level}</span><br/>
+          <span>LO Level Description</span><br/>
+          <input type="text" {...register('description', {required: true})} placeholder="type LO title" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
+        </Modal.Body>
+        <Modal.Footer>
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        </Modal.Footer>
+      </form>
+    </Modal>
+  </>;
+}
+
 interface Params extends ParsedUrlQuery {
   id: string;
 }
@@ -393,4 +483,14 @@ const DELETE_LOLINK = gql`
     deleteLOLink(loID: $loID, ploID: $ploID) {
       loID
       ploID
+}}`;
+const EDIT_LO = gql`
+  mutation EditLO($id: ID!, $title: String!) {
+    editLO(id: $id, title: $title) {
+      id
+}}`;
+const EDIT_LOLEVEL = gql`
+mutation EditLOLevel($id: ID!, $level: Int!, $description: String!) {
+  editLOLevel(id: $id, level: $level, description: $description) {
+    id
 }}`;
