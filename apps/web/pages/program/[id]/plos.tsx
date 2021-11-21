@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useRef } from 'react'
 import client from '../../../apollo-client';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { GetServerSideProps } from 'next';
@@ -48,6 +48,7 @@ const PLOContext = createContext<{
   modifyPLO: (id: string, title: string, description: string) => Promise<any>,
   removePLOGroup: (id: string) => Promise<any>,
   removePLO: (id: string) => Promise<any>,
+  appendPLOs: (id: string, plos: CreatePLOModel[]) => Promise<any>,
   submitting: boolean,
   isOwner: boolean,
   }>({
@@ -58,6 +59,7 @@ const PLOContext = createContext<{
   modifyPLO: () => null,
   removePLOGroup: () => null,
   removePLO: () => null,
+  appendPLOs: () => null,
   submitting: false,
   isOwner: false,
 });
@@ -72,15 +74,17 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
   const [deletePLO, { loading: withdrawPLO}] = useMutation<{deletePLO: {id: string}}, {id: string}>(DELETE_PLO);
   const [editPLOGroup, { loading: writePLOGroup }] = useMutation<{editPLOGroup: {id: string}}, {id: string, name: string}>(EDIT_PLOGROUP);
   const [editPLO, { loading: writePLO }] = useMutation<{editPLO: {id: string}}, {id: string, title: string, description: string}>(EDIT_PLO);
+  const [addPLOs, { loading: insertPLOs }] = useMutation<{addPLOs: {id: string}}, {ploGroupID: string, input: CreatePLOModel[]}>(ADD_PLOS);
   const savePLOGroup = (name: string, plos: CreatePLOModel[]) => createPLOGroup({variables: {programID, name, input: plos}}).finally(() => router.replace(router.asPath));
   const savePLO = (ploGroupID: string, plo: CreatePLOModel) => createPLO({variables: {ploGroupID, input: plo}});
   const modifyPLOGroup = (id: string, name: string) => editPLOGroup({variables: {id, name}}).finally(() => router.replace(router.asPath));
   const modifyPLO = (id: string, title: string, description: string) => editPLO({variables: {id, title, description}});
   const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath));
   const removePLO = (id: string) => deletePLO({variables: {id}});
+  const appendPLOs = (id: string, plos: CreatePLOModel[]) => addPLOs({variables: {ploGroupID: id, input: plos}});
   const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false);
-  const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO;
-  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, submitting, isOwner}}>
+  const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO || insertPLOs;
+  return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, appendPLOs, submitting, isOwner}}>
     <Head>
       <title>Manage PLOs</title>
     </Head>
@@ -107,7 +111,7 @@ export function PLOs() {
             <div className="flex justify-between items-center">
               <span className="font-bold">{ploGroup.name}</span>
             </div>
-            <span className="underline cursor-pointer text-blue-300" onClick={() => setSelectedPLOGroupID(ploGroup.id)}>Manage</span>
+            <span className="underline cursor-pointer text-blue-300" onClick={() => setSelectedPLOGroupID(ploGroup.id)}>Inspect</span>
           </div>
         ))}
       </div>
@@ -181,7 +185,10 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
   }
   if (loading) return <p>Loading...</p>;
   return <div>
-    {isOwner && <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>}
+    {isOwner && <div className="flex gap-x-2 items-center">
+      <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>
+      <AppendPLOsForm ploGroupID={ploGroupID} callback={refetch}/>
+    </div>}
     {[...data.plos].sort((p1, p2) => p1.title.localeCompare(p2.title)).map((plo) => (
       <div key={plo.id} className="flex flex-column rounded shadow-lg p-3 mb-3 -space-y-4">
         <p className="text-xl text-bold">
@@ -298,6 +305,25 @@ function EditPLOForm({ploID, initTitle, initDesc, callback}: {ploID: string, ini
   </>;
 }
 
+function AppendPLOsForm({ploGroupID, callback}: {ploGroupID: string, callback: () => any}) {
+  const { submitting, appendPLOs } = useContext(PLOContext);
+  const ref = useRef<HTMLInputElement>();
+  const excelJSON = (file) => {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      let data = e.target.result;
+      let workbook = xlsx.read(data, {type: 'binary'});
+      appendPLOs(ploGroupID, xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])).then(() => toast('Uploaded successfully', {type: 'success'})).finally(() => callback());
+    }
+    reader.onerror = console.log;
+    reader.readAsBinaryString(file);
+  };
+  return <>
+    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => submitting?null:ref.current.click()}>upload PLOs</span>
+    <input type="file" className="hidden" ref={ref} onChange={e => excelJSON(e.target.files[0])}/>
+  </>;
+}
+
 interface Params extends ParsedUrlQuery {
   id: string;
 }
@@ -337,6 +363,11 @@ const CREATE_PLOGROUP = gql`
     createPLOGroup(programID: $programID, name: $name, input: $input) {
       id
       name
+}}`;
+const ADD_PLOS = gql`
+  mutation AddPLOs($ploGroupID: ID!, $input: [CreatePLOInput!]!) {
+    addPLOs(ploGroupID: $ploGroupID, input: $input) {
+      id
 }}`;
 const CREATE_PLO = gql`
   mutation CreatePLO($ploGroupID: ID!, $input: CreatePLOInput!) {
