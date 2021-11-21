@@ -190,7 +190,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
 };
 
 function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
-  const { selectedQuestionID, setSelectedQuestionID, removeQuiz, submitting } = useContext(QuizContext);
+  const { selectedQuestionID, setSelectedQuestionID, removeQuiz, submitting, isOwner } = useContext(QuizContext);
   const deleteQuiz = (id: string) => {
     if (submitting || !confirm('Delete this quiz?')) return;
     removeQuiz(id).then(() => {
@@ -223,7 +223,7 @@ function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
           </li>
         ))}
         </ul>
-        <p className="cursor-pointer text-red-400 text-sm pt-3" onClick={() => deleteQuiz(quiz.id)}>Delete this quiz record</p>
+        {isOwner && <p className="cursor-pointer text-red-400 text-sm pt-3" onClick={() => deleteQuiz(quiz.id)}>Delete this quiz record</p>}
       </Panel>
     ))}
   </Collapse>
