@@ -8,6 +8,7 @@ import { Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 
 interface CourseModel {
   id: string;
@@ -17,6 +18,7 @@ interface CourseModel {
   year: number;
   ploGroupID: string;
   programID: string;
+  teacherID: string;
 };
 
 interface PLOModel {
@@ -77,17 +79,19 @@ export default ({course, los}: {course: CourseModel, los: LOModel[]}) => {
     </Head>
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'los'}/>
-    <LO courseID={course.id} ploGroupID={course.ploGroupID} los={[...los]}/>
+    <LO courseID={course.id} ploGroupID={course.ploGroupID} los={[...los]} teacherID={course.teacherID}/>
   </div>;
 };
 
-function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, los: LOModel[]}) {
+function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupID: string, los: LOModel[], teacherID: string}) {
+  const {data: session, status} = useSession();
   const router = useRouter();
-  const [deleteLO, {loading: deleting}] = useMutation<{deleteLO: {id: string}}, {id: string}>(DELETE_LO);
-  const [deleteLOLink, {loading: submitting}] = useMutation<{deleteLOLink: DeleteLOLinkResponse}, {loID: string, ploID: string}>(DELETE_LOLINK);
+  const [deleteLO, {loading: LOdeleting}] = useMutation<{deleteLO: {id: string}}, {id: string}>(DELETE_LO);
+  const [deleteLOLevel, {loading: LOLeveldeleting}] = useMutation<{deleteLOLevel: {id: string}}, {id: string, level: number}>(DELETE_LOLEVEL);
+  const [deleteLOLink, {loading: LOLinkdeleting}] = useMutation<{deleteLOLink: DeleteLOLinkResponse}, {loID: string, ploID: string}>(DELETE_LOLINK);
   const [selectedLOID, setSelectedLOID] = useState<string>('');
   const deleteLinkedPLO = (ploID: string) => {
-    if (!confirm('Delete this mapping?') || submitting) return;
+    if (LOLinkdeleting || !confirm('Delete this mapping?')) return;
     deleteLOLink({
       variables: {
         loID: selectedLOID,
@@ -96,7 +100,7 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
     }).finally(() => router.replace(router.asPath));
   };
   const removeLO = (id: string) => {
-    if (!confirm('Delete this LO (include sub LO levels)?') ||deleting) return;
+    if (LOdeleting || !confirm('Delete this LO (include sub LO levels)?')) return;
     deleteLO({
       variables: { id }
     }).then(() => {
@@ -106,30 +110,42 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
       router.replace(router.asPath);
     });
   };
+  const removeLOLevel = (id: string, level: number) => {
+    if (LOLeveldeleting || !confirm('Delete LO Level?')) return;
+    deleteLOLevel({
+      variables: {
+        id,
+        level
+      }
+    }).then(() => router.replace(router.asPath));
+  }
+  const isOwner = status !== 'loading' && session && session.id === teacherID;
   return <>
-    <CreateLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
+    {isOwner && <CreateLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>}
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
       <div className="flex flex-column space-y-2">
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
         <div key={lo.id} className="rounded shadow-lg p-3">
-          {lo.title} &nbsp;
-          <span className="cursor-pointer text-red-600 bg-red-200 hover:bg-red-300 py-1 px-1 rounded" onClick={() => removeLO(lo.id)}>
+          <span className="text-lg">{lo.title}</span> &nbsp;
+          {isOwner && <span className="cursor-pointer text-red-600 bg-red-200 hover:bg-red-300 py-1 px-1 rounded" onClick={() => removeLO(lo.id)}>
             delete&#9747;
-          </span>
-          <ul>
+          </span>}
+          <p className="my-3"></p>
+          <ul className="px-2">
           {[...lo.levels].sort((l1, l2) => l1.level - l2.level).map((level) => (
             <li key={`${lo.id}-${level.level}`}>
-              Level {level.level}<br/>{level.description}
+              <p>Level {level.level} {isOwner && lo.levels.length > 1 && <span className="cursor-pointer text-red-600" onClick={() => removeLOLevel(lo.id, level.level)}>&#9747;</span>}</p>
+              <p>{level.description}</p>
             </li>
           ))}
           </ul>
           <br/>
           <div className="flex justify-end space-x-3">
-            <CreateLOLevelForm loID={lo.id} initLevel={lo.levels.length + 1} callback={() => router.replace(router.asPath)}/>
+            {isOwner && <CreateLOLevelForm loID={lo.id} initLevel={lo.levels.length + 1} callback={() => router.replace(router.asPath)}/>}
             <button
               onClick={() => setSelectedLOID(lo.id)}
               className={`py-1 px-2 rounded text-sm ${selectedLOID===lo.id?'bg-blue-400 hover:bg-blue-300':'bg-gray-200 hover:bg-gray-400'}`}>
-              Link to PLOs <span className="text-xl text-green-800">&#9874;</span>
+              Inspect linked PLOs <span className="text-xl text-green-800">&#9874;</span>
             </button>
           </div>
         </div>
@@ -138,7 +154,7 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
       <div>
         {selectedLOID !== '' && 
         <div className="flex flex-column divide-y-4 space-y-2">
-          <CreateLOLink loID={selectedLOID} ploGroupID={ploGroupID} callback={() => router.replace(router.asPath)}/>
+          {isOwner && <CreateLOLink loID={selectedLOID} ploGroupID={ploGroupID} callback={() => router.replace(router.asPath)}/>}
           <div className="pt-3">
             <span>Linked PLOs: </span><br/>
             <ul>
@@ -146,10 +162,9 @@ function LO({courseID, ploGroupID, los}: {courseID: string, ploGroupID: string, 
               .sort((p1, p2) => p1.title.localeCompare(p2.title))
               .map((plo) => <li key={plo.id}>
                 <span>{plo.title}</span>&nbsp;
-                <span className="underline cursor-pointer text-red-600" onClick={() => deleteLinkedPLO(plo.id)}>delete</span>
+                {isOwner && <span className="underline cursor-pointer text-red-600" onClick={() => deleteLinkedPLO(plo.id)}>delete</span>}
                 <br/>
                 <span>{plo.description}</span>&nbsp;
-                
               </li>)
             }
             {los[los.findIndex((lo) => lo.id == selectedLOID)].ploLinks.length === 0 && <span>No linked PLOs</span>}
@@ -249,7 +264,7 @@ function CreateLOLevelForm({loID, initLevel, callback}: {loID: string, initLevel
   const [createLOLevel, {loading: submitting}] = useMutation<{createLOLevel: CreateLOLevelResponse}, {loID: string, input: CreateLOLevelModel}>(CREATE_LOLEVEL);
   const { register, handleSubmit, setValue } = useForm<CreateLOLevelModel>({
     defaultValues: {
-      level: initLevel,
+      level: 0,
       description: '',
     }
   });
@@ -260,16 +275,17 @@ function CreateLOLevelForm({loID, initLevel, callback}: {loID: string, initLevel
     <Modal show={show} onHide={() => setShow(false)}>
       <form
         onSubmit={handleSubmit((form) => {
-          if (form.description === '' || submitting) return;
+          if (form.description === '' || form.level <= 0 || submitting) return;
           createLOLevel({
             variables: {
               loID,
               input: form
             }
           }).then(() => {
-            setValue('description', '');
-            setShow(false);
             callback();
+            setValue('description', '');
+          }).catch(_ => alert('Duplicated LO Level')).finally(() => {
+            setShow(false);
           });
         })}>
         <Modal.Header>
@@ -277,9 +293,9 @@ function CreateLOLevelForm({loID, initLevel, callback}: {loID: string, initLevel
         </Modal.Header>
         <Modal.Body>
           <span>LO Level:</span><br/>
-          <span className="border-4 rounded-md p-1 mx-2 text-sm bg-gray-200 pointer-events-none inline-block w-1/3" >{initLevel}</span><br/>
+          <input {...register('level', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
           <span>Description:</span><br/>
-          <textarea {...register('description')} className="border-4 rounded-md p-1 mx-2 text-sm" cols={40} rows={4}></textarea><br/>
+          <textarea {...register('description', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm" cols={40} rows={4}></textarea><br/>
         </Modal.Body>
         <Modal.Footer>
           <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
@@ -320,6 +336,7 @@ const GET_COURSE = gql`
       name
       programID
       ploGroupID
+      teacherID
 }}`;
 const GET_LOS = gql`
   query LOs($courseID: ID!) {
@@ -350,6 +367,11 @@ const DELETE_LO = gql`
 const CREATE_LOLEVEL = gql`
   mutation CreateLOLevel($loID: ID!, $input: CreateLOLevelInput!) {
     createLOLevel(loID: $loID, input: $input) {
+      id
+}}`;
+const DELETE_LOLEVEL = gql`
+  mutation DeleteLOLevel($id: ID!, $level: Int!) {
+    deleteLOLevel(id: $id, level: $level) {
       id
 }}`;
 const GET_PLOS = gql`

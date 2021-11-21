@@ -150,9 +150,9 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
   const removeQuestionLink = (input: DeleteQuestionLinkModel) => {
     return deleteQuestionLink({variables: {input}}).finally(() => router.replace(router.asPath));
   }
-  const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false);
+  const isOwner = status !== 'loading' && session && session.id === teacherID;
   useEffect(() => {
-    if (!!course) return;
+    if (!course) return;
     (async() => {
       const {data, error} = await client.query<{course: {teacherID: string}}, {courseID: string}>({
         query: gql`
@@ -172,7 +172,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'quizzes'}/>
     <QuizContext.Provider value={{selectedQuestionID, setSelectedQuestionID, removeQuiz, removeQuestionLink, submitting, isOwner}}>
-      <CreateQuizForm courseID={course.id} callback={() => router.replace(router.asPath)}/>
+      {isOwner && <CreateQuizForm courseID={course.id} callback={() => router.replace(router.asPath)}/>}
       <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
         <div className="flex flex-column space-y-2">
           <Quizzes quizzes={quizzes}/>
@@ -180,7 +180,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
         <div>
           {selectedQuestionID !== '' && 
           <div className="flex flex-column divide-y-4 gap-y-3">
-            <CreateQuestionLinkForm los={[...los]} questionID={selectedQuestionID} callback={() => router.replace(router.asPath)}/>
+            {isOwner && <CreateQuestionLinkForm los={[...los]} questionID={selectedQuestionID} callback={() => router.replace(router.asPath)}/>}
             <LinkedLOContainer quizzes={quizzes}/>  
           </div>}
         </div>
@@ -230,7 +230,7 @@ function Quizzes({quizzes}: {quizzes: QuizModel[]}) {
 }
 
 function LinkedLOContainer({quizzes}: {quizzes: QuizModel[]}) {
-  const { selectedQuestionID, removeQuestionLink, submitting } = useContext(QuizContext);
+  const { selectedQuestionID, removeQuestionLink, submitting, isOwner } = useContext(QuizContext);
   let questionLinks: QuestionLinkModel[] = [];
   if (selectedQuestionID !== '') {
     questionLinks = [...quizzes].filter((quiz) => quiz.questions.findIndex((question) => question.id === selectedQuestionID) !== -1)[0]
@@ -246,7 +246,7 @@ function LinkedLOContainer({quizzes}: {quizzes: QuizModel[]}) {
     {[...questionLinks].sort((l1, l2) => l1.description.localeCompare(l2.description)).map((lo) => (
       <li key={`${lo.loID}-${lo.level}`}>
         {lo.description}&nbsp;
-        <span className="cursor-pointer text-red-600" onClick={() => deleteQuestionLink(lo.loID, lo.level)}>&#9747;</span>
+        {isOwner && <span className="cursor-pointer text-red-600" onClick={() => deleteQuestionLink(lo.loID, lo.level)}>&#9747;</span>}
       </li>
     ))}
     {questionLinks.length === 0 && <span>No linked LOs</span>}

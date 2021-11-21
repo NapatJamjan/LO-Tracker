@@ -41,3 +41,6 @@ Thumbs.db
 # secrets
 .env*
 !.env.example
+
+# docker volumes
+_data/
