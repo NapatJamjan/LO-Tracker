@@ -34,7 +34,7 @@ export function useStudent(courseID: string): [CustomStudent[], boolean] {
   useEffect(() => {
     if (loading && !data) return;
     let arr: CustomStudent[] = [];
-    data.studentsInCourse.forEach((val) => {
+    data?.studentsInCourse.forEach((val) => {
       arr.push({
         id: val.id,
         email: val.email,
@@ -183,7 +183,7 @@ export function useDashboardResult(courseID: string): [DashboardResult[], boolea
   const {data, loading} = useQuery<{quizResults: DashboardResult[]}, {courseID: string}>(GET_DASHBOARD_RESULT, {variables: {courseID}});
   useEffect(() => {
     if (loading && !data) return;
-    setDashboard(data.quizResults);
+    setDashboard(data?.quizResults);
     setLoaded(true);
   }, [loading]);
   return [dashboard, loaded];

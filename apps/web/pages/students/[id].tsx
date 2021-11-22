@@ -31,11 +31,10 @@ export default function Page({student}: {student: StudentModel}) {
      tableData.scores[i] = Math.floor(Math.random() * 90 + 10);
     }
   }, [dataType])
+
   if (status === 'loading') return null;
   const noPermission = !session.isTeacher && String(session.id) !== student.id;
   if (noPermission) return <p className="text-center">No permission</p>;
-
- 
   return <div>
     <Head>
       <title>{student.name}'s Dashboard</title>
