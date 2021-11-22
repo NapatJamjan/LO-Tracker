@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import client from '../../../apollo-client';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { GetServerSideProps } from 'next';
@@ -9,6 +9,8 @@ import { useForm } from 'react-hook-form';
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
+import { ToastContainer, toast } from 'react-toastify';
+import xlsx from 'xlsx';
 
 interface CourseModel {
   id: string;
@@ -72,7 +74,7 @@ interface DeleteLOLinkResponse {
   ploID: string;
 };
 
-export default ({course, los}: {course: CourseModel, los: LOModel[]}) => {
+export default function Page({course, los}: {course: CourseModel, los: LOModel[]}) {
   return <div>
     <Head>
       <title>Manage LOs</title>
@@ -80,6 +82,7 @@ export default ({course, los}: {course: CourseModel, los: LOModel[]}) => {
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'los'}/>
     <LO courseID={course.id} ploGroupID={course.ploGroupID} los={[...los]} teacherID={course.teacherID}/>
+    <ToastContainer/>
   </div>;
 };
 
@@ -121,7 +124,10 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
   }
   const isOwner = status !== 'loading' && session && session.id === teacherID;
   return <>
-    {isOwner && <CreateLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>}
+    {isOwner && <div className="flex gap-x-2 items-center">
+      <CreateLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
+      <CreateManyLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
+    </div>}
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
       <div className="flex flex-column space-y-2">
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
@@ -138,11 +144,9 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
           {[...lo.levels].sort((l1, l2) => l1.level - l2.level).map((level) => (
             <li key={`${lo.id}-${level.level}`}>
               <p>
-                Level {level.level} 
-                {isOwner && lo.levels.length > 1 && <>
-                  <EditLOLevelForm loID={lo.id} level={level.level} description={level.description} callback={() => router.replace(router.asPath)} />
-                  <span className="cursor-pointer text-red-600" onClick={() => removeLOLevel(lo.id, level.level)}>&#9747;</span>
-                </>}
+                Level {level.level}
+                {isOwner && <EditLOLevelForm loID={lo.id} level={level.level} description={level.description} callback={() => router.replace(router.asPath)} />}
+                {isOwner && lo.levels.length > 1 && <span className="cursor-pointer text-red-600" onClick={() => removeLOLevel(lo.id, level.level)}>&#9747;</span>}
               </p>
               <p>{level.description}</p>
             </li>
@@ -184,6 +188,59 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
     </div>
   </>;
 };
+
+interface LOExcel {
+  title: string;
+  levels: LOLevelExcel[];
+}
+
+interface LOLevelExcel {
+  level: number;
+  description: string;
+}
+
+function CreateManyLOForm({courseID, callback}: {courseID: string, callback: () => any}) {
+  const ref = useRef<HTMLInputElement>();
+  const [createLOs, {loading}] = useMutation<{createLOs: {id: string}[]}, {courseID: string, input: LOExcel[]}>(CREATE_LOS);
+  const excelJSON = (file) => {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      let data = e.target.result;
+      let workbook = xlsx.read(data, {type: 'binary'});
+      const excelsheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+      let los: LOExcel[] = [];
+      for (let i = 0; i < excelsheet.length; ++i) {
+        let lolevel: LOLevelExcel[] = [];
+        for (let j = 1; j < 100 && excelsheet[i][`level${j}`] !== undefined; j++) {
+          console.log(j);
+          lolevel.push({
+            level: j,
+            description: excelsheet[i][`level${j}`]
+          });
+        }
+        console.log(lolevel);
+        if (lolevel.length > 0) {
+          los.push({
+            title: excelsheet[i]['title'],
+            levels: lolevel
+          });
+        }
+      }
+      if (los.length === 0) {
+        toast('Excel is empty', {type:'info'});
+        return
+      }
+      createLOs({variables: {courseID, input: los}}).then(() => toast('Uploaded successfully')).finally(() => callback());
+    }
+    reader.onerror = console.log;
+    reader.readAsBinaryString(file);
+  };
+  return <>
+    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => loading?null:ref.current.click()}>upload LOs</span>
+    <input type="file" className="hidden" ref={ref} onChange={e => excelJSON(e.target.files[0])}/>
+  </>;
+
+}
 
 function CreateLOLink({ loID, ploGroupID, callback }: { loID: string, ploGroupID: string, callback: () => any }) {
   if (ploGroupID === '') return <p></p>;
@@ -443,6 +500,11 @@ const GET_LOS = gql`
         description
         ploGroupID
       }
+}}`;
+const CREATE_LOS = gql`
+  mutation CreateLOs($courseID: ID!, $input: [CreateLOsInput!]!) {
+    createLOs(courseID: $courseID, input: $input) {
+      id
 }}`;
 const CREATE_LO = gql`
   mutation CreateLO($courseID: ID!, $input: CreateLOInput!) {
