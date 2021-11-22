@@ -290,7 +290,7 @@ export function ScoreTable() {
 
   useEffect(() => {
     displayScore()
-  }, [dashboardQuiz.length > 0 && students.length > 0])
+  }, [dashboardQuiz?.length > 0 && students.length > 0])
 
   function displayScore(){
     let score = dashboardQuiz
