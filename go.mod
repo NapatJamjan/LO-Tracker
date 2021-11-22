@@ -13,6 +13,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/prisma/prisma-client-go v0.12.2
 	github.com/shopspring/decimal v1.3.1
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.9.0
 	github.com/takuoki/gocase v1.0.0
 	github.com/vektah/gqlparser/v2 v2.2.0
@@ -20,6 +21,7 @@ require (
 
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
+	github.com/bshuster-repo/logrus-logstash-hook v1.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
