@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import router, { useRouter } from 'next/router';
-import ClientOnly from '../../../../components/ClientOnly';
+import ClientOnly from '../ClientOnly';
 import { Modal } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';

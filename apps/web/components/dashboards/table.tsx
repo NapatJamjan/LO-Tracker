@@ -1,33 +1,35 @@
 import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStudent } from 'apps/web/utils/dashboard-helper';
 import Head from 'next/head';
+import Link from 'next/link';
 import router, { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
-import ClientOnly from '../../../../../components/ClientOnly';
-import { TableScrollable, TableScrollDiv } from '../table';
-import { ChartBarCompare, ChartPie } from './stdchart';
+import styled from 'styled-components';
+import ClientOnly from '../ClientOnly';
+import { AllStudentChart } from './chart';
+import { ExportOutcome2 } from './export';
 
-// path => /course/[id]/dashboards/[studentID]/stdtable
+// path => /course/[id]/dashboards/table
 export default function Index() {
   return (<div>
     <Head>
       <title>Dashboard</title>
     </Head>
     <ClientOnly>
-      <StdtablePage/>
+      <TablePage/>
     </ClientOnly>
   </div>);
 };
 
-function StdtablePage() {
+function TablePage() {
   const router = useRouter();
-  const {id: courseID, studentID} = router.query; // extract id from router.query and rename to courseID, but not rename studentID
+  const courseID = router.query.id as string;
   return <div>
-    Hello {courseID} {studentID}
+    Hello {courseID}
   </div>;
 };
 
-interface studentResult {
+export interface studentResult {
   studentID: string,
   studentName: string,
   scores: Array<Number>
@@ -38,16 +40,13 @@ interface loData {
   name: string
 }
 
-export function IndividualPLO(props: { studentID: string }) {
+export function ScoreTablePLO() {
   const courseID = router.query.id as string;
   const [dashboardFlat] = useDashboardFlat(courseID);
   const [dashboardPLO] = useDashboardPLOSummary(courseID);
   const [tableHead, setHead] = useState<string[]>([])
   const [tableData, setData] = useState<studentResult[]>([]);
  
-  const [allData, setAllData] = useState<studentResult[]>([]);
-  const [totalLOScore, setTLOS] = useState<studentResult[]>([]);
-  const [totalPLOScore, setTPLOS] = useState<studentResult[]>([]);
   const [studentLOScore, setLOS] = useState<studentResult[]>([]);  
   const [studentLOHead, setLOH] = useState<string[]>(['Student ID','Student Name']); 
   const [studentPLOScore, setPLOS] = useState<studentResult[]>([]); 
@@ -58,19 +57,16 @@ export function IndividualPLO(props: { studentID: string }) {
   }, [dashboardFlat]) //probably work
 
   function calculatePLO() {
-    let thisStudent = props.studentID;
     let score = dashboardFlat;
     let plolink = dashboardPLO;
     const std = []; // score index will be based on student in this response
     const stdname = []; // name for the table
-    //object entries can be replaced by foreach now
     score.students.forEach((v, k) => {
-      std.push(k);
-      stdname.push(v);
+      std.push(k); stdname.push(v);
     })
     let loScore = []; let loScoreC = []; // for counting purpose, plo score go down
     let questions = score.questions;
-    let loArr:Array<number[]> = [];
+    let loArr: Array<number[]> = [];
     let loData: Array<loData> = [];
     let ploData: Array<loData> = [];
     score.plos.forEach((v, k) => {
@@ -90,12 +86,10 @@ export function IndividualPLO(props: { studentID: string }) {
       if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
       if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
       return 0;
-    })
-
+    }) 
     score.los.forEach((v, k) => { // make loArr
       if(k.split(',').length === 1){ loArr.push([]) }
     })
-
     let lotemp = 0;
     let temp = []
     let tempprev = "";
@@ -118,7 +112,7 @@ export function IndividualPLO(props: { studentID: string }) {
       loArr[loidx] = Array.from({length: lotemp}, () => 0)
       lotemp = 0;
     } // end lvl scoring creation
- 
+
     for (var i in std) {
       loScore.push([]); loScoreC.push([]);
       for(var j in loArr) {
@@ -126,11 +120,11 @@ export function IndividualPLO(props: { studentID: string }) {
         loScoreC[i].push(Array.from({length: loArr[j].length}, () => 0));
       }
     }
-    
     for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loData.indexOf(loData.find(e => e.id == questions[i].linkedLOs[k].split(',')[0]))
         let lvlidx = parseInt(questions[i].linkedLOs[k].split(',')[1])-1;
+        // console.log("hh", loidx, lvlidx)
         // index of level, all combined will be [student][lo][level]
         for (let j = 0; j < questions[i].results.length; j++) { // might have to loop after link check
           let currentScore = 0;
@@ -143,7 +137,7 @@ export function IndividualPLO(props: { studentID: string }) {
           if(stdidx != -1){
             if(loScore[stdidx][loidx][lvlidx] != null){
             loScore[stdidx][loidx][lvlidx] += currentScore;
-            loScoreC[stdidx][loidx][lvlidx] += 1;
+            loScoreC[stdidx][loidx][lvlidx] += 1;        
             }
           }
         }
@@ -185,18 +179,14 @@ export function IndividualPLO(props: { studentID: string }) {
         }
       }
     }// end of lo score calculation
-
-    let stdidx = std.indexOf(std.find(e => e == thisStudent));
     for (let i = 0; i < loData.length; i++) {
       studentLOHead.push(loData[i].name.substring(0,4));
     }
     setLOH(studentLOHead.slice());
-    let loTemp = []
     for (let i = 0; i < loRes.length; i++) {
-      loTemp.push({studentID: std[i], studentName: stdname[i] ,scores: [...loRes[i]]})
+      studentLOScore.push({studentID: std[i], studentName: stdname[i] ,scores: [...loRes[i]]})
     }
-    setTLOS(loTemp.slice());
-    setLOS([loTemp[stdidx]].slice());
+    setLOS(studentLOScore.slice());
 
     //plo section
     let ploScore: Array<Number[]> = [];
@@ -215,6 +205,7 @@ export function IndividualPLO(props: { studentID: string }) {
 
     for (let i = 0; i < std.length; i++) { // start plo calculation
       for (let j = 0; j < ploScore[i].length; j++) { // select plo of this student
+        // let ploidx = loData.indexOf(loData.find(e => e.id == questions[i].linkedLOs[k].split(',')[0]))
         let psc: any = 0;
         for (let k = 0; k < linkIndex[j].length; k++) {
           if(isNaN(loRes[i][linkIndex[j][k]] as number)) { loRes[i][linkIndex[j][k]] = 0; }
@@ -227,81 +218,46 @@ export function IndividualPLO(props: { studentID: string }) {
     for (let i = 0; i < ploData.length; i++) {
       studentPLOHead.push(ploData[i].name);
     }
-    let ploTemp = []
     setPLOH(studentPLOHead.slice()); 
     setHead(studentPLOHead.slice()); // set as start
     for (let i = 0; i < ploScore.length; i++) {
-      ploTemp.push({studentID: std[i], studentName: stdname[i] ,scores: [...ploScore[i]]}) 
+      studentPLOScore.push({studentID: std[i], studentName: stdname[i] ,scores: [...ploScore[i]]})
     }
-    ploTemp = ploTemp.filter(item => item).slice();
-    setTPLOS(ploTemp.slice());
-    setPLOS([ploTemp[stdidx]].slice());
-    setAllData(ploTemp.slice()); // set as start
-    setData([ploTemp[stdidx]].slice()); 
+    setPLOS(studentPLOScore.slice());
+    setData(studentPLOScore.slice());// set as start
   }  
 
-  const [compareID, setCompare] = useState("---");
   const [dataType, setType] = useState("PLO");
-  function handleType(e: any) { setType(e.target.value) }
-  function handleCompare(e: any) { setCompare(e.target.value) }
+  const [chartType, setChartType] = useState("avg");
+  function handleDataType(e: any){ setType(e.target.value) }
+  function handleChartType(e: any){ setChartType(e.target.value) }
   useEffect(() => {
-    if (dataType == "PLO") {
-      let temp = studentPLOScore.slice()
-      if(compareID != "---") { 
-        let stdidx = totalPLOScore.indexOf(totalPLOScore.find(e => e.studentID == compareID));
-        temp.push(totalPLOScore[stdidx]);
-      }
-      setHead(studentPLOHead.slice()); setData(temp.slice()); setAllData(totalPLOScore.slice());
-    } else {
-      let temp = studentLOScore.slice()
-      if(compareID != "---") { 
-        let stdidx = totalLOScore.indexOf(totalLOScore.find(e => e.studentID == compareID));
-        temp.push(totalLOScore[stdidx]);
-      }
-      setHead(studentLOHead.slice()); setData(temp.slice()); setAllData(totalLOScore.slice());
+    if(dataType == "PLO"){
+      setHead(studentPLOHead.slice()); setData(studentPLOScore.slice());
+    }else{
+      setHead(studentLOHead.slice());  setData(studentLOScore.slice());
     }
   }, [dataType])
-  
-  useEffect(() => {
-    if(tableData.length != 0){
-      if (compareID == "---" && tableData.length > 1) {
-        let temp = [tableData[0]]; setData(temp.slice());
-      }
-      else {
-        let temp = [tableData[0]];
-        if(dataType == "PLO") {
-          let stdidx = totalPLOScore.indexOf(totalPLOScore.find(e => e.studentID == compareID));
-          temp.push(totalPLOScore[stdidx]);
-          setData(temp.slice());
-        } else{
-          let stdidx = totalLOScore.indexOf(totalLOScore.find(e => e.studentID == compareID));
-          temp.push(totalLOScore[stdidx]);
-          setData(temp.slice());
-        }
-      }
-    }
-  }, [compareID])
-
   return (
-    <div >
-      <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
+    <div>
+      <ExportOutcome2 datas={tableData} head={tableHead}/>
+      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
       <br/>
-      <div style={{display:"inline-block"}}>
-        <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
+      <div style={{display: "inline"}}>
+        <select value={dataType} onChange={handleDataType} className="border rounded-md border-2 ">
           <option value="PLO">PLO</option>
           <option value="LO">LO</option>
         </select>
-        <span>Compare to</span>
-        <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
-        <option value="---">---</option>
-        {allData.map(std => (
-          <option value={std.studentID}>{std.studentID}</option>
-        ))}
-        </select>
+        <div style={{display: "inline", marginLeft: 10}}>
+          <span style={{marginRight: 5}}>Data Type</span>
+          <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
+            <option value="avg">Average Scores</option>
+            <option value="all">Student Scores</option>
+          </select>
+        </div>
       </div>
-      <br/>
       <TableScrollDiv>
-        <TableScrollable striped bordered className="table" style={{ margin: 0 }} >
+        <TableScrollable striped bordered hover className="table" style={{ margin: 0}}>
           <thead>
             <tr>
               {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
@@ -310,9 +266,9 @@ export function IndividualPLO(props: { studentID: string }) {
           <tbody>
             {tableData.map(data => (
               <tr>
-                <td>{data.studentID}</td>
-                <td>{data.studentName}</td>
-                {data.scores.map(scores => ( // map score of this student's id 
+                <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+                <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
+                {data.scores.map(scores => (
                   <td>{scores}</td>
                 ))}
               </tr>
@@ -320,25 +276,23 @@ export function IndividualPLO(props: { studentID: string }) {
           </tbody>
         </TableScrollable>
       </TableScrollDiv>
-      <ChartPie stdData={tableData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
     </div>
   )
 }
 
-export function IndividualQuiz (props: { studentID: string }) {
+export function ScoreTable() {
   const courseID = router.query.id as string;
-  const [students, loaded] = useStudent(courseID);
-  const [dashboardQuiz, loaded2] = useDashboardResult(courseID);
-  const [totalData, setTotalData] = useState<studentResult[]>([]);
+  const [students] = useStudent(courseID);
+  const [dashboardQuiz] = useDashboardResult(courseID);
+
   const [tableData, setData] = useState<studentResult[]>([]);
   const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name']); 
 
   useEffect(() => {
     displayScore()
-  }, [dashboardQuiz.length > 0 && students.length > 0]) //probably work
+  }, [dashboardQuiz?.length > 0 && students.length > 0])
 
   function displayScore(){
-    let thisStudent = props.studentID;
     let score = dashboardQuiz
     let quizScore: Array<Number[]> = [];
     let sID: Array<string> = [];
@@ -360,48 +314,28 @@ export function IndividualQuiz (props: { studentID: string }) {
     }
     setHead(tableHead.slice());
     for (let i = 0; i < quizScore.length; i++) {
-      totalData.push({
+      tableData.push({
         studentID: sID[i],
         studentName: students.find(e => e.id == sID[i]).fullname,
         scores: quizScore[i]
       })
-      if(sID[i] == thisStudent){
-        tableData.push({
-          studentID: sID[i],
-          studentName: students.find(e => e.id == sID[i]).fullname,
-          scores: quizScore[i]
-        })
-      }
     }
-    setTotalData(totalData.slice());
     setData(tableData.slice());
   }
   
-  const [compareID, setCompare] = useState("---");
-  function handleCompare(e: any) { setCompare(e.target.value) }
-  useEffect(() => {
-    if(tableData.length != 0) {
-      if (compareID == "---" && tableData.length > 1) {
-        let temp = [tableData[0]]; setData(temp.slice());
-      }else{
-        let temp = [tableData[0]];
-        let stdidx = totalData.indexOf(totalData.find(e => e.studentID == compareID));
-        temp.push(totalData[stdidx]);
-        setData(temp.slice());
-      }
-    }
-  }, [compareID])
+  const [chartType, setChartType] = useState("avg");
+  function handleChartType(e: any){ setChartType(e.target.value) }
 
-  return <div > 
-    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz" tableHead={tableHead.slice(2)}/><br/>
-    <span>Compare to</span>
-      <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
-        <option value="---">---</option>
-        {totalData.map(std => (
-          <option value={std.studentID}>{std.studentID}</option>
-        ))}
+  return <div>
+    <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
+    <br/>
+      <div style={{display: "inline"}}>
+        <span style={{marginRight: 5}}>Data Type</span>
+        <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
+          <option value="avg">Average Scores</option>
+          <option value="all">Student Scores</option>
         </select>
-      <br/>
+      </div>
     <TableScrollDiv>
       <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
         <thead>
@@ -412,8 +346,8 @@ export function IndividualQuiz (props: { studentID: string }) {
         <tbody>
           {tableData.map(data => (
             <tr>
-              <td>{data.studentID}</td>
-              <td>{data.studentName}</td>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
+              <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
               {data.scores.map(scores => (
                 <td>{scores}</td>
               ))}
@@ -422,14 +356,20 @@ export function IndividualQuiz (props: { studentID: string }) {
         </tbody>
       </TableScrollable>
     </TableScrollDiv>
-    <ChartPie stdData={tableData} scoreType="Quiz" tableHead={tableHead.slice(2)} />
   </div>
 }
 
-export function InfoPage(props: { studentID: string }){
-  const courseID = router.query.id as string;
-  return <div>
-    <br/>
-    <h1>Information Page</h1>
-  </div>
-}
+const LinkedCol = styled(Link)`
+  text-decoration:none;
+  color:black;
+`;
+
+export const TableScrollDiv = styled.div`
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 60%;
+  transform: rotateX(180deg);
+`
+export const TableScrollable = styled(Table)`
+  transform: rotateX(180deg);
+`

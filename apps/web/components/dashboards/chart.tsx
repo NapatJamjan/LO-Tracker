@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import ClientOnly from '../../../../components/ClientOnly';
+import ClientOnly from '../ClientOnly';
 import * as d3 from "d3";
 import styled from 'styled-components';
 
@@ -43,10 +43,12 @@ function AverageChart(props: { data: studentResult[], scoreType: string, tableHe
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="bar">Bar Chart</option>
           <option value="pie">Pie Chart</option>
+          <option value="dist">Distribute Chart</option>
         </select>
       </div>
       {chartType === "bar" && <ChartBarAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
       {chartType === "pie" && <ChartPieAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {chartType === "dist" && <ChartDistribute data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
     </div>
   )
 }
@@ -894,6 +896,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
   const ref = useRef();
   const scoreType = props.scoreType;
   const tableHead = props.tableHead;
+  const chartX = [];
   //Scoring
   interface averageScore { name: string, score: number }
   let datas = props.data; let dataLength = 0;
@@ -917,6 +920,21 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
     avgScore.push({ name: tableHead[i], score: avg[i] });
   }
 
+  //new scoring, average lo score of each student
+  let stdScore: averageScore[] = []; 
+  let dataCount = 1; let currentScore = 0;
+  for (let i = 0; i < datas.length; i++) {
+    chartX.push(datas[i].studentID)
+    stdScore.push({ name: datas[i].studentID, score: 0})
+    dataCount = datas[i].scores.length;
+    for (let j = 0; j < datas[i].scores.length; j++) {
+      currentScore += datas[i].scores[j] as number;
+    }
+    stdScore[i].score = parseInt((currentScore/dataCount).toFixed(0));
+    currentScore = 0
+  }
+  console.log(stdScore)
+
   //Charting
   let dimensions = {
     w: 600, h: 400,
@@ -929,26 +947,32 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
     if (avgScore.length != 0) {
       d3.selectAll("svg > *").remove();
       const svgElement = d3.select(ref.current)
-      let dataset = avgScore;
+      let dataset = stdScore;
       //chart area
       svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
         .style("background-color", "transparent")
       svgElement.append('text')
         .attr('x', dimensions.w / 2).attr('y', 30)
         .style('text-anchor', 'middle').style('font-size', 20)
-        .text(`Graph of Average ${scoreType} Score`)
+        .text(`Graph of Student's Average ${scoreType} Score`)
       const box = svgElement.append('g')
         .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
 
       //scale
       const xScale = d3.scaleBand()
         .range([0, boxW])
-        .domain(tableHead)
+        .domain(chartX)
         .padding(0.2);
       box.append("g").transition()
         .attr("transform", "translate(0," + boxH + ")")
-        .call(d3.axisBottom(xScale))
-        .selectAll("text").style("text-anchor", "middle");
+        .call(d3.axisBottom(xScale).tickValues(xScale.domain().filter(function(d,i){ 
+          if(stdScore.length >= 15){
+            return !(i%4)
+          }else{
+            return !(i%2)
+          }
+        })))
+        .selectAll("text").style("text-anchor", "middle")
       const yScale = d3.scaleLinear()
         .domain([0, 100])
         .range([boxH, 0]);

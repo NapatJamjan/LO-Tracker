@@ -7,7 +7,7 @@ import client from '../../apollo-client';
 import router from 'next/router';
 import { Table } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
-import { ChartBarPLO } from './plochart';
+import { ChartBarPLO } from '../../components/dashboards/plochart';
 import { getSession, useSession } from 'next-auth/react';
 
 export default function Page({student}: {student: StudentModel}) {

@@ -10,7 +10,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../components/ClientOnly';
 import ProgramNameLink from '../../../../components/ProgramAnchor';
-import { ScoreTable, ScoreTablePLO } from './table';
+import { ScoreTable, ScoreTablePLO } from '../../../../components/dashboards/table';
 import { CourseStaticPaths } from 'apps/web/utils/staticpaths';
 
 // path => /course/[id]/dashboards

@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ClientOnly from '../../../../../components/ClientOnly';
-import { IndividualPLO, IndividualQuiz, InfoPage } from './stdtable';
+import { IndividualPLO, IndividualQuiz, InfoPage } from '../../../../../components/dashboards/stdtable';
 
 // path => /course/[id]/dashboards/[studentID]
 export default function Index() {

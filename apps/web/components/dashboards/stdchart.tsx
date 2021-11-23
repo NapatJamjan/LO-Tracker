@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import ClientOnly from '../../../../../components/ClientOnly';
+import ClientOnly from '../ClientOnly';
 import * as d3 from "d3";
 import styled from 'styled-components';
 
