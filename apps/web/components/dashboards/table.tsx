@@ -120,11 +120,10 @@ export function ScoreTablePLO() {
         loScoreC[i].push(Array.from({length: loArr[j].length}, () => 0));
       }
     }
-    for (let i = 0; i < questions.length; i++) { // main calculation ; end with array of lo level
+    for (let i = 0; i < questions?.length; i++) { // main calculation ; end with array of lo level
       for (let k = 0; k < questions[i].linkedLOs.length; k++) { // calculate each linked lo in the question
         let loidx = loData.indexOf(loData.find(e => e.id == questions[i].linkedLOs[k].split(',')[0]))
         let lvlidx = parseInt(questions[i].linkedLOs[k].split(',')[1])-1;
-        // console.log("hh", loidx, lvlidx)
         // index of level, all combined will be [student][lo][level]
         for (let j = 0; j < questions[i].results.length; j++) { // might have to loop after link check
           let currentScore = 0;

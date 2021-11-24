@@ -139,13 +139,13 @@ export function useDashboardFlat(courseID: string): [DashboardFlat, boolean] {
       los: new Map<string, string>(),
       questions: []
     };
-    data.flatSummary.students.forEach(student => newDashboard.students.set(student.id, `${student.name} ${student.surname}`));
-    data.flatSummary.plos.forEach(plo => newDashboard.plos.set(plo.id, plo.title));
-    data.flatSummary.los.forEach(lo => {
+    data?.flatSummary.students.forEach(student => newDashboard.students.set(student.id, `${student.name} ${student.surname}`));
+    data?.flatSummary.plos.forEach(plo => newDashboard.plos.set(plo.id, plo.title));
+    data?.flatSummary.los.forEach(lo => {
       newDashboard.los.set(lo.id, lo.title);
       lo.levels.forEach(loLevel => newDashboard.los.set(`${lo.id},${loLevel.level}`, loLevel.description));
     });
-    newDashboard.questions = data.flatSummary.questions;
+    newDashboard.questions = data?.flatSummary.questions;
     setDashboard(newDashboard);
     setLoaded(true);
   }, [loading]);
@@ -212,7 +212,7 @@ export function useDashboardPLOSummary(courseID: string): [DashboardPLOSummary, 
   useEffect(() => {
     if (loading && !data) return;
     let plos = new Map<string, string[]>();
-    data.ploSummary.forEach((v) => {
+    data?.ploSummary.forEach((v) => {
       plos.set(v.ploID, v.loID);
     });
     setDashboard(new Map(plos.entries()));

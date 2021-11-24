@@ -891,7 +891,7 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
   </div>
 }
 
-
+//https://bl.ocks.org/ctufts/a90019910166d8378c6462dfd2f6f3ec
 export function ChartDistribute(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
@@ -900,41 +900,34 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
   //Scoring
   interface averageScore { name: string, score: number }
   let datas = props.data; let dataLength = 0;
-  let avgScore: averageScore[] = [];
-  for(var i in datas) { 
-    let ltemp = 0;
-    for (var j in datas[i].scores) { ltemp +=1; } 
-      if(ltemp > dataLength) { dataLength = ltemp;}
-  }
-  let avg = Array.from({length: dataLength}, () => 0);
-  for (let i = 0; i < datas.length; i++) { 
-    for (let j = 0; j < datas[i].scores.length; j++) {
-      let score = datas[i].scores[j] as number;
-      if(!isNaN(score)){ // prevent nan
-        avg[j] += score;
-      }
-    }
-  }
-  for (let i = 0; i < avg.length; i++) {
-    avg[i] = parseInt((avg[i] / datas.length).toFixed(0))
-    avgScore.push({ name: tableHead[i], score: avg[i] });
-  }
-
   //new scoring, average lo score of each student
   let stdScore: averageScore[] = []; 
+  let scoreTemp: averageScore[] =[];
   let dataCount = 1; let currentScore = 0;
+  let scores: number[] = [];
   for (let i = 0; i < datas.length; i++) {
     chartX.push(datas[i].studentID)
-    stdScore.push({ name: datas[i].studentID, score: 0})
+    scoreTemp.push({ name: datas[i].studentID, score: 0})
     dataCount = datas[i].scores.length;
     for (let j = 0; j < datas[i].scores.length; j++) {
       currentScore += datas[i].scores[j] as number;
     }
-    stdScore[i].score = parseInt((currentScore/dataCount).toFixed(0));
+    scoreTemp[i].score = parseInt((currentScore/dataCount).toFixed(0));
+    scores.push(parseInt((currentScore/dataCount).toFixed(0)));
     currentScore = 0
   }
-  console.log(stdScore)
-
+  
+  stdScore = scoreTemp.slice()
+  let lower = Math.min(...scores)
+  let upper = Math.max(...scores);
+  let mean =  ((stdScore).reduce((sum: any, current: any) => sum + current.score, 0))/stdScore.length
+  function getStandardDeviation (array: any) {
+    const n = array.length
+    const mean = array.reduce((a, b) => a + b) / n
+    return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+  }
+  let sd = getStandardDeviation(scores);
+  console.log("mean, lower, upper, sd", mean, lower, upper, sd)
   //Charting
   let dimensions = {
     w: 600, h: 400,
@@ -944,7 +937,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
 
   useEffect(() => {
-    if (avgScore.length != 0) {
+    if (stdScore.length != 0) {
       d3.selectAll("svg > *").remove();
       const svgElement = d3.select(ref.current)
       let dataset = stdScore;
@@ -1034,7 +1027,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         tooltip.style('display', 'none')
       }
     }
-  }, [avgScore])
+  }, [stdScore])
 
   return <div >
     <div>
