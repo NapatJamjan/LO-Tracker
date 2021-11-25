@@ -185,3 +185,195 @@ func (r *queryResolver) FlatSummary(ctx context.Context, courseID string) (*mode
 	}
 	return response, nil
 }
+
+func (r *queryResolver) IndividualSummary(ctx context.Context, studentID string) (*model.DashboardIndividual, error) {
+	allQuestionResults, err := r.Client.QuestionResult.FindMany(
+		db.QuestionResult.Student.Where(
+			db.Student.ID.Equals(studentID),
+		),
+	).With(
+		db.QuestionResult.Question.Fetch().With(
+			db.Question.Quiz.Fetch().With(
+				db.Quiz.Course.Fetch(),
+			),
+			db.Question.Links.Fetch().With(
+				db.QuestionLink.LoLevel.Fetch().With(
+					db.LOlevel.Lo.Fetch().With(
+						db.LO.Links.Fetch().With(
+							db.LOlink.Plo.Fetch().With(
+								db.PLO.PloGroup.Fetch(),
+							),
+						),
+					),
+				),
+			),
+		),
+	).Exec(ctx)
+	if err != nil {
+		return &model.DashboardIndividual{}, err
+	}
+	type CustomPLOGroup struct {
+		Name string
+		Plos map[string]*model.DashboardIndividualPlo
+	}
+	courseMap := map[string]*model.DashboardIndividualCourse{}
+	ploGroupMap := map[string]*CustomPLOGroup{}
+	loCount := map[string]int{}
+	ploCount := map[string]int{}
+
+	for _, result := range allQuestionResults {
+		var idvCourse *model.DashboardIndividualCourse
+		question := result.Question()
+		quiz := question.Quiz()
+		thisPercent := float64(result.Score) / float64(question.MaxScore)
+
+		course := quiz.Course()
+		if val, ok := courseMap[course.ID]; ok {
+			idvCourse = val
+		} else {
+			idvCourse = &model.DashboardIndividualCourse{
+				Name:     course.Name,
+				Semester: course.Semester,
+				Year:     course.Year,
+				Los:      []*model.DashboardIndividualCourseLo{},
+				Quizzes:  []*model.DashboardIndividualCourseQuiz{},
+			}
+		}
+		idvLos := idvCourse.Los
+		idvQuizzes := idvCourse.Quizzes
+		var idvQuiz *model.DashboardIndividualCourseQuiz
+		quizFound := false
+		for _, val := range idvQuizzes {
+			if val.ID == quiz.ID {
+				idvQuiz = val
+				idvQuiz.MaxScore += question.MaxScore
+				idvQuiz.StudentScore += result.Score
+				quizFound = true
+				break
+			}
+		}
+		if !quizFound {
+			idvQuiz = &model.DashboardIndividualCourseQuiz{
+				ID:           quiz.ID,
+				Name:         quiz.Name,
+				MaxScore:     question.MaxScore,
+				StudentScore: result.Score,
+				Los:          []string{},
+			}
+		}
+
+		for _, qlink := range question.Links() {
+			loLevel := qlink.LoLevel().Level
+			loDescription := qlink.LoLevel().Description
+			loTitle := qlink.LoLevel().Lo().Title
+			loID := qlink.LoLevel().Lo().ID
+			// begin: Course_LO update
+			var idvLo *model.DashboardIndividualCourseLo
+			loFound := false
+			for _, val := range idvLos {
+				// check if this course already has the LO
+				if val.ID == loID {
+					// if found, update the value
+					idvLo = val
+					lolevelFound := false
+					for _, val := range idvLo.Levels {
+						if val.Level == loLevel {
+							lolevelFound = true
+							break
+						}
+					}
+					if !lolevelFound {
+						idvLo.Levels = append(idvLo.Levels, &model.DashboardIndividualCourseLOLevel{
+							Level:       loLevel,
+							Description: loDescription,
+						})
+					}
+					n := loCount[loID]
+					idvLo.Percentage = (idvLo.Percentage*float64(n) + thisPercent) / float64(n+1)
+					loFound = true
+					break
+				}
+			}
+			if !loFound {
+				// if this course doesn't have this LO yet
+				idvLos = append(idvLos, &model.DashboardIndividualCourseLo{
+					ID:         loID,
+					Title:      loTitle,
+					Percentage: thisPercent,
+					Levels: []*model.DashboardIndividualCourseLOLevel{
+						{Level: loLevel, Description: loDescription},
+					},
+				})
+			}
+			loCount[loID] += 1
+			// end: Course_LO update
+			// begin: Course_Quiz_Link update
+			found := false
+			for _, lostring := range idvQuiz.Los {
+				if lostring == loID+","+strconv.Itoa(loLevel) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				idvQuiz.Los = append(idvQuiz.Los, loID+","+strconv.Itoa(loLevel))
+			}
+			// end: Course_Quiz_Link update
+
+			for _, llink := range qlink.LoLevel().Lo().Links() {
+				ploID := llink.Plo().ID
+				ploTitle := llink.Plo().Title
+				ploGroupName := llink.Plo().PloGroup().Name
+				ploGroupID := llink.Plo().PloGroup().ID
+				// begin: PLO update
+				if _, created := ploGroupMap[ploGroupID]; !created {
+					// create base ploGroup if this ploGroup hasn't been created
+					ploGroupMap[ploGroupID] = &CustomPLOGroup{
+						Name: ploGroupName,
+						Plos: map[string]*model.DashboardIndividualPlo{},
+					}
+				}
+				if _, has := ploGroupMap[ploGroupID].Plos[ploID]; !has {
+					// add base PLO to this ploGroup if not exist yet
+					ploGroupMap[ploGroupID].Plos[ploID] = &model.DashboardIndividualPlo{
+						Title:      ploTitle,
+						Percentage: thisPercent,
+					}
+				} else {
+					// if this PLO already exist, update the percentage
+					n := ploCount[ploID]
+					oldPercent := ploGroupMap[ploGroupID].Plos[ploID].Percentage
+					ploGroupMap[ploGroupID].Plos[ploID].Percentage = (oldPercent*float64(n) + thisPercent) / float64(n+1)
+				}
+				ploCount[ploID] += 1
+				// end: PLO update
+			}
+		}
+		if !quizFound {
+			idvQuizzes = append(idvQuizzes, idvQuiz)
+		}
+		idvCourse.Los = idvLos
+		idvCourse.Quizzes = idvQuizzes
+		courseMap[course.ID] = idvCourse
+	}
+
+	ploGroups := []*model.DashboardIndividualPLOGroup{}
+	for _, ploGroup := range ploGroupMap {
+		plos := []*model.DashboardIndividualPlo{}
+		for _, plo := range ploGroup.Plos {
+			plos = append(plos, plo)
+		}
+		ploGroups = append(ploGroups, &model.DashboardIndividualPLOGroup{
+			Name: ploGroup.Name,
+			Plos: plos,
+		})
+	}
+	courses := []*model.DashboardIndividualCourse{}
+	for _, course := range courseMap {
+		courses = append(courses, course)
+	}
+	return &model.DashboardIndividual{
+		PloGroups: ploGroups,
+		Courses:   courses,
+	}, nil
+}

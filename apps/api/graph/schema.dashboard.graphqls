@@ -35,8 +35,52 @@ type DashboardFlatQuestionResult {
   studentScore: Int!
 }
 
+type DashboardIndividual {
+  ploGroups: [DashboardIndividualPLOGroup!]!
+  courses: [DashboardIndividualCourse!]!
+}
+
+type DashboardIndividualPLOGroup {
+  name: String!
+  plos: [DashboardIndividualPLO!]!
+}
+
+type DashboardIndividualPLO {
+  title: String!
+  percentage: Float!
+}
+
+type DashboardIndividualCourse {
+  name: String!
+  semester: Int!
+  year: Int!
+  los: [DashboardIndividualCourseLO!]!
+  quizzes: [DashboardIndividualCourseQuiz!]!
+}
+
+type DashboardIndividualCourseLO {
+  id: ID!
+  title: String!
+  levels: [DashboardIndividualCourseLOLevel!]!
+  percentage: Float!
+}
+
+type DashboardIndividualCourseLOLevel {
+  level: Int!
+  description: String!
+}
+
+type DashboardIndividualCourseQuiz {
+  id: ID!
+  name: String!
+  maxScore: Int!
+  studentScore: Int!
+  los: [String!]!
+}
+
 extend type Query {
   quizResults(courseID: ID!): [DashboardResult!]!
   ploSummary(courseID: ID!): [DashboardPLOSummary!]!
   flatSummary(courseID: ID!): DashboardFlat!
+  individualSummary(studentID: ID!): DashboardIndividual!
 }

@@ -128,6 +128,49 @@ type DashboardFlatQuestionResult struct {
 	StudentScore int    `json:"studentScore"`
 }
 
+type DashboardIndividual struct {
+	PloGroups []*DashboardIndividualPLOGroup `json:"ploGroups"`
+	Courses   []*DashboardIndividualCourse   `json:"courses"`
+}
+
+type DashboardIndividualCourse struct {
+	Name     string                           `json:"name"`
+	Semester int                              `json:"semester"`
+	Year     int                              `json:"year"`
+	Los      []*DashboardIndividualCourseLo   `json:"los"`
+	Quizzes  []*DashboardIndividualCourseQuiz `json:"quizzes"`
+}
+
+type DashboardIndividualCourseLo struct {
+	ID         string                              `json:"id"`
+	Title      string                              `json:"title"`
+	Levels     []*DashboardIndividualCourseLOLevel `json:"levels"`
+	Percentage float64                             `json:"percentage"`
+}
+
+type DashboardIndividualCourseLOLevel struct {
+	Level       int    `json:"level"`
+	Description string `json:"description"`
+}
+
+type DashboardIndividualCourseQuiz struct {
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	MaxScore     int      `json:"maxScore"`
+	StudentScore int      `json:"studentScore"`
+	Los          []string `json:"los"`
+}
+
+type DashboardIndividualPlo struct {
+	Title      string  `json:"title"`
+	Percentage float64 `json:"percentage"`
+}
+
+type DashboardIndividualPLOGroup struct {
+	Name string                    `json:"name"`
+	Plos []*DashboardIndividualPlo `json:"plos"`
+}
+
 type DashboardPLOSummary struct {
 	PloID string   `json:"ploID"`
 	LoID  []string `json:"loID"`
