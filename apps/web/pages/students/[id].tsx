@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { ChartBarPLO } from '../../components/dashboards/plochart';
 import { getSession, useSession } from 'next-auth/react';
 
-export default function Page({student}: {student: StudentModel}) {
+export default function Page({student, dashboard}: {student: StudentModel, dashboard: IndividualDashboard}) {
   const {data: session, status} = useSession();
   const [dataType, setType] = useState("plo");
   function handleType(e: any) { setType(e.target.value) }
@@ -84,14 +84,21 @@ interface PageParams extends ParsedUrlQuery {
   id: string;
 }
 
-export const getStaticProps: GetStaticProps<{student: StudentModel}> = async (context) => {
+export const getStaticProps: GetStaticProps<{student: StudentModel, dashboard: IndividualDashboard}> = async (context) => {
   const { id: studentID } = context.params as PageParams;
-  const { data } = await client.query<{student: StudentModel}, {studentID: string}>({
-    query: GET_STUDENT, variables: { studentID }
-  });
+  const data = await Promise.all([
+    client.query<{student: StudentModel}, {studentID: string}>({
+      query: GET_STUDENT, variables: { studentID }
+    }),
+    client.query<{individualSummary: IndividualDashboard}, {studentID: string}>({
+      query: GET_DASHBOARD, variables: { studentID }
+    })
+  ]);
+  console.log(data[1].data.individualSummary)
   return {
     props: {
-      student: data.student
+      student: data[0].data.student,
+      dashboard: data[1].data.individualSummary
     },
     revalidate: 30,
   };
@@ -130,6 +137,70 @@ const GET_STUDENTS = gql`
     students {
       id
 }}`;
+
+const GET_DASHBOARD = gql`
+  query IndividualSummary($studentID: ID!) {
+    individualSummary(studentID: $studentID) {
+      ploGroups {
+        name
+        plos {
+          title
+          percentage
+        }
+      }
+      courses {
+        name
+        semester
+        year
+        los {
+          id
+          title
+          percentage
+          levels {
+            level
+            description
+          }
+        }
+        quizzes {
+          id
+          name
+          maxScore
+          studentScore
+          los
+        }
+      }
+}}`;
+
+interface IndividualDashboard {
+  ploGroups: {
+    name: string;
+    plos: {
+      title: string;
+      percentage: number;
+    }[];
+  }[];
+  courses: {
+    name: string;
+    semester: number;
+    year: number;
+    los: {
+      id: string;
+      title: string;
+      percentage: number;
+      levels: {
+        level: number;
+        description: string;
+      }[];
+    }[];
+    quizzes: {
+      id: string;
+      name: string;
+      maxScore: number;
+      studentScore: number;
+      los: string[];
+    }[];
+  }
+}
 
 interface studentResult {
   studentID: string,
