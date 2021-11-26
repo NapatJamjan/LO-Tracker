@@ -102,7 +102,6 @@ export function ChartBarPLO(props: { data: studentResult, scoreType: string, tab
       }
 
       function mMoveEvent(e: any, d: any) {
-        console.log(e)
         tooltip.style('display', 'block')
           .style('top', e.clientY + 'px').style('left', e.clientX + 20 + 'px')
       }
