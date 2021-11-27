@@ -5,9 +5,9 @@ import Head from 'next/head';
 import { gql } from '@apollo/client';
 import client from '../../apollo-client';
 import router from 'next/router';
-import { OverlayTrigger, Table, Tooltip} from 'react-bootstrap';
+import { OverlayTrigger, Table, Tooltip, Collapse} from 'react-bootstrap';
 import { useEffect, useState } from 'react';
-import { ChartBarPLO } from '../../components/dashboards/plochart';
+import { ChartBarPLO, ChartBarLO } from '../../components/dashboards/plochart';
 import { getSession, useSession } from 'next-auth/react';
 
 export default function Page({student, dashboard}: {student: StudentModel, dashboard: IndividualDashboard}) {
@@ -111,6 +111,11 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
   let tempHead = ['Student ID', 'Student Name'];
   const [tableData, setData] = useState([]);
   const [quizData, setQuiz] = useState([]);
+  const [show, setShows] = useState([]);
+  function setShow(i: number){
+    show[i] = !show[i]
+    setShows(show.slice())
+  }
   let courses = dashboard.courses.slice();
   courses.sort((a: any, b: any) => {
     if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
@@ -131,23 +136,30 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
     })
     for (let i = 0; i < targetCourse.los.length; i++) {
       targetCourse.los[i].levels.sort((a: any, b: any) => {
-        if(a.level< b.level) return -1;
+        if(a.level < b.level) return -1;
         if(a.level > b.level) return 1;
         return 0;
       })
     }
+  
+    setShows(Array.from({length: targetCourse.quizzes.length}, () => false))
     setData(targetCourse.los.slice());
     setQuiz(targetCourse.quizzes.slice());
     chartData.scores = []
     tempHead = ['Student ID', 'Student Name']
     for (let i = 0; i < targetCourse.los.length; i++) {
-      tempHead.push(targetCourse.los[i].title);
+      tempHead.push(targetCourse.los[i].title.substring(0, 4));
       chartData.scores.push(parseInt((targetCourse.los[i].percentage * 100 as number).toFixed(0)));
     }
     setChart(chartData);
     setHead(tempHead.slice());
     
   }, [course])
+  function getLoName(id: string){
+    // return tableData.find(e => e.id == id.split(',')[0]).title
+    return tableData.find(e => e.id == id.split(',')[0]).levels.find(e => e.level == id.split(',')[1]).description
+  }
+
   return(
     <div>
       <span>Select Course: </span>
@@ -185,22 +197,35 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
           </tbody>
         </TableScrollable>
       </TableScrollDiv>
-      {quizData.map(d => (
-        <div>
-          <p>{d.name} : {d.studentScore} / {d.maxScore}</p>
-          <p>Linked to {d.los.length} LO levels</p>
+      <div className="flex">
+        <div style={{minWidth: "50%", minHeight: "300px"}}>
+          <p className="text-xl">Quiz Score</p>
+          {quizData.map((d, i) => (
+            <div>
+              <p>{d.name} : {d.studentScore} / {d.maxScore}</p>
+              <p onClick={() => setShow(i)}>Linked to {d.los.length} LO levels &#11167;</p>
+              <Collapse in={show[i]}>
+                <div>
+                  {d.los.map(los => (
+                    <p>{getLoName(los)}</p>
+                  ))}
+                </div>
+              </Collapse>
+              
+              
+            </div>
+          ))}
+
         </div>
-      ))}
+        <div style={{}}>
+          <ChartBarLO data={chartData} scoreType={"Learning Outcome"} tableHead={tableHead.slice(2)}/>
+        </div>
+        
+      </div>
     </div>
   )
  
 }
-
-const OverlayText = (props) => (
-  <Tooltip id="button-tooltip">
-    {props.text}
-  </Tooltip>
-);
 
 interface PageParams extends ParsedUrlQuery {
   id: string;
