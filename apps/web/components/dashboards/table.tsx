@@ -77,16 +77,13 @@ export function ScoreTablePLO() {
         loData.push({name: v, id: k});
       }
     })
-    loData.sort((a: any, b: any) => {
-      if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-      if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-      return 0;
-    })
-    ploData.sort((a: any, b: any) => {
-      if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-      if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-      return 0;
-    }) 
+    // loData.sort((a: any, b: any) => {
+    //   if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+    //   if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+    //   return 0;
+    // })
+    loData.sort((a, b) => a.name.localeCompare(b.name));
+    ploData.sort((a, b) => a.name.localeCompare(b.name)); 
     score.los.forEach((v, k) => { // make loArr
       if(k.split(',').length === 1){ loArr.push([]) }
     })

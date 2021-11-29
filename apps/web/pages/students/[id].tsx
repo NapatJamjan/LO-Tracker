@@ -19,11 +19,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
   let tempHead = ['Student ID', 'Student Name'];
   const [tableData, setData] = useState([]);
   let plos = dashboard.ploGroups.slice();
-  plos.sort((a: any, b: any) => {
-    if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-    if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-    return 0;
-  })
+  plos.sort((a, b) => a.name.localeCompare(b.name))
   console.log("d", dashboard)
   // tableData.scores = Array.from({length: MockCount}, () => Math.floor(Math.random() * 90 + 10))
   if(plos.length != 0 && ploDataType == "loading"){
@@ -31,11 +27,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
   }
   useEffect(() => {
     let targetPLOs = plos.find(e => e.name == ploDataType)
-    targetPLOs.plos.sort((a: any, b: any) => {
-      if(a.title.toLowerCase() < b.title.toLowerCase()) return -1;
-      if(a.title.toLowerCase() > b.title.toLowerCase()) return 1;
-      return 0;
-    })
+    targetPLOs.plos.sort((a, b) => a.title.localeCompare(b.title))
     setData(targetPLOs.plos.slice());
     chartData.scores = []
     tempHead = ['Student ID', 'Student Name']
@@ -77,7 +69,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
         ))}
       </select>
       <TableScrollDiv>
-        <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
+        <TableScrollable striped bordered className="table" style={{ margin: 0 }}>
           <thead>
             <tr>
               {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
@@ -116,12 +108,9 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
     show[i] = !show[i]
     setShows(show.slice())
   }
+
   let courses = dashboard.courses.slice();
-  courses.sort((a: any, b: any) => {
-    if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-    if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-    return 0;
-  })
+  courses.sort((a, b) => a.name.localeCompare(b.name))
   console.log("d", dashboard)
 
   if(dashboard.ploGroups.length != 0 && course == "loading"){
@@ -129,11 +118,7 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
   }
   useEffect(() => {
     let targetCourse = courses.find(e => e.name == course)
-    targetCourse.los.sort((a: any, b: any) => {
-      if(a.title.toLowerCase() < b.title.toLowerCase()) return -1;
-      if(a.title.toLowerCase() > b.title.toLowerCase()) return 1;
-      return 0;
-    })
+    targetCourse.los.sort((a, b) => a.title.localeCompare(b.title))
     for (let i = 0; i < targetCourse.los.length; i++) {
       targetCourse.los[i].levels.sort((a: any, b: any) => {
         if(a.level < b.level) return -1;
@@ -155,9 +140,14 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
     setHead(tempHead.slice());
     
   }, [course])
+  let LvlArray = []
   function getLoName(id: string){
-    // return tableData.find(e => e.id == id.split(',')[0]).title
-    return tableData.find(e => e.id == id.split(',')[0]).levels.find(e => e.level == id.split(',')[1]).description
+    LvlArray.push(tableData.find(e => e.id == id.split(',')[0]).levels.find(e => e.level == id.split(',')[1]).description)
+
+  }
+  function showLoLvl(){
+    LvlArray.sort((a, b) => a.localeCompare(b))
+    return LvlArray.map(d => <p>{d}</p>)
   }
 
   return(
@@ -169,13 +159,13 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
         ))}
       </select>
       <TableScrollDiv>
-        <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
+        <TableScrollable striped bordered className="table" style={{ margin: 0 }}>
           <thead>
             <tr>
               <th>Student ID</th>
-              <th>student Name</th>
+              <th>Student Name</th>
               {tableData.map((data, i) => (<OverlayTrigger
-                placement="right"overlay={
+                placement="right" overlay={
                   <Tooltip id={`tooltip${i}`}>
                     <b>LO Levels</b>
                     {data.levels.map(lvl => ( 
@@ -207,11 +197,11 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
               <Collapse in={show[i]}>
                 <div>
                   {d.los.map(los => (
-                    <p>{getLoName(los)}</p>
+                    getLoName(los)
                   ))}
+                    {showLoLvl()}
                 </div>
               </Collapse>
-              
               
             </div>
           ))}

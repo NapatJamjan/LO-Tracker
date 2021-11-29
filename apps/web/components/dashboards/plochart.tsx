@@ -48,14 +48,14 @@ export function ChartBarPLO(props: { data: studentResult, scoreType: string, tab
         .range([0, boxW])
         .domain(tableHead)
         .padding(0.2);
-      box.append("g").transition()
+      box.append("g")
         .attr("transform", "translate(0," + boxH + ")")
         .call(d3.axisBottom(xScale))
         .selectAll("text").style("text-anchor", "middle");
       const yScale = d3.scaleLinear()
         .domain([0, 100])
         .range([boxH, 0]);
-      box.append("g").transition()
+      box.append("g")
         .call(d3.axisLeft(yScale));
 
       box.selectAll("rect")
@@ -68,8 +68,7 @@ export function ChartBarPLO(props: { data: studentResult, scoreType: string, tab
         .on('mouseover', mOverEvent)
         .on('mousemove', mMoveEvent)
         .on('mouseout', mOutEvent)
-        .transition()
-
+        
       //Axis
       const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
       const yAxisGroup = box.append("g")
@@ -162,14 +161,14 @@ export function ChartBarLO(props: { data: studentResult, scoreType: string, tabl
         .range([0, boxW])
         .domain(tableHead)
         .padding(0.2);
-      box.append("g").transition()
+      box.append("g")
         .attr("transform", "translate(0," + boxH + ")")
         .call(d3.axisBottom(xScale))
         .selectAll("text").style("text-anchor", "middle");
       const yScale = d3.scaleLinear()
         .domain([0, 100])
         .range([boxH, 0]);
-      box.append("g").transition()
+      box.append("g")
         .call(d3.axisLeft(yScale));
 
       box.selectAll("rect")
@@ -182,7 +181,6 @@ export function ChartBarLO(props: { data: studentResult, scoreType: string, tabl
         .on('mouseover', mOverEvent)
         .on('mousemove', mMoveEvent)
         .on('mouseout', mOutEvent)
-        .transition()
 
       //Axis
       const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)

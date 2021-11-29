@@ -1065,8 +1065,8 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         .text("Probability Density");
 
       function mousemove(e: any) {
-        // console.log("h", bisectX(dataset, xScale.invert(d3.pointer(this)[0]), 1))
-        // var x0 = xScale.invert(e.pageX),
+        // console.log("h", bisectX(dataset, xScale.invert(d3.pointer(e)[0]), 1))
+        // var x0 = xScale.invert(e.pageX), // use d3.pointer(e) instead
         //   i = bisectX(dataset, x0, 1),
         //   d0 = dataset[i - 1],
         //   d1 = dataset[1],
@@ -1100,7 +1100,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
 
 
 
-export function ChartDensity(props: { data:studentResult[], scoreType: string, tableHead: string[] }) {
+export function ChartDensityOld(props: { data:studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
   const tableHead = props.tableHead;
@@ -1279,6 +1279,166 @@ export function ChartDensity(props: { data:studentResult[], scoreType: string, t
   </div>
 }
 
+
+export function ChartDensity(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
+  const ref = useRef();
+  const scoreType = props.scoreType;
+  const tableHead = props.tableHead;
+  //Scoring
+  interface averageScore { name: number, score: number }
+  let datas = props.data; let dataLength = 0;
+  let scores: number[] = Array.from({length: 101}, () => 0);
+  let stdScore: any[] = Array.from({length: 101}, (d,i) => ({name: i, score: 0}));
+  let scoreTemp: any[] = Array.from({length: 101}, (d,i) => ({name: i, score: 0}));
+  let dataCount = 1; let currentScore = 0;
+  let checkStart = 0; let checking = true;
+  for (let i = 0; i < datas.length; i++) {
+    dataCount = datas[i].scores.length;
+    for (let j = 0; j < datas[i].scores.length; j++) {
+      currentScore += datas[i].scores[j] as number;
+    }
+    let avgScore = parseInt((currentScore/dataCount).toFixed(0));
+    scoreTemp[avgScore].name = avgScore;
+    scoreTemp[avgScore].score += 1;
+    scores[avgScore] += 1;
+    currentScore = 0
+  }
+  // ignore 0 at start
+  for (let i = 0; i < scores.length; i++) {
+    if(scores[i] == 0 && checking) { checkStart += 1; }
+    else { checking = false; }
+  }
+
+  // stdScore = scores.slice(/*checkStart-1*/); // ignore 0 at start
+  stdScore = scoreTemp.slice(checkStart-1);
+  console.log(stdScore)
+  //Charting
+  let dimensions = {
+    w: 600, h: 400,
+    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+  }
+  let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
+  let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
+
+  useEffect(() => {
+    if (stdScore.length != 0) {
+      d3.selectAll("svg > *").remove();
+      const svgElement = d3.select(ref.current)
+      let dataset = stdScore;
+      const bisectData = d3.bisector(function(d: any) { return d.name; }).center
+      //chart area
+      svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
+        .style("background-color", "transparent")
+      svgElement.append('text')
+        .attr('x', dimensions.w / 2).attr('y', 30)
+        .style('text-anchor', 'middle').style('font-size', 20)
+        .text(`Graph of Average ${scoreType} Score`)
+      const box = svgElement.append('g')
+        .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
+
+      //scale
+      const xScale = d3.scaleLinear()
+        .range([0, boxW])
+        .domain([checkStart-1, 100])
+      box.append("g").transition()
+        .attr("transform", "translate(0," + boxH + ")")
+        .call(d3.axisBottom(xScale))
+        .selectAll("text").style("text-anchor", "middle");
+      const yScale = d3.scaleLinear()
+        .domain([0, d3.max(scores)])
+        .range([boxH, 0]);
+      box.append("g").transition()
+        .call(d3.axisLeft(yScale).ticks(d3.max(scores), ".0f"));
+
+      box.append("path")
+        .datum(dataset)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("fill", "#69b3a2")
+        .attr("d", d3.line<any>()
+          .curve(d3.curveBumpX)
+          .x(function(d) { return xScale(d.name) })
+          .y(function(d) { return yScale(d.score) })
+          )
+        // .on('mouseover', mOverEvent)
+        
+      box.append("rect")
+        .attr("width", boxW)
+        .attr("height", boxH) 
+        .style("fill", "none")
+        .style("pointer-events", "all")
+        .on('mouseover', mOverEvent)
+        .on('mousemove', mMoveEvent)
+        .on('mouseout', mOutEvent)
+        
+      //Axis
+      const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
+      const yAxisGroup = box.append("g")
+      xAxisGroup.append('text')
+        .attr('x', boxW / 2)
+        .attr('y', dimensions.margin.bottom - 10)
+        .attr('fill', 'black')
+        .text(scoreType)
+        .style('text-anchor', 'middle')
+      yAxisGroup.append('text')
+        .attr('x', -boxH / 2)
+        .attr('y', -dimensions.margin.left + 15) // have - when you rotate
+        .attr('fill', 'black')
+        .text('Score')
+        .style('transform', 'rotate(270deg)')
+        .style('text-anchor', 'middle')
+
+      const tooltip = d3.select('#tooltip')
+      //event
+      function mOverEvent(e: any) { //event, data
+        box.append('line')
+          .attr('x1', d3.pointer(e)[0]).attr('y1', 0)
+          .attr('x2', d3.pointer(e)[0]).attr('y2', boxH)
+          .style("pointer-events", "none")
+          .style('stroke', 'black').classed('temp', true).style('opacity', '0.25')
+
+      }
+      
+      function mMoveEvent(e: any) {
+        d3.select(this).style('stroke-width', 3)
+        const x0 = xScale.invert(d3.pointer(e)[0]) ,
+          i = bisectData(dataset, x0, 1),
+          d0 = dataset[i - 1].score,
+          d1 = dataset[i].score,
+          d = x0 - d0 > d1 - x0 ? d1 : d0;
+        // console.log("d", d, d0, d1, i, x0.toFixed(1))
+        //tooltip
+        tooltip.select('.name')
+          .html(
+            `<b>Score ${i+checkStart}</b> <br/> 
+            Density ${d} `
+          )
+        tooltip.style('display', 'block')
+        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        d3.select('svg').selectAll('.temp')
+          .attr('x1', d3.pointer(e)[0]).attr('y1', 0)
+          .attr('x2', d3.pointer(e)[0]).attr('y2', boxH)
+      }
+
+      function mOutEvent() {
+        d3.select(this).style('stroke-width', 1.5)
+        d3.select('svg').selectAll('.temp').remove()
+        tooltip.style('display', 'none')
+      }
+    }
+  }, [stdScore])
+
+  return <div >
+    <div>
+      <svg ref={ref}></svg>
+      <Tooltip id='tooltip'>
+          <div className='name'></div>
+          <div className='score'></div>
+        </Tooltip>
+    </div>
+  </div>
+}
 
 const Tooltip = styled.div`
   border: 1px solid #ccc;
