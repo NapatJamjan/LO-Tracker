@@ -6,7 +6,7 @@ import { gql } from '@apollo/client';
 import client from '../../apollo-client';
 import router from 'next/router';
 import { OverlayTrigger, Table, Tooltip, Collapse} from 'react-bootstrap';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ChartBarPLO, ChartBarLO } from '../../components/dashboards/plochart';
 import { getSession, useSession } from 'next-auth/react';
 
@@ -21,6 +21,11 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
   let plos = dashboard.ploGroups.slice();
   plos.sort((a, b) => a.name.localeCompare(b.name))
   console.log("d", dashboard)
+  const ploRef = useRef(null);
+  const loRef = useRef(null);
+  function scrollTo(ref: any){
+    ref.current.scrollIntoView();   
+  }
   // tableData.scores = Array.from({length: MockCount}, () => Math.floor(Math.random() * 90 + 10))
   if(plos.length != 0 && ploDataType == "loading"){
     setPLOType(plos[0].name);
@@ -49,7 +54,11 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
       <title>{student.name}'s Dashboard</title>
     </Head>
     <div>
-      <p style={{fontSize: 20}}>Program Learning Outcome Dashboard</p>
+      <div className="flex justify-between">
+        <p style={{fontSize: 20}} ref={ploRef} onClick={() => scrollTo(ploRef)}>Program Learning Outcome Dashboard</p>
+        <button className="bg-white hover:bg-gray-400 px-2 border border-gray-400 rounded" 
+        onClick={() => scrollTo(loRef)} > &#8595;Go down</button>
+      </div>
       <div>
       <BackButton onClick={() => {
         if(session.isTeacher) router.back();
@@ -89,7 +98,11 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
       <ChartBarPLO data={chartData} scoreType={"Program Learning Outcome"} tableHead={tableHead.slice(2)}/>
     </div>
     <div>
-    <p style={{fontSize: 20}}>Learning Outcome Dashboard</p>
+    <div className="flex justify-between">
+      <p style={{fontSize: 20}} ref={loRef} onClick={() => scrollTo(loRef)}>Learning Outcome Dashboard</p>
+      <button className="bg-white hover:bg-gray-400 px-2 border border-gray-400 rounded" 
+        onClick={() => scrollTo(ploRef)} > &#8593;Go up</button>
+    </div>
     <LODashboard student={student} dashboard = {dashboard}/>
     </div>
   </div>;
@@ -141,13 +154,14 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
     
   }, [course])
   let LvlArray = []
+  function resetLoLvl(){ LvlArray = []}
   function getLoName(id: string){
     LvlArray.push(tableData.find(e => e.id == id.split(',')[0]).levels.find(e => e.level == id.split(',')[1]).description)
-
   }
   function showLoLvl(){
-    LvlArray.sort((a, b) => a.localeCompare(b))
-    return LvlArray.map(d => <p>{d}</p>)
+    const LvlArrays = Array.from(new Set(LvlArray));
+    LvlArrays.sort((a, b) => a.localeCompare(b))
+    return LvlArrays.map(d => <p>{d}</p>)
   }
 
   return(
@@ -196,18 +210,18 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
               <p onClick={() => setShow(i)}>Linked to {d.los.length} LO levels &#11167;</p>
               <Collapse in={show[i]}>
                 <div>
+                  {resetLoLvl()}
                   {d.los.map(los => (
                     getLoName(los)
                   ))}
-                    {showLoLvl()}
+                  {showLoLvl()}
                 </div>
               </Collapse>
-              
             </div>
           ))}
 
         </div>
-        <div style={{}}>
+        <div>
           <ChartBarLO data={chartData} scoreType={"Learning Outcome"} tableHead={tableHead.slice(2)}/>
         </div>
         

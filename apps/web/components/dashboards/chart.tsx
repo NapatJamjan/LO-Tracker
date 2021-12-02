@@ -44,14 +44,14 @@ function AverageChart(props: { data: studentResult[], scoreType: string, tableHe
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="bar">Bar Chart</option>
           <option value="pie">Pie Chart</option>
+          <option value="line">Line Chart</option>
           <option value="dist">Distribute Chart</option>
-          <option value="dens">Density Chart</option>
         </select>
       </div>
       {chartType === "bar" && <ChartBarAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
       {chartType === "pie" && <ChartPieAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {chartType === "line" && <ChartLineAverage data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
       {chartType === "dist" && <ChartDistribute data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
-      {chartType === "dens" && <ChartDensity data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
     </div>
   )
 }
@@ -67,11 +67,13 @@ function AllChart(props: { data: studentResult[], scoreType: string, tableHead: 
           <option value="bar">Bar Chart</option>
           <option value="bar2">Bar Scrollable</option>
           <option value="barVerti">Bar Vertical</option>
+          <option value="dens">Density Chart</option>
         </select>
       </div>
       {chartType === "bar" && <ChartBarAll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
       {chartType === "bar2" && <ChartBarAllScroll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
       {chartType === "barVerti" && <ChartBarAllVertical data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {chartType === "dens" && <ChartDensity data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
     </div>
   )
 }
@@ -193,6 +195,152 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
       function mOutEvent() {
         d3.select(this).style('stroke-width', 0)
         d3.select(this).attr('fill', '#69b3a2')
+        d3.select('svg').selectAll('.temp').remove()
+        tooltip.style('display', 'none')
+      }
+    }
+  }, [avgScore])
+
+  return <div >
+    <div>
+      <svg ref={ref}></svg>
+      <Tooltip id='tooltip'>
+          <div className='name'></div>
+          <div className='score'></div>
+        </Tooltip>
+    </div>
+  </div>
+}
+
+
+export function ChartLineAverage(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
+  const ref = useRef();
+  const scoreType = props.scoreType;
+  const tableHead = props.tableHead;
+  //Scoring
+  interface averageScore { name: string, score: number }
+  let datas = props.data; let dataLength = 0;
+  let avgScore: averageScore[] = [];
+  for(var i in datas) { 
+    let ltemp = 0;
+    for (var j in datas[i].scores) { ltemp +=1; } 
+      if(ltemp > dataLength) { dataLength = ltemp;}
+  }
+  let avg = Array.from({length: dataLength}, () => 0);
+  for (let i = 0; i < datas.length; i++) { 
+    for (let j = 0; j < datas[i].scores.length; j++) {
+      let score = datas[i].scores[j] as number;
+      if(!isNaN(score)){ // prevent nan
+        avg[j] += score;
+      }
+    }
+  }
+  for (let i = 0; i < avg.length; i++) {
+    avg[i] = parseInt((avg[i] / datas.length).toFixed(0))
+    avgScore.push({ name: tableHead[i], score: avg[i] });
+  }
+
+  //Charting
+  let dimensions = {
+    w: 600, h: 400,
+    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+  }
+  let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
+  let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
+
+  useEffect(() => {
+    if (avgScore.length != 0) {
+      d3.selectAll("svg > *").remove();
+      const svgElement = d3.select(ref.current)
+      let dataset = avgScore;
+      //chart area
+      svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
+        .style("background-color", "transparent")
+      svgElement.append('text')
+        .attr('x', dimensions.w / 2).attr('y', 30)
+        .style('text-anchor', 'middle').style('font-size', 20)
+        .text(`Graph of Average ${scoreType} Score`)
+      const box = svgElement.append('g')
+        .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
+
+      //scale
+      const xScale = d3.scalePoint()
+        .domain(tableHead)
+        .rangeRound([0, boxW])    
+      box.append("g").transition()
+        .attr("transform", "translate(0," + boxH + ")")
+        .call(d3.axisBottom(xScale))
+        .selectAll("text").style("text-anchor", "middle");
+      const yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([boxH, 0]);
+      box.append("g").transition()
+        .call(d3.axisLeft(yScale));
+
+      const mainColor = "#626beb";
+      box.append("path").datum(dataset)
+        .attr("fill", "none")
+        .attr("stroke", "#989ff7")
+        .attr("stroke-width", 3)
+        .attr("d", d3.line<any>()
+          .x(function(d) { return xScale(d.name) })
+          .y(function(d) { return yScale(d.score) })
+        )
+        .transition()
+
+      box.append("g").selectAll("dot")
+        .data(dataset).enter()
+        .append("circle")
+        .attr("cx", function(d) { return xScale(d.name) } )
+        .attr("cy", function(d) { return yScale(d.score) } )
+        .attr("r", 5)
+        .attr("fill", mainColor)
+        .on('mouseover', mOverEvent)
+        .on('mousemove', mMoveEvent)
+        .on('mouseout', mOutEvent)
+        .transition()
+
+      //Axis
+      const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
+      const yAxisGroup = box.append("g")
+      xAxisGroup.append('text')
+        .attr('x', boxW / 2)
+        .attr('y', dimensions.margin.bottom - 10)
+        .attr('fill', 'black')
+        .text(scoreType)
+        .style('text-anchor', 'middle')
+      yAxisGroup.append('text')
+        .attr('x', -boxH / 2)
+        .attr('y', -dimensions.margin.left + 15) // have - when you rotate
+        .attr('fill', 'black')
+        .text('Score')
+        .style('transform', 'rotate(270deg)')
+        .style('text-anchor', 'middle')
+
+      const tooltip = d3.select('#tooltip')
+      //event
+      function mOverEvent(e: any, d: any) { //event, data
+        d3.select(this).style('stroke-width', 2)
+        d3.select(this).attr('fill', 'darkblue')
+        d3.select(this).attr('r', 7.5)
+        //tooltip
+        tooltip.select('.name')
+          .html(
+            `<b>${d.name}</b> <br/> 
+            Score ${d.score} `
+          )
+          
+      }
+      
+      function mMoveEvent(e: any, d: any) {
+        tooltip.style('display', 'block')
+        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+      }
+
+      function mOutEvent() {
+        d3.select(this).style('stroke-width', 0)
+        d3.select(this).attr('fill', mainColor)
+        d3.select(this).attr('r', 5)
         d3.select('svg').selectAll('.temp').remove()
         tooltip.style('display', 'none')
       }
@@ -893,6 +1041,7 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
 }
 
 //https://bl.ocks.org/ctufts/a90019910166d8378c6462dfd2f6f3ec
+//http://bl.ocks.org/phil-pedruco/88cb8a51cdce45f13c7e another one
 export function ChartDistribute(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
@@ -932,7 +1081,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
     return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
   }
   let sd = getStandardDeviation(scores);
-  console.log("mean, lower, upper, sd", mean, lower, upper, sd)
+  // console.log("mean, lower, upper, sd", mean, lower, upper, sd)
   //create data
   let n =  Math.abs(Math.ceil((upper - lower / interval)))
   let data = [];
@@ -951,7 +1100,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
   //Charting
   let dimensions = {
     w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+    margin:{ top: 50, bottom: 50, left: 50, right: 50 }
   }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
@@ -967,12 +1116,10 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
       svgElement.append('text')
         .attr('x', dimensions.w / 2).attr('y', 30)
         .style('text-anchor', 'middle').style('font-size', 20)
-        .text(`Graph of Student's Average ${scoreType} Score`)
+        .text(`Normal Distribution Graph of Student's ${scoreType} Score`)
       const box = svgElement.append('g')
         .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
       //scale
-      console.log("min", d3.min(dataset, d => d.x))
-      console.log("max", d3.max(dataset, d => d.x))
       const xScale = d3.scaleLinear()
         .domain([
           d3.min(dataset, function(d: any) { return d.x; }), 
@@ -1002,7 +1149,7 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         .append("circle").attr("class", "dot")
         .attr("cx", function(d) { return xScale(d.x); })
         .attr("cy", function(d) { return yScale(d.y); })
-        .attr("r", 1.0)
+        .attr("r", 1.5)
 
       area.y0(yScale(0));
       // cut off datapoints that are outside the axis
@@ -1016,12 +1163,12 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         .attr("class", "area")
         .attr("fill", "steelblue")
         .attr("d", area)
-        .style('opacity',0.2);
+        .style('opacity', 0.2);
 
       box.append("text")
         .attr("id", "pdisplay")
-        .attr("x", xScale(0))
-        .attr("y", yScale(0.2))
+        .attr("x", boxW/2)
+        .attr("y", boxH/2)
         .style("text-anchor", "middle")
         .text("p(X \u2264 x) = 0.50");
 
@@ -1040,18 +1187,20 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         "transform", "translate(" + xScale(center_point.x) + "," + yScale(center_point.y) + ")"
       );
       focus.append("line")
+        .style('stroke', '#E4002B')
+        .style('stroke-width', 1.5)
         .attr('x1', 0).attr('x2', 0)
         .attr('y1', 0).attr('y2', boxH - yScale(center_point.y));
+
       // rect for tracking mouse (active over dimensions of svg )
       box.append("rect")
         .style('fill', 'white')
-        .style('opacity',0.01)
+        .style('opacity', 0.05)
         .style('pointer-event', 'all')
-        .attr("width", boxW).attr("height", boxH)
+        .attr("width", boxW + 5).attr("height", boxH + 5)
         .on("mousemove", mousemove)
-        .on("mouseover", function () { focus.style("display", 'none'); })
+        .on("mouseover", function () { focus.style("display", null); })
         .on("mouseout", function () { focus.style("display", "inline"); });
-        
         
       box.append("g").attr("class", "x axis")
         .attr("transform", "translate(0," + boxH + ")")
@@ -1065,23 +1214,23 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         .text("Probability Density");
 
       function mousemove(e: any) {
-        // console.log("h", bisectX(dataset, xScale.invert(d3.pointer(e)[0]), 1))
-        // var x0 = xScale.invert(e.pageX), // use d3.pointer(e) instead
-        //   i = bisectX(dataset, x0, 1),
-        //   d0 = dataset[i - 1],
-        //   d1 = dataset[1],
-        //   d = x0 - d0.x > d1.x - x0 ? d1 : d0;
+        console.log("h", bisectX(dataset, xScale.invert(d3.pointer(e)[0]), 1))
+        const x0 = xScale.invert(d3.pointer(e)[0]), // use d3.pointer(e) instead
+          i = bisectX(dataset, x0, 1),
+          d0 = dataset[i - 1],
+          d1 = dataset[1],
+          d = x0 - d0.x > d1.x - x0 ? d0 : d1;
 
-        // focus.attr("transform", "translate(" + xScale(d.x) + "," + yScale(d.y) + ")");
-        // focus.select('line')
-        //   .attr('x1', 0).attr('x2', 0)
-        //   .attr('y1', 0).attr('y2', boxH - yScale(d.y));
-        // //Update the 'area to go with the line'
-        // box.select("path")
-        //   .data([dataset.slice(0, dataset.indexOf(d) + 1)])
-        //   .attr("d", area);
-        // // Update center display
-        // box.select("#pdisplay").text('p(X \u2264 x) = ' + pct(jstat.normal.cdf(d.x, mean, sd)));
+        focus.attr("transform", "translate(" + xScale(d.x) + "," + yScale(d.y) + ")");
+        focus.select('line')
+          .attr('x1', 0).attr('x2', 0)
+          .attr('y1', 0).attr('y2', boxH - yScale(d.y));
+        //Update the 'area to go with the line'
+        box.select("path")
+          .data([dataset.slice(0, dataset.indexOf(d) + 1)])
+          .attr("d", area);
+        // Update center display
+        box.select("#pdisplay").text('p(X \u2264 x) = ' + pct(jstat.normal.cdf(d.x, mean, sd)));
       }
 
     }
@@ -1094,187 +1243,6 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
           <div className='name'></div>
           <div className='score'></div>
         </Tooltip>
-    </div>
-  </div>
-}
-
-
-
-export function ChartDensityOld(props: { data:studentResult[], scoreType: string, tableHead: string[] }) {
-  const ref = useRef();
-  const scoreType = props.scoreType;
-  const tableHead = props.tableHead;
-  //Scoring
-  interface averageScore { name: string, score: number }
-  let datas = props.data; let dataLength = 0;
-  //new scoring, average lo score of each student
-  // let stdScore: averageScore[] = []; 
-  let stdScore: number[] = [];
-  let scoreTemp: averageScore[] =[];
-  let dataCount = 1; let currentScore = 0;
-  let scores: number[] = [];
-  for (let i = 0; i < datas.length; i++) {
-    scoreTemp.push({ name: datas[i].studentID, score: 0})
-    dataCount = datas[i].scores.length;
-    for (let j = 0; j < datas[i].scores.length; j++) {
-      currentScore += datas[i].scores[j] as number;
-    }
-    scoreTemp[i].score = parseInt((currentScore/dataCount).toFixed(0));
-    scores.push(parseInt((currentScore/dataCount).toFixed(0)));
-    currentScore = 0
-  }
-  let maxScore = Math.max(...scores)
-  let minScore = Math.min(...scores)
-  // stdScore = scoreTemp.slice()
-  stdScore = scores.slice();
-  console.log(stdScore)
-  //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
-  }
-  let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
-  let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
-
-  useEffect(() => {
-    if (stdScore.length != 0) {
-      d3.selectAll("svg > *").remove();
-      const svgElement = d3.select(ref.current)
-      let dataset = stdScore;
-      //chart area
-      svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
-        .style("background-color", "transparent")
-      svgElement.append('text')
-        .attr('x', dimensions.w / 2).attr('y', 30)
-        .style('text-anchor', 'middle').style('font-size', 20)
-        .text(`Graph of Students' ${scoreType} Score`)
-      const box = svgElement.append('g')
-        .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
-
-      //scale
-      // var groups = d3.map(dataset, function(d){return(d.studentName)}).keys()
-      const xScale = d3.scaleLinear()
-        .domain([0, 100])
-        .range([0, boxW]);
-      box.append("g").transition()
-        .attr("transform", "translate(0," + boxH + ")")
-        .call(d3.axisBottom(xScale))
-        .selectAll("text").style("text-anchor", "middle")
-
-      // Compute kernel density estimation
-      const kde = kernelDensityEstimator(kernelEpanechnikov(7), xScale.ticks(100))
-      const density = kde(dataset.map(function (d) { return d; }))
-      console.log(density)
-
-      const yScale = d3.scaleLinear()
-        .domain([0, 0.05])
-        .range([boxH, 0]);
-      box.append("g").transition()
-        .call(d3.axisLeft(yScale));
-
-      // Plot the area
-      box.append("path")
-        .attr("class", "mypath")
-        .datum(density)
-        .attr("fill", "#69b3a2")
-        .attr("opacity", ".8")
-        .attr("stroke", "#000")
-        .attr("stroke-width", 1)
-        .attr("stroke-linejoin", "round")
-        .attr("d", d3.line()
-          .curve(d3.curveBasis)
-          .x(function (d) { return xScale(d[0]); })
-          .y(function (d) { return yScale(d[1]); })
-        );
-
-
-      // Function to compute density
-      function kernelDensityEstimator(kernel: any, X: any) {
-        return function (V: any) {
-          return X.map(function (x: any) {
-            return [x, d3.mean(V, function (v: any) { return kernel(x - v); })];
-          });
-        };
-      }
-      function kernelEpanechnikov(k: any) {
-        return function (v: any) {
-          return Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
-        };
-      }
-
-      //Axis
-      const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
-      const yAxisGroup = box.append("g")
-      xAxisGroup.append('text')
-        .attr('x', boxW / 2)
-        .attr('y', dimensions.margin.bottom - 10)
-        .attr('fill', 'black')
-        .text(scoreType)
-        .style('text-anchor', 'middle')
-        .transition()
-      yAxisGroup.append('text')
-        .attr('x', -boxH / 2)
-        .attr('y', -dimensions.margin.left + 15) // have - when you rotate
-        .attr('fill', 'black')
-        .text('Score')
-        .style('transform', 'rotate(270deg)')
-        .style('text-anchor', 'middle')
-        .transition()
-
-      const tooltip = d3.select('#tooltip')
-      const tooltipMain = d3.select('#tooltip2')
-      
-      //event
-      function mOverMain(e: any, d: any) {
-        tooltipMain.select('.name')
-          .html(
-            `<b>${d.name}</b> <br/> `
-          )
-      }
-      function mMoveMain(e: any, d: any) {
-        tooltipMain.style('display','block')
-        .style('top', e.layerY-45 +'px').style('left', e.layerX+20 +'px')
-      }
-      function mOverEvent(e: any, d: any) { //event, data
-        d3.select(this).style('opacity', 1)
-        d3.select(this).style('stroke-width', 1)
-        box.append('line')
-          .attr('x1', 0).attr('y1', d3.select(this).attr('y'))
-          .attr('x2', boxW).attr('y2', d3.select(this).attr('y'))
-          .style('stroke', 'black').classed('temp', true).style('opacity', '0.25')
-        //tooltip
-        tooltip.select('.name')
-          .html(
-            `<b>${d.key}</b> <br/> 
-            Score ${d.value} <br/>`
-          )
-      }
-
-      function mMoveEvent(e: any, d: any) {
-        tooltip.style('display','block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
-      }
-      function mOutEvent() {
-        d3.select(this).style('opacity', 0.8)
-        d3.select(this).style('stroke-width', 0)
-        d3.select('svg').selectAll('.temp').remove()
-        tooltip.style('display','none')
-        tooltipMain.style('display','none')
-      }
-    }
-  }, [stdScore])
-
-  return <div /*style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}*/>
-    <div>
-      <svg ref={ref}>
-      </svg>
-      <Tooltip id='tooltip'>
-        <div className='name'></div>
-        <div className='score'></div>
-      </Tooltip>
-      <Tooltip id='tooltip2'>
-        <div className='name'></div>
-      </Tooltip>
     </div>
   </div>
 }
@@ -1309,9 +1277,8 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
     else { checking = false; }
   }
 
-  // stdScore = scores.slice(/*checkStart-1*/); // ignore 0 at start
   stdScore = scoreTemp.slice(checkStart-1);
-  console.log(stdScore)
+
   //Charting
   let dimensions = {
     w: 600, h: 400,
@@ -1332,7 +1299,7 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
       svgElement.append('text')
         .attr('x', dimensions.w / 2).attr('y', 30)
         .style('text-anchor', 'middle').style('font-size', 20)
-        .text(`Graph of Average ${scoreType} Score`)
+        .text(`Density Graph of ${scoreType} Score`)
       const box = svgElement.append('g')
         .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
 
@@ -1371,6 +1338,14 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
         .on('mouseover', mOverEvent)
         .on('mousemove', mMoveEvent)
         .on('mouseout', mOutEvent)
+
+      if(checkStart > 1){ // if no less score than 1 
+        box.append("text")
+          .attr('x', 0)
+          .attr('y', boxH + 45)
+          .style('font-size', 10)
+          .text(`No student got ${checkStart} or less score`)
+      }
         
       //Axis
       const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
@@ -1397,7 +1372,6 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
           .attr('x2', d3.pointer(e)[0]).attr('y2', boxH)
           .style("pointer-events", "none")
           .style('stroke', 'black').classed('temp', true).style('opacity', '0.25')
-
       }
       
       function mMoveEvent(e: any) {
@@ -1407,12 +1381,11 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
           d0 = dataset[i - 1].score,
           d1 = dataset[i].score,
           d = x0 - d0 > d1 - x0 ? d1 : d0;
-        // console.log("d", d, d0, d1, i, x0.toFixed(1))
         //tooltip
         tooltip.select('.name')
           .html(
             `<b>Score ${i+checkStart}</b> <br/> 
-            Density ${d} `
+            ${d} student${d > 1 ? "s" : ""} got this score `
           )
         tooltip.style('display', 'block')
         .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
@@ -1432,11 +1405,12 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
   return <div >
     <div>
       <svg ref={ref}></svg>
-      <Tooltip id='tooltip'>
+        <Tooltip id='tooltip'>
           <div className='name'></div>
           <div className='score'></div>
         </Tooltip>
     </div>
+    
   </div>
 }
 
