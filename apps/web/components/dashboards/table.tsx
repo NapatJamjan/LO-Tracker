@@ -54,7 +54,7 @@ export function ScoreTablePLO() {
 
   useEffect(() => {
     calculatePLO()
-  }, [dashboardFlat]) //probably work
+  }, [dashboardFlat])
 
   function calculatePLO() {
     let score = dashboardFlat;
@@ -77,11 +77,6 @@ export function ScoreTablePLO() {
         loData.push({name: v, id: k});
       }
     })
-    // loData.sort((a: any, b: any) => {
-    //   if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-    //   if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-    //   return 0;
-    // })
     loData.sort((a, b) => a.name.localeCompare(b.name));
     ploData.sort((a, b) => a.name.localeCompare(b.name)); 
     score.los.forEach((v, k) => { // make loArr
@@ -99,7 +94,6 @@ export function ScoreTablePLO() {
           lotemp = 0;
         }
       }else{ 
-        // if(lotemp < parseInt(temp[1])) { lotemp += parseInt(temp[1])-lotemp; } // broke if level is like 1 2 9
         lotemp += 1;
         tempprev = temp[0]
       }
@@ -245,7 +239,7 @@ export function ScoreTablePLO() {
           <option value="LO">LO</option>
         </select>
         <div style={{display: "inline", marginLeft: 10}}>
-          <span style={{marginRight: 5}}>Data Type</span>
+          <span style={{marginRight: 5}}>Graph Data Type</span>
           <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
             <option value="avg">Average Scores</option>
             <option value="all">Student Scores</option>
@@ -260,7 +254,8 @@ export function ScoreTablePLO() {
             </tr>
           </thead>
           <tbody>
-            {tableData.map(data => (
+            {tableData.length === 0 && <tr><td className="text-center">---</td><td>No Data</td></tr>}
+            {tableData.sort((s1, s2) => s1.studentID.localeCompare(s2.studentID)).map(data => (
               <tr>
                 <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
                 <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>
@@ -280,7 +275,6 @@ export function ScoreTable() {
   const courseID = router.query.id as string;
   const [students] = useStudent(courseID);
   const [dashboardQuiz] = useDashboardResult(courseID);
-
   const [tableData, setData] = useState<studentResult[]>([]);
   const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name']); 
 
@@ -326,7 +320,7 @@ export function ScoreTable() {
     <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
     <br/>
       <div style={{display: "inline"}}>
-        <span style={{marginRight: 5}}>Data Type</span>
+        <span style={{marginRight: 5}}>Graph Data Type</span>
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
           <option value="avg">Average Scores</option>
           <option value="all">Student Scores</option>
@@ -340,7 +334,8 @@ export function ScoreTable() {
           </tr>
         </thead>
         <tbody>
-          {tableData.map(data => (
+        {tableData.length === 0 && <tr><td className="text-center">---</td><td>No Data</td></tr>}
+          {tableData.sort((s1, s2) => s1.studentID.localeCompare(s2.studentID)).map(data => (
             <tr>
               <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentID}</LinkedCol></td>
               <td><LinkedCol href={`/course/${courseID}/dashboards/${data.studentID}`}>{data.studentName}</LinkedCol></td>

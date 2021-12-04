@@ -308,6 +308,7 @@ export function IndividualPLO(props: { studentID: string }) {
             </tr>
           </thead>
           <tbody>
+            {tableData.length === 0 && <tr><td className="text-center">---</td><td>No Data</td></tr>}
             {tableData.map(data => (
               <tr>
                 <td>{data.studentID}</td>
@@ -335,7 +336,7 @@ export function IndividualQuiz (props: { studentID: string }) {
 
   useEffect(() => {
     displayScore()
-  }, [dashboardQuiz.length > 0 && students.length > 0]) //probably work
+  }, [dashboardQuiz?.length > 0 && students.length > 0]) //probably work
 
   function displayScore(){
     let thisStudent = props.studentID;
@@ -410,6 +411,7 @@ export function IndividualQuiz (props: { studentID: string }) {
           </tr>
         </thead>
         <tbody>
+          {tableData.length === 0 && <tr><td className="text-center">---</td><td>No Data</td></tr>}
           {tableData.map(data => (
             <tr>
               <td>{data.studentID}</td>
@@ -423,13 +425,5 @@ export function IndividualQuiz (props: { studentID: string }) {
       </TableScrollable>
     </TableScrollDiv>
     <ChartPie stdData={tableData} scoreType="Quiz" tableHead={tableHead.slice(2)} />
-  </div>
-}
-
-export function InfoPage(props: { studentID: string }){
-  const courseID = router.query.id as string;
-  return <div>
-    <br/>
-    <h1>Information Page</h1>
   </div>
 }

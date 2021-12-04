@@ -32,8 +32,6 @@ function IndexPage({course}: {course: CourseModel}) {
   return <div>
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     {/* <NavHistory courseID = {courseID}/> */}
-    {/*<Link href={`/course/${courseID}`}>Back to Course Homepage</Link><br/>
-    <button onClick={() => router.push(`/course/${courseID}`)}>This also works</button><br/>*/}
     <CourseSubMenu courseID={course.id} selected={'dashboards'}/>
     <ButtonTab>
       <button onClick={() => setState("Quiz")} style={{marginRight: 5}}

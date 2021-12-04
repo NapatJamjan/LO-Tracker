@@ -1143,7 +1143,14 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         .tickFormat(function (d, i) { return xlabels[i]; });
       var yAxis = d3.axisLeft(yScale)
         .ticks(8);
-
+      
+      const xAxisGroup = box.append("g").style('transform', `translateY(${boxH}px)`)
+      xAxisGroup.append('text')
+        .attr('x', boxW / 2)
+        .attr('y', dimensions.margin.bottom - 10)
+        .attr('fill', 'black')
+        .text("z-scores")
+        .style('text-anchor', 'middle')
       box.append("g").attr("id", "circles").selectAll("circle")
         .data(dataset).enter()
         .append("circle").attr("class", "dot")
@@ -1344,7 +1351,7 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
           .attr('x', 0)
           .attr('y', boxH + 45)
           .style('font-size', 10)
-          .text(`No student got ${checkStart} or less score`)
+          .text(`No student got score less than or equal to ${checkStart}`)
       }
         
       //Axis

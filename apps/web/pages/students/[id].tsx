@@ -26,7 +26,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
   function scrollTo(ref: any){
     ref.current.scrollIntoView();   
   }
-  // tableData.scores = Array.from({length: MockCount}, () => Math.floor(Math.random() * 90 + 10))
+  
   if(plos.length != 0 && ploDataType == "loading"){
     setPLOType(plos[0].name);
   }
@@ -63,7 +63,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
       <BackButton onClick={() => {
         if(session.isTeacher) router.back();
         else router.replace('/');
-        }}>
+        }} className="text-xl">
         &#12296;Back
       </BackButton>
       <h6>ID: {student.id}</h6>
@@ -72,7 +72,6 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
       </div><br/>
       <span>Select PLO Group to view: </span>
       <select value={ploDataType} onChange={handleType} className="border rounded-md border-2 ">
-        {/* <option value="plo">Program Learning Outcome</option> */}
         {plos.map((d, i) =>  (
           <option key={`ploset`+i} value={d.name}>{d.name}</option>
         ))}
@@ -187,7 +186,7 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
                     ))}
                   </Tooltip>
                 }><th>
-                {data.title}{i > 1 && <span> (%)</span>}</th></OverlayTrigger>))}
+                {data.title} (%)</th></OverlayTrigger>))}
             </tr>
           </thead>
           <tbody>
@@ -207,7 +206,8 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
           {quizData.map((d, i) => (
             <div>
               <p>{d.name} : {d.studentScore} / {d.maxScore}</p>
-              <p onClick={() => setShow(i)}>Linked to {d.los.length} LO levels &#11167;</p>
+              <p onClick={() => setShow(i)}>Linked to {d.los.length} LO levels 
+                {show[i] === false? <span>&#11167;</span> : <span>&#11165;</span>}</p>
               <Collapse in={show[i]}>
                 <div>
                   {resetLoLvl()}
