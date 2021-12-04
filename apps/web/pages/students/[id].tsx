@@ -296,6 +296,7 @@ const GET_DASHBOARD = gql`
         name
         plos {
           title
+          description
           percentage
         }
       }
@@ -327,6 +328,7 @@ interface IndividualDashboard {
     name: string;
     plos: {
       title: string;
+      description: string;
       percentage: number;//0-1
     }[];
   }[];

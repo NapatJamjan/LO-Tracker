@@ -131,8 +131,9 @@ type ComplexityRoot struct {
 	}
 
 	DashboardIndividualPlo struct {
-		Percentage func(childComplexity int) int
-		Title      func(childComplexity int) int
+		Description func(childComplexity int) int
+		Percentage  func(childComplexity int) int
+		Title       func(childComplexity int) int
 	}
 
 	DashboardIndividualPLOGroup struct {
@@ -692,6 +693,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DashboardIndividualCourseQuiz.StudentScore(childComplexity), true
+
+	case "DashboardIndividualPLO.description":
+		if e.complexity.DashboardIndividualPlo.Description == nil {
+			break
+		}
+
+		return e.complexity.DashboardIndividualPlo.Description(childComplexity), true
 
 	case "DashboardIndividualPLO.percentage":
 		if e.complexity.DashboardIndividualPlo.Percentage == nil {
@@ -1852,6 +1860,7 @@ type DashboardIndividualPLOGroup {
 
 type DashboardIndividualPLO {
   title: String!
+  description: String!
   percentage: Float!
 }
 
@@ -4505,6 +4514,41 @@ func (ec *executionContext) _DashboardIndividualPLO_title(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardIndividualPLO_description(ctx context.Context, field graphql.CollectedField, obj *model.DashboardIndividualPlo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardIndividualPLO",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10638,6 +10682,11 @@ func (ec *executionContext) _DashboardIndividualPLO(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("DashboardIndividualPLO")
 		case "title":
 			out.Values[i] = ec._DashboardIndividualPLO_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "description":
+			out.Values[i] = ec._DashboardIndividualPLO_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

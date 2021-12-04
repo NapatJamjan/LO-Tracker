@@ -162,8 +162,9 @@ type DashboardIndividualCourseQuiz struct {
 }
 
 type DashboardIndividualPlo struct {
-	Title      string  `json:"title"`
-	Percentage float64 `json:"percentage"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Percentage  float64 `json:"percentage"`
 }
 
 type DashboardIndividualPLOGroup struct {

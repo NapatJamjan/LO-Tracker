@@ -323,6 +323,7 @@ func (r *queryResolver) IndividualSummary(ctx context.Context, studentID string)
 			for _, llink := range qlink.LoLevel().Lo().Links() {
 				ploID := llink.Plo().ID
 				ploTitle := llink.Plo().Title
+				ploDescription := llink.Plo().Description
 				ploGroupName := llink.Plo().PloGroup().Name
 				ploGroupID := llink.Plo().PloGroup().ID
 				// begin: PLO update
@@ -336,8 +337,9 @@ func (r *queryResolver) IndividualSummary(ctx context.Context, studentID string)
 				if _, has := ploGroupMap[ploGroupID].Plos[ploID]; !has {
 					// add base PLO to this ploGroup if not exist yet
 					ploGroupMap[ploGroupID].Plos[ploID] = &model.DashboardIndividualPlo{
-						Title:      ploTitle,
-						Percentage: thisPercent,
+						Title:       ploTitle,
+						Description: ploDescription,
+						Percentage:  thisPercent,
 					}
 				} else {
 					// if this PLO already exist, update the percentage

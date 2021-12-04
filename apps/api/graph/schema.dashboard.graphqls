@@ -47,6 +47,7 @@ type DashboardIndividualPLOGroup {
 
 type DashboardIndividualPLO {
   title: String!
+  description: String!
   percentage: Float!
 }
 
