@@ -14,13 +14,11 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
   const {data: session, status} = useSession();
   const [ploDataType, setPLOType] = useState("loading");
   function handleType(e: any) { setPLOType(e.target.value) }
-  const [tableHead, setHead] = useState<string[]>([])
   const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []});
-  let tempHead = ['Student ID', 'Student Name'];
   const [tableData, setData] = useState([]);
   let plos = dashboard.ploGroups.slice();
   plos.sort((a, b) => a.name.localeCompare(b.name))
-  console.log("d", dashboard)
+  
   const ploRef = useRef(null);
   const loRef = useRef(null);
   function scrollTo(ref: any){
@@ -35,13 +33,10 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
     targetPLOs.plos.sort((a, b) => a.title.localeCompare(b.title))
     setData(targetPLOs.plos.slice());
     chartData.scores = []
-    tempHead = ['Student ID', 'Student Name']
     for (let i = 0; i < targetPLOs.plos.length; i++) {
-      tempHead.push(targetPLOs.plos[i].title);
       chartData.scores.push(parseInt((targetPLOs.plos[i].percentage * 100 as number).toFixed(0)));
     }
     setChart(chartData);
-    setHead(tempHead.slice());
     
   }, [ploDataType])
 
@@ -80,7 +75,16 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
         <TableScrollable striped bordered className="table" style={{ margin: 0 }}>
           <thead>
             <tr>
-              {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
+              <th>Student ID</th>
+              <th>Student Name</th>
+              {tableData.map((data, i) => (<OverlayTrigger
+                placement="right" overlay={
+                  <Tooltip id={`tooltip${i}`}>
+                    <b>Description</b>
+                    <p>{data.description}</p>
+                  </Tooltip>
+                }><th>
+                  {data.title} (%)</th></OverlayTrigger>))}
             </tr>
           </thead>
           <tbody>
@@ -94,7 +98,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
           </tbody>
         </TableScrollable>
       </TableScrollDiv>
-      <ChartBarPLO data={chartData} scoreType={"Program Learning Outcome"} tableHead={tableHead.slice(2)}/>
+      <ChartBarPLO data={chartData} scoreType={"Program Learning Outcome"} tableHead={tableData.map(d => d.title)}/>
     </div>
     <div>
     <div className="flex justify-between">
@@ -110,9 +114,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
 function LODashboard({student, dashboard}: {student: StudentModel, dashboard: IndividualDashboard}){
   const [course, setCourse] = useState("loading");
   function handleType(e: any) { setCourse(e.target.value) }
-  const [tableHead, setHead] = useState<string[]>([])
   const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []});
-  let tempHead = ['Student ID', 'Student Name'];
   const [tableData, setData] = useState([]);
   const [quizData, setQuiz] = useState([]);
   const [show, setShows] = useState([]);
@@ -123,7 +125,6 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
 
   let courses = dashboard.courses.slice();
   courses.sort((a, b) => a.name.localeCompare(b.name))
-  console.log("d", dashboard)
 
   if(dashboard.ploGroups.length != 0 && course == "loading"){
     setCourse(courses[0].name);
@@ -143,13 +144,10 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
     setData(targetCourse.los.slice());
     setQuiz(targetCourse.quizzes.slice());
     chartData.scores = []
-    tempHead = ['Student ID', 'Student Name']
     for (let i = 0; i < targetCourse.los.length; i++) {
-      tempHead.push(targetCourse.los[i].title.substring(0, 4));
       chartData.scores.push(parseInt((targetCourse.los[i].percentage * 100 as number).toFixed(0)));
     }
     setChart(chartData);
-    setHead(tempHead.slice());
     
   }, [course])
   let LvlArray = []
@@ -219,12 +217,10 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
               </Collapse>
             </div>
           ))}
-
         </div>
         <div>
-          <ChartBarLO data={chartData} scoreType={"Learning Outcome"} tableHead={tableHead.slice(2)}/>
+          <ChartBarLO data={chartData} scoreType={"Learning Outcome"} tableHead={tableData.map(d => d.title.substring(0, 4))}/>
         </div>
-        
       </div>
     </div>
   )

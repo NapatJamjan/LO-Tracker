@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import ClientOnly from '../ClientOnly';
 import * as d3 from "d3";
@@ -1040,8 +1039,6 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
   </div>
 }
 
-//https://bl.ocks.org/ctufts/a90019910166d8378c6462dfd2f6f3ec
-//http://bl.ocks.org/phil-pedruco/88cb8a51cdce45f13c7e another one
 export function ChartDistribute(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
   const scoreType = props.scoreType;
@@ -1081,7 +1078,6 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
     return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
   }
   let sd = getStandardDeviation(scores);
-  // console.log("mean, lower, upper, sd", mean, lower, upper, sd)
   //create data
   let n =  Math.abs(Math.ceil((upper - lower / interval)))
   let data = [];
@@ -1094,7 +1090,6 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
       })
       x_position += interval
   }
-  console.log('data', data)
   newData = data.slice();
 
   //Charting
