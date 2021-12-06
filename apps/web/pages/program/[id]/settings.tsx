@@ -1,42 +1,42 @@
-import Head from 'next/head';
-import { useEffect } from 'react';
-import client from '../../../apollo-client';
-import { gql, useMutation } from '@apollo/client';
-import { GetServerSideProps } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import { KnownProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/router';
-import { ToastContainer, toast } from 'react-toastify';
-import { useSession } from 'next-auth/react';
+import Head from 'next/head'
+import { useEffect } from 'react'
+import { gql, useMutation } from '@apollo/client'
+import { GetServerSideProps } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import { KnownProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
+import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/router'
+import { toast } from 'react-toastify'
+import { useSession } from 'next-auth/react'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface ProgramModel {
-  id: string;
-  name: string;
-  description: string;
-  teacherID: string;
-};
-
-interface EditProgramModel {
-  name: string;
-  description: string;
+  id: string
+  name: string
+  description: string
+  teacherID: string
 }
 
-export default ({program}: {program: ProgramModel}) => {
-  const router = useRouter();
-  const {data: session, status} = useSession();
-  const [editProgram, { loading: submitting }] = useMutation<{editProgram: {id: string}}, {id: string, input: EditProgramModel}>(EDIT_PROGRAM);
+interface EditProgramModel {
+  name: string
+  description: string
+}
+
+export default function SettingsPage({program}: {program: ProgramModel}) {
+  const router = useRouter()
+  const {data: session, status} = useSession()
+  const [editProgram, { loading: submitting }] = useMutation<{editProgram: {id: string}}, {id: string, input: EditProgramModel}>(EDIT_PROGRAM)
   const { register, handleSubmit } = useForm<EditProgramModel>({
     defaultValues: {
       name: program.name,
-      description: program.description
-    }
-  });
+      description: program.description,
+    },
+  })
   const saveProgram = (form: EditProgramModel) => {
-    if (submitting) return;
+    if (submitting) return
     if (form.name === program.name && form.description === program.description) {
-      toast('No data changed', {type: 'info', delay: 800, hideProgressBar: true});
-      return;
+      toast('No data changed', {type: 'info', delay: 800, hideProgressBar: true})
+      return
     }
     editProgram({
       variables: {
@@ -44,12 +44,12 @@ export default ({program}: {program: ProgramModel}) => {
         input: form
       }
     }).then(() => toast('Data updated!', {type: 'success'}))
-    .finally(() => router.replace(router.asPath));
-  };
+    .finally(() => router.replace(router.asPath))
+  }
   useEffect(() => {
-    if (status === 'loading') return;
-    if (session && session.id !== program.teacherID) router.replace(`/program/${program.id}/courses`);
-  }, [session, status]);
+    if (status === 'loading') return
+    if (session && session.id !== program.teacherID) router.replace(`/program/${program.id}/courses`)
+  }, [session, status])
   return <div>
     <Head>
       <title>Program Settings</title>
@@ -68,28 +68,28 @@ export default ({program}: {program: ProgramModel}) => {
       <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
     </div>
     </form>
-    <ToastContainer/>
-  </div>;
-};
+  </div>
+}
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getServerSideProps: GetServerSideProps<{program: ProgramModel}> = async (context) => {
-  const { id: programID } = context.params as Params;
+  const { id: programID } = context.params as Params
+  const client = initializeApollo()
   const { data } = await client.query<{program: ProgramModel}, {programID: string}>({
     query: GET_PROGRAM,
     variables: {
-      programID
-    }
-  });
-  return {
+      programID,
+    },
+  })
+  return addApolloState(client, {
     props: {
       program: data.program,
     },
-  };
-};
+  })
+}
 
 const GET_PROGRAM = gql`
   query Program($programID: ID!) {
@@ -98,9 +98,9 @@ const GET_PROGRAM = gql`
       name
       description
       teacherID
-}}`;
+}}`
 const EDIT_PROGRAM = gql`
   mutation EditProgram($id: ID!, $input: CreateProgramInput!) {
     editProgram(id: $id, input: $input) {
       id
-}}`;
+}}`

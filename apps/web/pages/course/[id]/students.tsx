@@ -1,27 +1,27 @@
-import Head from 'next/head';
-import client from '../../../apollo-client';
-import { gql } from '@apollo/client';
-import { GetStaticPaths, GetStaticProps } from 'next';
-import { CourseStaticPaths } from '../../../utils/staticpaths';
-import { ParsedUrlQuery } from 'querystring';
-import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
+import Head from 'next/head'
+import { gql } from '@apollo/client'
+import { GetStaticPaths, GetStaticProps } from 'next'
+import { CourseStaticPaths } from '../../../utils/staticpaths'
+import { ParsedUrlQuery } from 'querystring'
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface CourseModel {
-  id: string;
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-  programID: string;
-};
+  id: string
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+  programID: string
+}
 
 interface StudentModel {
-  id: string;
-  email: string;
-  name: string;
-  surname: string;
-};
+  id: string
+  email: string
+  name: string
+  surname: string
+}
 
 export default ({course, students}: {course: CourseModel, students: StudentModel[]}) => {
   return (<div>
@@ -53,28 +53,29 @@ export default ({course, students}: {course: CourseModel, students: StudentModel
         }
       </tbody>
     </table>
-  </div>);
-};
+  </div>)
+}
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getStaticProps: GetStaticProps<{course: CourseModel, students: StudentModel[]}> = async (context) => {
-  const { id: courseID } = context.params as Params;
+  const { id: courseID } = context.params as Params
   const GET_COURSE = gql`
     query CourseDescription($courseID: ID!) {
       course(courseID: $courseID) {
         id
         name
         programID
-  }}`;
+  }}`
+  const client = initializeApollo()
   const {data: {course}} = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {
       courseID
     }
-  });
+  })
   const GET_STUDENTS_IN_COURSE = gql`
     query StudentsInCourse($courseID: ID!) {
       studentsInCourse(courseID: $courseID) {
@@ -82,18 +83,18 @@ export const getStaticProps: GetStaticProps<{course: CourseModel, students: Stud
         email
         name
         surname
-  }}`;
+  }}`
   const {data: {studentsInCourse}} = await client.query<{studentsInCourse: StudentModel[]}, {courseID: string}>({
     query: GET_STUDENTS_IN_COURSE,
     variables: {courseID}
-  });
-  return {
+  })
+  return addApolloState(client, {
     props: {
       course,
       students: studentsInCourse
     },
     revalidate: 60,
-  };
-};
+  })
+}
 
-export const getStaticPaths: GetStaticPaths = CourseStaticPaths;
+export const getStaticPaths: GetStaticPaths = CourseStaticPaths

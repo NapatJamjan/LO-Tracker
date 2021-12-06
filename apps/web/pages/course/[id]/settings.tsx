@@ -1,41 +1,41 @@
-import Head from 'next/head';
-import { useEffect } from 'react';
-import client from '../../../apollo-client';
-import { gql, useMutation } from '@apollo/client';
-import { GetServerSideProps } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
+import Head from 'next/head'
+import { useEffect } from 'react'
+import { gql, useMutation } from '@apollo/client'
+import { GetServerSideProps } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu'
+import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface CourseModel {
-  id: string;
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-  programID: string;
-  teacherID: string;
-};
+  id: string
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+  programID: string
+  teacherID: string
+}
 
 interface PLOGroupModel {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 interface CreateCourseModel {
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-};
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+}
 
 export default function Page({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupModel[]}) {
-  const router = useRouter();
-  const {data: session, status} = useSession();
+  const router = useRouter()
+  const {data: session, status} = useSession()
   const { register, handleSubmit } = useForm<CreateCourseModel>({
     defaultValues: {
       name: course.name,
@@ -44,34 +44,34 @@ export default function Page({course, ploGroups}: {course: CourseModel, ploGroup
       year: course.year,
       ploGroupID: course.ploGroupID,
     }
-  });
-  const [editCourse, { loading: editing }] = useMutation<{editCourse: {id: string}}, {id: string, input: CreateCourseModel}>(EDIT_COURSE);
-  const [deleteCourse, { loading: deleting }] = useMutation<{deleteCourse: {id: string}}, {id: string}>(DELETE_COURSE);
+  })
+  const [editCourse, { loading: editing }] = useMutation<{editCourse: {id: string}}, {id: string, input: CreateCourseModel}>(EDIT_COURSE)
+  const [deleteCourse, { loading: deleting }] = useMutation<{deleteCourse: {id: string}}, {id: string}>(DELETE_COURSE)
   const saveCourse = (form: CreateCourseModel) => {
-    if (editing) return;
+    if (editing) return
     editCourse({
       variables: {
         id: course.id,
         input: form,
       }
     }).then(() => {
-      alert('updated');
-      router.replace(router.asPath);
-    });
-  };
+      alert('updated')
+      router.replace(router.asPath)
+    })
+  }
   const removeCourse = () => {
-    if (!confirm('Are you sure?') || deleting) return;
+    if (!confirm('Are you sure?') || deleting) return
     deleteCourse({
       variables: { id: course.id }
     }).then(() => {
-      alert('deleted');
-      router.push(`/program/${course.programID}/courses`);
-    });
-  };
+      alert('deleted')
+      router.push(`/program/${course.programID}/courses`)
+    })
+  }
   useEffect(() => {
-    if (status === 'loading') return;
-    if (session && session.id !== course.teacherID) router.replace(`/course/${course.id}`);
-  }, [session, status]);
+    if (status === 'loading') return
+    if (session && session.id !== course.teacherID) router.replace(`/course/${course.id}`)
+  }, [session, status])
   return <div>
     <Head>
       <title>Course Settings</title>
@@ -114,34 +114,35 @@ export default function Page({course, ploGroups}: {course: CourseModel, ploGroup
     </div>
     </form>
     <p className="cursor-pointer text-red-400" onClick={removeCourse}>Delete this course</p>
-  </div>;
-};
+  </div>
+}
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getServerSideProps: GetServerSideProps<{course: CourseModel, ploGroups: PLOGroupModel[]}> = async (context) => {
-  const { id: courseID } = context.params as Params;
+  const { id: courseID } = context.params as Params
+  const client = initializeApollo()
   const {data: fetchCourse} = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {
       courseID
     }
-  });
+  })
   const {data: fetchPLOGroups} = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
     query: GET_PLOGROUPS,
     variables: {
       programID: fetchCourse.course.programID
     }
-  });
-  return {
+  })
+  return addApolloState(client, {
     props: {
       course: fetchCourse.course,
       ploGroups: fetchPLOGroups.ploGroups
     }
-  };
-};
+  })
+}
 
 const GET_COURSE = gql`
   query CourseDetail($courseID: ID!) {
@@ -154,21 +155,21 @@ const GET_COURSE = gql`
       ploGroupID
       programID
       teacherID
-}}`;
+}}`
 const GET_PLOGROUPS = gql`
   query PLOGroups($programID: ID!) {
     ploGroups(programID: $programID) {
       id
       name
-}}`;
+}}`
 const EDIT_COURSE = gql`
   mutation EditCourse($id: ID!, $input: CreateCourseInput!) {
     editCourse(id: $id, input: $input) {
       id
-}}`;
+}}`
 const DELETE_COURSE = gql`
   mutation DeleteCourse($id: ID!) {
     deleteCourse(id: $id) {
       id
-}}`;
+}}`
 

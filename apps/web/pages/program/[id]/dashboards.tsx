@@ -1,18 +1,18 @@
-import Head from 'next/head';
-import client from '../../../apollo-client';
-import { gql } from '@apollo/client';
-import { GetStaticPaths, GetStaticProps } from 'next';
-import { ProgramStaticPaths } from '../../../utils/staticpaths';
-import { ParsedUrlQuery } from 'querystring';
-import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
-import router from 'next/router';
+import Head from 'next/head'
+import { gql } from '@apollo/client'
+import { GetStaticPaths, GetStaticProps } from 'next'
+import { ProgramStaticPaths } from '../../../utils/staticpaths'
+import { ParsedUrlQuery } from 'querystring'
+import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
+import router from 'next/router'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface StudentModel {
-  id: string;
-  email: string;
-  name: string;
-  surname: string;
-};
+  id: string
+  email: string
+  name: string
+  surname: string
+}
 
 export default function Page({programID, students}: {programID: string, students: StudentModel[]}) {
   return <div>
@@ -44,29 +44,30 @@ export default function Page({programID, students}: {programID: string, students
         }
       </tbody>
     </table>
-  </div>;
-};
+  </div>
+}
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getStaticProps: GetStaticProps<{programID: string, students: StudentModel[]}> = async (context) => {
-  const { id: programID } = context.params as Params;
+  const { id: programID } = context.params as Params
+  const client = initializeApollo()
   const {data: {studentsInProgram}} = await client.query<{studentsInProgram: StudentModel[]}, {programID: string}>({
     query: GET_STUDENTS_IN_PROGRAM,
     variables: {programID}
-  });
-  return {
+  })
+  return addApolloState(client, {
     props: {
       programID,
       students: studentsInProgram
     },
     revalidate: 60,
-  };
-};
+  })
+}
 
-export const getStaticPaths: GetStaticPaths = ProgramStaticPaths;
+export const getStaticPaths: GetStaticPaths = ProgramStaticPaths
 
 const GET_STUDENTS_IN_PROGRAM = gql`
   query StudentsInProgram($programID: ID!) {
@@ -75,4 +76,4 @@ const GET_STUDENTS_IN_PROGRAM = gql`
       email
       name
       surname
-}}`;
+}}`

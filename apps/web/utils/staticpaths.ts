@@ -1,15 +1,15 @@
-import { gql } from '@apollo/client';
-import client from '../apollo-client';
-import { GetStaticPaths } from 'next';
+import { gql } from '@apollo/client'
+import { GetStaticPaths } from 'next'
+import { initializeApollo } from './apollo-client'
 
 interface CourseModel {
-  id: string;
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-};
+  id: string
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+}
 
 export const CourseStaticPaths: GetStaticPaths = async (context) => {
   const GET_COURSES = gql`
@@ -21,26 +21,25 @@ export const CourseStaticPaths: GetStaticPaths = async (context) => {
         semester
         year
         ploGroupID
-      }
-    }
-  `;
+  }}`
+  const client = initializeApollo()
   const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
     query: GET_COURSES,
     variables: { programID: '' }
-  });
+  })
   return {
     paths: data.courses.map((course) => ({
       params: {id: course.id}
     })),
     fallback: 'blocking',
-  };
-};
+  }
+}
 
 interface ProgramModel {
-  id: string;
-  name: string;
-  description: string;
-};
+  id: string
+  name: string
+  description: string
+}
 
 export const ProgramStaticPaths: GetStaticPaths = async (context) => {
   const GET_PROGRAMS = gql`
@@ -49,16 +48,15 @@ export const ProgramStaticPaths: GetStaticPaths = async (context) => {
         id
         name
         description
-      }
-    }
-  `;
+  }}`
+  const client = initializeApollo()
   const { data } = await client.query<{programs: ProgramModel[]}>({
     query: GET_PROGRAMS
-  });
+  })
   return {
     paths: data.programs.map((program) => ({
       params: {id: program.id}
     })),
     fallback: 'blocking',
-  };
-};
+  }
+}

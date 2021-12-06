@@ -1,10 +1,11 @@
-import { useStudent } from 'apps/web/utils/dashboard-helper';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import ClientOnly from '../../../../../components/ClientOnly';
-import { IndividualPLO, IndividualQuiz } from '../../../../../components/dashboards/stdtable';
+import { useStudent } from 'apps/web/utils/dashboard-helper'
+import Head from 'next/head'
+import { useRouter } from 'next/router'
+import React, { useEffect, useState } from 'react'
+import styled from 'styled-components'
+import ClientOnly from '../../../../../components/ClientOnly'
+import { IndividualPLO, IndividualQuiz } from '../../../../../components/dashboards/stdtable'
+import { initializeApollo, addApolloState } from '../../../../../utils/apollo-client'
 
 // path => /course/[id]/dashboards/[studentID]
 export default function Index() {
@@ -15,19 +16,19 @@ export default function Index() {
     <ClientOnly>
       <IndexPage/>
     </ClientOnly>
-  </div>);
-};
+  </div>)
+}
 interface student {
-  id: string;
-  email: string;
-  fullname: string;
+  id: string
+  email: string
+  fullname: string
 }
 function IndexPage() {
-  const router = useRouter();
-  const courseID = router.query.id as string;
-  const studentID = router.query.studentID as string; 
-  const [state, setState] = useState("Quiz");
-  const [students, loaded] = useStudent(courseID);
+  const router = useRouter()
+  const courseID = router.query.id as string
+  const studentID = router.query.studentID as string 
+  const [state, setState] = useState("Quiz")
+  const [students, loaded] = useStudent(courseID)
   const [student, setStudent] = useState<student>({id: "00000", fullname: "Loading", email:"Loading"})
   useEffect(() => {
     if(students.length > 0){
@@ -68,27 +69,27 @@ function IndexPage() {
       </DashboardDiv>
     </MainDiv>
     
-  </div>;
-};
+  </div>
+}
 
 const MainDiv = styled.div`
-  margin: 1.5%;
-  text-align: start;
-`;
+  margin: 1.5%
+  text-align: start
+`
 
 const BackButton = styled.button`
-  float: left;
-  margin-top: 20px;
-  padding: 5px;
-  margin-right: 15px;
-`;
+  float: left
+  margin-top: 20px
+  padding: 5px
+  margin-right: 15px
+`
 
 const DashboardDiv = styled.div`
-    text-align: left;
-    margin-left : 1%;
-    margin-right: 1%;
-`;
+    text-align: left
+    margin-left : 1%
+    margin-right: 1%
+`
   
 const ButtonTab = styled.div`
-    display: inline-block;
-`;
+    display: inline-block
+`

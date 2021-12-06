@@ -1,33 +1,34 @@
-import Head from 'next/head';
-import Link from 'next/link';
-import { useState, createContext, useContext } from 'react';
-import client from '../../../apollo-client';
-import { gql } from '@apollo/client';
-import { GetStaticProps, GetStaticPaths } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import { ProgramStaticPaths } from '../../../utils/staticpaths';
-import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
-import { useSession } from 'next-auth/react';
+import Head from 'next/head'
+import Link from 'next/link'
+import { useState, createContext, useContext } from 'react'
+import client from '../../../apollo-client'
+import { gql } from '@apollo/client'
+import { GetStaticProps, GetStaticPaths } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import { ProgramStaticPaths } from '../../../utils/staticpaths'
+import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
+import { useSession } from 'next-auth/react'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface CourseModel {
-  id: string;
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-  teacherID: string;
-};
+  id: string
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+  teacherID: string
+}
 
-const FilterContext = createContext<{filter: string, changeFilter: (string) => any, mine: boolean, setMine: (boolean) => any}>({filter: '', changeFilter: (s) => {}, mine: false, setMine: (v) => {}});
+const FilterContext = createContext<{filter: string, changeFilter: (string) => any, mine: boolean, setMine: (boolean) => any}>({filter: '', changeFilter: (s) => {}, mine: false, setMine: (v) => {}})
 
 export default ({programID, courses}: {programID: string, courses: CourseModel[]}) => {
-  const {data: session, status} = useSession();
-  const [filter, setFilter] = useState<string>('');
-  const [mine, setMine] = useState<boolean>(false);
-  let teacherID = '';
+  const {data: session, status} = useSession()
+  const [filter, setFilter] = useState<string>('')
+  const [mine, setMine] = useState<boolean>(false)
+  let teacherID = ''
   if (session) {
-    teacherID = String(session.id);
+    teacherID = String(session.id)
   }
   return <FilterContext.Provider value={{filter, changeFilter: payload => setFilter(payload), mine, setMine}}>
     <Head>
@@ -43,44 +44,44 @@ export default ({programID, courses}: {programID: string, courses: CourseModel[]
     </div>
     <FilterOwner/>
     <Courses courses={courses} teacherID={teacherID}/>
-  </FilterContext.Provider>;
-};
+  </FilterContext.Provider>
+}
 
 function FilterTextField() {
-  const { changeFilter } = useContext(FilterContext);
-  return <input type="text" onChange={e => changeFilter(e.target.value || '')} placeholder="search for a course" className="border-4 rounded-md p-1 mx-2 text-sm"/>;
+  const { changeFilter } = useContext(FilterContext)
+  return <input type="text" onChange={e => changeFilter(e.target.value || '')} placeholder="search for a course" className="border-4 rounded-md p-1 mx-2 text-sm"/>
 }
 
 function FilterOwner() {
-  const {mine, setMine} = useContext(FilterContext);
+  const {mine, setMine} = useContext(FilterContext)
   return <div onClick={() => setMine(!mine)} className="cursor-pointer">
     <input type="checkbox" defaultChecked={mine} className="border-4 rounded-md mr-2"/>
     <span>Show only my courses</span>
-  </div>;
+  </div>
 }
 
 function Courses({courses, teacherID}: {courses: CourseModel[], teacherID: string}) {
-  const { filter, mine } = useContext(FilterContext);
-  let courseGroups = new Map<string, CourseModel[]>();
+  const { filter, mine } = useContext(FilterContext)
+  let courseGroups = new Map<string, CourseModel[]>()
   for (let i = 0; i < courses.length; ++i) {
-    if (mine && courses[i].teacherID !== teacherID) continue;
-    if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue;
-    let groupName: string = `${courses[i].semester},${courses[i].year}`;
-    courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}]);
+    if (mine && courses[i].teacherID !== teacherID) continue
+    if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue
+    let groupName: string = `${courses[i].semester},${courses[i].year}`
+    courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}])
   }
-  if (courseGroups.size === 0) return <p className="mt-4">No course available</p>;
+  if (courseGroups.size === 0) return <p className="mt-4">No course available</p>
   return <>{
     Array.from(courseGroups).sort((group1, group2) => {
-      let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10));
-      let [sem2, year2] = group2[0].split(',').map(val => parseInt(val, 10));
-      if (year1 === year2) return sem2 - sem1;
-      return year2 - year1;
+      let [sem1, year1] = group1[0].split(',').map(val => parseInt(val, 10))
+      let [sem2, year2] = group2[0].split(',').map(val => parseInt(val, 10))
+      if (year1 === year2) return sem2 - sem1
+      return year2 - year1
     }).map((group) => {
-      let [semester, year] = group[0].split(',').map(val => parseInt(val, 10));
-      let filteredCourses: CourseModel[] = group[1];
-      return <CourseSection key={`group-${group[0]}`} courses={filteredCourses} semester={semester} year={year}/>;
+      let [semester, year] = group[0].split(',').map(val => parseInt(val, 10))
+      let filteredCourses: CourseModel[] = group[1]
+      return <CourseSection key={`group-${group[0]}`} courses={filteredCourses} semester={semester} year={year}/>
     })
-  }</>;
+  }</>
 }
 
 function CourseSection({courses, semester, year}: {courses: CourseModel[], semester: number, year: number}) {
@@ -88,12 +89,12 @@ function CourseSection({courses, semester, year}: {courses: CourseModel[], semes
     <h3 className="text-left mb-2">Semester {semester === 3? 'S': semester}/{year}</h3>
     <ul className="courselist">
       {courses.sort((c1, c2) => {
-        if (c1.year !== c2.year) return c2.year - c1.year;
-        if (c1.semester !== c2.semester) return c2.semester - c1.semester;
-        return c1.name.localeCompare(c2.name);
+        if (c1.year !== c2.year) return c2.year - c1.year
+        if (c1.semester !== c2.semester) return c2.semester - c1.semester
+        return c1.name.localeCompare(c2.name)
       }).map(course => <Course key={course.id} course={course}/>)}
     </ul>
-  </div>;
+  </div>
 }
 
 function Course({course}: {course: CourseModel}) {
@@ -101,28 +102,29 @@ function Course({course}: {course: CourseModel}) {
     <Link href={`/course/${course.id}`}>
       {course.name}
     </Link>
-  </li>;
+  </li>
 }
 
 interface PageParams extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getStaticProps: GetStaticProps<{programID: string, courses: CourseModel[]}> = async (context) => {
-  const { id: programID } = context.params as PageParams;
+  const { id: programID } = context.params as PageParams
+  const client = initializeApollo()
   const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
     query: GET_COURSES, variables: { programID }
-  });
-  return {
+  })
+  return addApolloState(client, {
     props: {
       programID,
       courses: data.courses,
     },
     revalidate: 30,
-  };
-};
+  })
+}
 
-export const getStaticPaths: GetStaticPaths = ProgramStaticPaths;
+export const getStaticPaths: GetStaticPaths = ProgramStaticPaths
 
 const GET_COURSES = gql`
   query Courses($programID: ID!) {
@@ -134,4 +136,4 @@ const GET_COURSES = gql`
       year
       ploGroupID
       teacherID
-}}`;
+}}`

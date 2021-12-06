@@ -1,48 +1,48 @@
-import { GetStaticPaths, GetStaticProps } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import styled from 'styled-components';
-import Head from 'next/head';
-import { gql } from '@apollo/client';
-import client from '../../apollo-client';
-import router from 'next/router';
-import { OverlayTrigger, Table, Tooltip, Collapse} from 'react-bootstrap';
-import { useEffect, useState, useRef } from 'react';
-import { ChartBarPLO, ChartBarLO } from '../../components/dashboards/plochart';
-import { getSession, useSession } from 'next-auth/react';
+import { GetStaticPaths, GetStaticProps } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import styled from 'styled-components'
+import Head from 'next/head'
+import { gql } from '@apollo/client'
+import { initializeApollo, addApolloState } from '../../utils/apollo-client'
+import router from 'next/router'
+import { OverlayTrigger, Table, Tooltip, Collapse} from 'react-bootstrap'
+import { useEffect, useState, useRef } from 'react'
+import { ChartBarPLO, ChartBarLO } from '../../components/dashboards/plochart'
+import { useSession } from 'next-auth/react'
 
 export default function Page({student, dashboard}: {student: StudentModel, dashboard: IndividualDashboard}) {
-  const {data: session, status} = useSession();
-  const [ploDataType, setPLOType] = useState("loading");
+  const {data: session, status} = useSession()
+  const [ploDataType, setPLOType] = useState("loading")
   function handleType(e: any) { setPLOType(e.target.value) }
-  const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []});
-  const [tableData, setData] = useState([]);
-  let plos = dashboard.ploGroups.slice();
+  const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []})
+  const [tableData, setData] = useState([])
+  let plos = dashboard.ploGroups.slice()
   plos.sort((a, b) => a.name.localeCompare(b.name))
   
-  const ploRef = useRef(null);
-  const loRef = useRef(null);
+  const ploRef = useRef(null)
+  const loRef = useRef(null)
   function scrollTo(ref: any){
-    ref.current.scrollIntoView();   
+    ref.current.scrollIntoView()   
   }
   
   if(plos.length != 0 && ploDataType == "loading"){
-    setPLOType(plos[0].name);
+    setPLOType(plos[0].name)
   }
   useEffect(() => {
     let targetPLOs = plos.find(e => e.name == ploDataType)
     targetPLOs.plos.sort((a, b) => a.title.localeCompare(b.title))
-    setData(targetPLOs.plos.slice());
+    setData(targetPLOs.plos.slice())
     chartData.scores = []
     for (let i = 0; i < targetPLOs.plos.length; i++) {
-      chartData.scores.push(parseInt((targetPLOs.plos[i].percentage * 100 as number).toFixed(0)));
+      chartData.scores.push(parseInt((targetPLOs.plos[i].percentage * 100 as number).toFixed(0)))
     }
-    setChart(chartData);
+    setChart(chartData)
     
   }, [ploDataType])
 
-  if (status === 'loading') return null;
-  const noPermission = !session.isTeacher && String(session.id) !== student.id;
-  if (noPermission) return <p className="text-center">No permission</p>;
+  if (status === 'loading') return null
+  const noPermission = !session.isTeacher && String(session.id) !== student.id
+  if (noPermission) return <p className="text-center">No permission</p>
 
   return <div>
     <Head>
@@ -56,8 +56,8 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
       </div>
       <div>
       <BackButton onClick={() => {
-        if(session.isTeacher) router.back();
-        else router.replace('/');
+        if(session.isTeacher) router.back()
+        else router.replace('/')
         }} className="text-xl">
         &#12296;Back
       </BackButton>
@@ -108,46 +108,46 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
     </div>
     <LODashboard student={student} dashboard = {dashboard}/>
     </div>
-  </div>;
+  </div>
 }
 
 function LODashboard({student, dashboard}: {student: StudentModel, dashboard: IndividualDashboard}){
-  const [course, setCourse] = useState("loading");
+  const [course, setCourse] = useState("loading")
   function handleType(e: any) { setCourse(e.target.value) }
-  const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []});
-  const [tableData, setData] = useState([]);
-  const [quizData, setQuiz] = useState([]);
-  const [show, setShows] = useState([]);
+  const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []})
+  const [tableData, setData] = useState([])
+  const [quizData, setQuiz] = useState([])
+  const [show, setShows] = useState([])
   function setShow(i: number){
     show[i] = !show[i]
     setShows(show.slice())
   }
 
-  let courses = dashboard.courses.slice();
+  let courses = dashboard.courses.slice()
   courses.sort((a, b) => a.name.localeCompare(b.name))
 
   if(dashboard.ploGroups.length != 0 && course == "loading"){
-    setCourse(courses[0].name);
+    setCourse(courses[0].name)
   }
   useEffect(() => {
     let targetCourse = courses.find(e => e.name == course)
     targetCourse.los.sort((a, b) => a.title.localeCompare(b.title))
     for (let i = 0; i < targetCourse.los.length; i++) {
       targetCourse.los[i].levels.sort((a: any, b: any) => {
-        if(a.level < b.level) return -1;
-        if(a.level > b.level) return 1;
-        return 0;
+        if(a.level < b.level) return -1
+        if(a.level > b.level) return 1
+        return 0
       })
     }
   
     setShows(Array.from({length: targetCourse.quizzes.length}, () => false))
-    setData(targetCourse.los.slice());
-    setQuiz(targetCourse.quizzes.slice());
+    setData(targetCourse.los.slice())
+    setQuiz(targetCourse.quizzes.slice())
     chartData.scores = []
     for (let i = 0; i < targetCourse.los.length; i++) {
-      chartData.scores.push(parseInt((targetCourse.los[i].percentage * 100 as number).toFixed(0)));
+      chartData.scores.push(parseInt((targetCourse.los[i].percentage * 100 as number).toFixed(0)))
     }
-    setChart(chartData);
+    setChart(chartData)
     
   }, [course])
   let LvlArray = []
@@ -156,7 +156,7 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
     LvlArray.push(tableData.find(e => e.id == id.split(',')[0]).levels.find(e => e.level == id.split(',')[1]).description)
   }
   function showLoLvl(){
-    const LvlArrays = Array.from(new Set(LvlArray));
+    const LvlArrays = Array.from(new Set(LvlArray))
     LvlArrays.sort((a, b) => a.localeCompare(b))
     return LvlArrays.map(d => <p>{d}</p>)
   }
@@ -228,47 +228,55 @@ function LODashboard({student, dashboard}: {student: StudentModel, dashboard: In
 }
 
 interface PageParams extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getStaticProps: GetStaticProps<{student: StudentModel, dashboard: IndividualDashboard}> = async (context) => {
-  const { id: studentID } = context.params as PageParams;
+  const { id: studentID } = context.params as PageParams
+  const client = initializeApollo()
   const data = await Promise.all([
     client.query<{student: StudentModel}, {studentID: string}>({
-      query: GET_STUDENT, variables: { studentID }
+      query: GET_STUDENT,
+      variables: { studentID },
     }),
     client.query<{individualSummary: IndividualDashboard}, {studentID: string}>({
-      query: GET_DASHBOARD, variables: { studentID }
-    })
-  ]);
-  console.log(data[1].data.individualSummary)
-  return {
+      query: GET_DASHBOARD,
+      variables: { studentID },
+    }),
+  ])
+  return addApolloState(client, {
     props: {
       student: data[0].data.student,
-      dashboard: data[1].data.individualSummary
+      dashboard: data[1].data.individualSummary,
     },
     revalidate: 30,
-  };
-};
+  })
+}
 
 export const getStaticPaths: GetStaticPaths = async (context) => {
+  const GET_STUDENTS = gql`
+    query Students {
+      students {
+        id
+  }}`
+  const client = initializeApollo()
   const { data } = await client.query<{students: StudentModel[]}>({
-    query: GET_STUDENTS
-  });
+    query: GET_STUDENTS,
+  })
   return {
     paths: data.students.map((student) => ({
       params: {id: student.id}
     })),
     fallback: 'blocking',
-  };
-};
+  }
+}
 
 interface StudentModel {
-  id: string;
-  email: string;
-  name: string;
-  surname: string;
-};
+  id: string
+  email: string
+  name: string
+  surname: string
+}
 
 const GET_STUDENT = gql`
   query Student($studentID: ID!) {
@@ -277,13 +285,7 @@ const GET_STUDENT = gql`
       email
       name
       surname
-}}`;
-
-const GET_STUDENTS = gql`
-  query Students {
-    students {
-      id
-}}`;
+}}`
 
 const GET_DASHBOARD = gql`
   query IndividualSummary($studentID: ID!) {
@@ -317,59 +319,59 @@ const GET_DASHBOARD = gql`
           los
         }
       }
-}}`;
+}}`
 
 interface IndividualDashboard {
   ploGroups: {
-    name: string;
+    name: string
     plos: {
-      title: string;
-      description: string;
-      percentage: number;//0-1
-    }[];
-  }[];
+      title: string
+      description: string
+      percentage: number//0-1
+    }[]
+  }[]
   courses: {
-    name: string;
-    semester: number;
-    year: number;
+    name: string
+    semester: number
+    year: number
     los: {
-      id: string;
-      title: string;
-      percentage: number;//0-1
+      id: string
+      title: string
+      percentage: number//0-1
       levels: {
-        level: number;
-        description: string;
-      }[];
-    }[];
+        level: number
+        description: string
+      }[]
+    }[]
     quizzes: {
-      id: string;
-      name: string;
-      maxScore: number;
-      studentScore: number;
-      los: string[];//array of "id,level"
-    }[];
-  }[];
+      id: string
+      name: string
+      maxScore: number
+      studentScore: number
+      los: string[]//array of "id,level"
+    }[]
+  }[]
 }
 
 interface studentResult {
-  studentID: string,
-  studentName: string,
-  scores: Array<Number>
+  studentID: string
+  studentName: string
+  scores: number[]
 }
 
 const BackButton = styled.button`
-  float: left;
-  margin-top: 10px;
-  padding: 5px;
-  margin-right: 15px;
-  font: 18px;
-`;
+  float: left
+  margin-top: 10px
+  padding: 5px
+  margin-right: 15px
+  font: 18px
+`
 
 const TableScrollDiv = styled.div`
-  overflow-x: auto;
-  overflow-y: hidden;
-  transform: rotateX(180deg);
+  overflow-x: auto
+  overflow-y: hidden
+  transform: rotateX(180deg)
 `
 const TableScrollable = styled(Table)`
-  transform: rotateX(180deg);
+  transform: rotateX(180deg)
 `

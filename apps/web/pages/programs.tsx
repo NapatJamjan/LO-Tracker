@@ -1,43 +1,43 @@
-import React, { useState, Dispatch, SetStateAction } from 'react';
-import { useForm } from 'react-hook-form';
-import { Modal } from 'react-bootstrap';
-import Head from 'next/head';
-import Link from 'next/link';
-import { gql, useMutation } from '@apollo/client';
-import ClientOnly from '../components/ClientOnly';
-import { GetStaticProps } from 'next';
-import client from '../apollo-client';
-import { useRouter } from 'next/router';
-import xlsx from 'xlsx';
-import { useSession } from 'next-auth/react';
+import React, { useState, Dispatch, SetStateAction } from 'react'
+import { useForm } from 'react-hook-form'
+import { Modal } from 'react-bootstrap'
+import Head from 'next/head'
+import Link from 'next/link'
+import { gql, useMutation } from '@apollo/client'
+import ClientOnly from '../components/ClientOnly'
+import { GetStaticProps } from 'next'
+import client from '../apollo-client'
+import { useRouter } from 'next/router'
+import xlsx from 'xlsx'
+import { useSession } from 'next-auth/react'
 
 interface ProgramModel {
-  id: string;
-  name: string;
-  description: string;
-};
+  id: string
+  name: string
+  description: string
+}
 
 export interface CreateProgramModel {
-  name: string;
-  description: string;
-};
+  name: string
+  description: string
+}
 
 export interface CreateProgramRepsonse {
-  id: string;
-  name: string;
-  description: string;
-};
+  id: string
+  name: string
+  description: string
+}
 
 interface StudentExcel {
-  id: string;
-  email: string;
-  name: string;
-  surname: string;
+  id: string
+  email: string
+  name: string
+  surname: string
 }
 
 
 export default function Page({programs}: {programs: ProgramModel[]}) {
-  const {data: session, status} = useSession();
+  const {data: session, status} = useSession()
   return <div>
     <Head>
       <title>Program</title>
@@ -54,13 +54,13 @@ export default function Page({programs}: {programs: ProgramModel[]}) {
       </ClientOnly>
     </div>
     <Programs programs={[...programs]}/>
-  </div>;
-};
+  </div>
+}
 
 function Programs({programs}: {programs: ProgramModel[]}) {
   return <div>{programs.sort((p1, p2) => p1.name.localeCompare(p2.name)).map(
     (program) => <Program key={program.id} program={program} />
-  )}</div>;
+  )}</div>
 }
 
 function Program({program}: {program: ProgramModel}) {
@@ -72,39 +72,39 @@ function Program({program}: {program: ProgramModel}) {
       <span style={{ fontSize: '0.6rem' }}>&#128279;</span>
     </span>
     <div className="text-gray-600">{program.description}</div>
-  </div>;
+  </div>
 }
 
 function CreateProgramButton() {
-  const [show, setShow] = useState<boolean>(false);
+  const [show, setShow] = useState<boolean>(false)
   return <>
     <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
       Create a new program <span className="text-xl text-green-800">+</span>
     </button>
     <CreateProgramModal show={show} setShow={setShow} />
-  </>;
+  </>
 }
 
 function CreateProgramModal({show, setShow}: {show: boolean, setShow: Dispatch<SetStateAction<boolean>>}) {
-  const {data: session, status} = useSession();
-  const router = useRouter();
-  const { register, handleSubmit, reset, formState: { errors, touchedFields } } = useForm<CreateProgramModel>();
+  const {data: session, status} = useSession()
+  const router = useRouter()
+  const { register, handleSubmit, reset, formState: { errors, touchedFields } } = useForm<CreateProgramModel>()
   const resetForm = () => {
-    reset({ name: '', description: '' }); setShow(false);
-  };
+    reset({ name: '', description: '' }); setShow(false)
+  }
   const CREATE_PROGRAM = gql`
     mutation CreateProgram($teacherID: ID!, $input: CreateProgramInput!) {
       createProgram(teacherID: $teacherID, input: $input) {
         id
         name
         description
-  }}`;
-  const [createProgram, { loading: submitting } ] = useMutation<{createProgram: CreateProgramRepsonse}, {teacherID: string, input: CreateProgramModel}>(CREATE_PROGRAM);
+  }}`
+  const [createProgram, { loading: submitting } ] = useMutation<{createProgram: CreateProgramRepsonse}, {teacherID: string, input: CreateProgramModel}>(CREATE_PROGRAM)
   const submitForm = (form: CreateProgramModel) => createProgram({ 
     variables: {teacherID: String(session.id), input: form} 
   }).then((res) => {
-    resetForm(); router.push(`/program/${res.data.createProgram.id}/courses`);
-  });
+    resetForm(); router.push(`/program/${res.data.createProgram.id}/courses`)
+  })
   return <Modal show={show} onHide={() => resetForm()}>
     <form onSubmit={handleSubmit((form) => submitting || status === 'loading' ? null: submitForm(form))}>
       <Modal.Header>
@@ -120,8 +120,8 @@ function CreateProgramModal({show, setShow}: {show: boolean, setShow: Dispatch<S
         <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg" />
       </Modal.Footer>
     </form>
-  </Modal>;
-};
+  </Modal>
+}
 
 const UploadStudents: React.FC = () => {
   const CREATE_STUDENTS = gql`
@@ -130,31 +130,31 @@ const UploadStudents: React.FC = () => {
         id
       }
     }
-  `;
-  const [createStudents, {loading: submitting}] = useMutation<{createStudent: {id: string}}, {input: StudentExcel[]}>(CREATE_STUDENTS);
+  `
+  const [createStudents, {loading: submitting}] = useMutation<{createStudent: {id: string}}, {input: StudentExcel[]}>(CREATE_STUDENTS)
   const uploadToDB = (students: StudentExcel[]) => {
     createStudents({
       variables: {
         input: students
       }
     }).then(() => {
-      setShow(false);
-      alert('Students import success');
+      setShow(false)
+      alert('Students import success')
     }).catch((err) => {
       alert(JSON.stringify(err))
-    });
-  };
+    })
+  }
   const excelJSON = (file) => {
-    let reader = new FileReader();
+    let reader = new FileReader()
     reader.onload = function(e) {
-      let data = e.target.result;
-      let workbook = xlsx.read(data, {type: 'binary'});
-      uploadToDB(xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
+      let data = e.target.result
+      let workbook = xlsx.read(data, {type: 'binary'})
+      uploadToDB(xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]))
     }
-    reader.onerror = console.log;
-    reader.readAsBinaryString(file);
-  };
-  const [show, setShow] = useState(false);
+    reader.onerror = console.log
+    reader.readAsBinaryString(file)
+  }
+  const [show, setShow] = useState(false)
   return (<div>
     <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm" style={{marginRight: 10}}>
       Upload new students <span className="text-xl text-blue-800">+</span>
@@ -169,8 +169,8 @@ const UploadStudents: React.FC = () => {
         {submitting && <p>Uploading...</p>}
       </Modal.Body>
     </Modal>
-  </div>);
-};
+  </div>)
+}
 
 export const getStaticProps: GetStaticProps<{programs: ProgramModel[]}> = async (_) => {
   const GET_PROGRAMS = gql`
@@ -179,14 +179,14 @@ export const getStaticProps: GetStaticProps<{programs: ProgramModel[]}> = async 
         id
         name
         description
-  }}`;
+  }}`
   const { data } = await client.query<{programs: ProgramModel[]}>({
     query: GET_PROGRAMS
-  });
+  })
   return {
     props: {
       programs: data.programs,
     },
     revalidate: 60,
-  };
-};
+  }
+}

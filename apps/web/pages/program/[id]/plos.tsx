@@ -1,44 +1,44 @@
-import Head from 'next/head';
+import Head from 'next/head'
 import React, { createContext, useContext, useRef } from 'react'
-import client from '../../../apollo-client';
-import { gql, useMutation, useQuery } from '@apollo/client';
-import { GetServerSideProps } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu';
-import { Modal } from 'react-bootstrap';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import xlsx from 'xlsx';
-import { useRouter } from 'next/router';
-import { ToastContainer, toast } from 'react-toastify';
-import { useSession } from 'next-auth/react';
+import { gql, useMutation, useQuery } from '@apollo/client'
+import { GetServerSideProps } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
+import { Modal } from 'react-bootstrap'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import xlsx from 'xlsx'
+import { useRouter } from 'next/router'
+import { toast } from 'react-toastify'
+import { useSession } from 'next-auth/react'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface CreatePLOGroupResponse {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 interface PLOGroupModel {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 interface CreatePLOModel {
-  title: string;
-  description: string;
-};
+  title: string
+  description: string
+}
 
 interface CreatePLOModel {
-  title: string;
-  description: string;
-};
+  title: string
+  description: string
+}
 
 interface PLOModel {
-  id: string;
-  title: string;
-  description: string;
-  ploGroupID: string;
-};
+  id: string
+  title: string
+  description: string
+  ploGroupID: string
+}
 
 const PLOContext = createContext<{
   ploGroups: PLOGroupModel[],
@@ -62,28 +62,28 @@ const PLOContext = createContext<{
   appendPLOs: () => null,
   submitting: false,
   isOwner: false,
-});
+})
 
 export default function Page({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) {
-  const router = useRouter();
-  const {data: session, status} = useSession();
-  const [teacherID, setTeacherID] = useState<string>('');
-  const [createPLOGroup, { loading: submitPLOGroup }] = useMutation<{createPLOGroup: CreatePLOGroupResponse}, {programID: string, name: string, input: CreatePLOModel[]}>(CREATE_PLOGROUP);
-  const [deletePLOGroup, { loading: withdrawPLOGroup}] = useMutation<{deletePLOGroup: {id: string}}, {id: string}>(DELETE_PLOGROUP);
-  const [createPLO, { loading: submitPLO }] = useMutation<{createPLO: PLOModel}, {ploGroupID: string, input: CreatePLOModel}>(CREATE_PLO);
-  const [deletePLO, { loading: withdrawPLO}] = useMutation<{deletePLO: {id: string}}, {id: string}>(DELETE_PLO);
-  const [editPLOGroup, { loading: writePLOGroup }] = useMutation<{editPLOGroup: {id: string}}, {id: string, name: string}>(EDIT_PLOGROUP);
-  const [editPLO, { loading: writePLO }] = useMutation<{editPLO: {id: string}}, {id: string, title: string, description: string}>(EDIT_PLO);
-  const [addPLOs, { loading: insertPLOs }] = useMutation<{addPLOs: {id: string}}, {ploGroupID: string, input: CreatePLOModel[]}>(ADD_PLOS);
-  const savePLOGroup = (name: string, plos: CreatePLOModel[]) => createPLOGroup({variables: {programID, name, input: plos}}).finally(() => router.replace(router.asPath));
-  const savePLO = (ploGroupID: string, plo: CreatePLOModel) => createPLO({variables: {ploGroupID, input: plo}});
-  const modifyPLOGroup = (id: string, name: string) => editPLOGroup({variables: {id, name}}).finally(() => router.replace(router.asPath));
-  const modifyPLO = (id: string, title: string, description: string) => editPLO({variables: {id, title, description}});
-  const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath));
-  const removePLO = (id: string) => deletePLO({variables: {id}});
-  const appendPLOs = (id: string, plos: CreatePLOModel[]) => addPLOs({variables: {ploGroupID: id, input: plos}});
-  const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false);
-  const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO || insertPLOs;
+  const router = useRouter()
+  const {data: session, status} = useSession()
+  const [teacherID, setTeacherID] = useState<string>('')
+  const [createPLOGroup, { loading: submitPLOGroup }] = useMutation<{createPLOGroup: CreatePLOGroupResponse}, {programID: string, name: string, input: CreatePLOModel[]}>(CREATE_PLOGROUP)
+  const [deletePLOGroup, { loading: withdrawPLOGroup}] = useMutation<{deletePLOGroup: {id: string}}, {id: string}>(DELETE_PLOGROUP)
+  const [createPLO, { loading: submitPLO }] = useMutation<{createPLO: PLOModel}, {ploGroupID: string, input: CreatePLOModel}>(CREATE_PLO)
+  const [deletePLO, { loading: withdrawPLO}] = useMutation<{deletePLO: {id: string}}, {id: string}>(DELETE_PLO)
+  const [editPLOGroup, { loading: writePLOGroup }] = useMutation<{editPLOGroup: {id: string}}, {id: string, name: string}>(EDIT_PLOGROUP)
+  const [editPLO, { loading: writePLO }] = useMutation<{editPLO: {id: string}}, {id: string, title: string, description: string}>(EDIT_PLO)
+  const [addPLOs, { loading: insertPLOs }] = useMutation<{addPLOs: {id: string}}, {ploGroupID: string, input: CreatePLOModel[]}>(ADD_PLOS)
+  const savePLOGroup = (name: string, plos: CreatePLOModel[]) => createPLOGroup({variables: {programID, name, input: plos}}).finally(() => router.replace(router.asPath))
+  const savePLO = (ploGroupID: string, plo: CreatePLOModel) => createPLO({variables: {ploGroupID, input: plo}})
+  const modifyPLOGroup = (id: string, name: string) => editPLOGroup({variables: {id, name}}).finally(() => router.replace(router.asPath))
+  const modifyPLO = (id: string, title: string, description: string) => editPLO({variables: {id, title, description}})
+  const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath))
+  const removePLO = (id: string) => deletePLO({variables: {id}})
+  const appendPLOs = (id: string, plos: CreatePLOModel[]) => addPLOs({variables: {ploGroupID: id, input: plos}})
+  const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false)
+  const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO || insertPLOs
   return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, appendPLOs, submitting, isOwner}}>
     <Head>
       <title>Manage PLOs</title>
@@ -91,15 +91,14 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
     <ProgramMainMenu programID={programID} callback={(program) => setTeacherID(program.teacherID)}/>
     <ProgramSubMenu programID={programID} selected={'plos'} showSetting={isOwner}/>
     <PLOs/>
-    <ToastContainer/>
-  </PLOContext.Provider>;
-};
+  </PLOContext.Provider>
+}
 
 export function PLOs() {
-  const { ploGroups, removePLOGroup, isOwner, submitting } = useContext(PLOContext);
-  const [selectedPLOGroupID, setSelectedPLOGroupID] = useState<string>('');
+  const { ploGroups, removePLOGroup, isOwner, submitting } = useContext(PLOContext)
+  const [selectedPLOGroupID, setSelectedPLOGroupID] = useState<string>('')
   const deletePLOGroup = () => {
-    if (submitting || !confirm('Delete this PLO group?')) return;
+    if (submitting || !confirm('Delete this PLO group?')) return
     removePLOGroup(selectedPLOGroupID).then(() => setSelectedPLOGroupID(''))
   }
   return <div>
@@ -125,34 +124,34 @@ export function PLOs() {
         {selectedPLOGroupID !== '' && <PLOSub ploGroupID={selectedPLOGroupID}/>}
       </div>
     </div>
-  </div>;
-};
+  </div>
+}
 
 function CreatePLOGroupForm() {
-  const { savePLOGroup, submitting } = useContext(PLOContext);
-  const [excelFile, setExcelFile] = useState<CreatePLOModel[]>([]);
+  const { savePLOGroup, submitting } = useContext(PLOContext)
+  const [excelFile, setExcelFile] = useState<CreatePLOModel[]>([])
   const excelJSON = (file) => {
-    let reader = new FileReader();
+    let reader = new FileReader()
     reader.onload = function(e) {
-      let data = e.target.result;
-      let workbook = xlsx.read(data, {type: 'binary'});
-      setExcelFile(xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
+      let data = e.target.result
+      let workbook = xlsx.read(data, {type: 'binary'})
+      setExcelFile(xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]))
     }
-    reader.onerror = console.log;
-    reader.readAsBinaryString(file);
-  };
-  const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, setValue } = useForm<{name: string}>();
+    reader.onerror = console.log
+    reader.readAsBinaryString(file)
+  }
+  const [show, setShow] = useState<boolean>(false)
+  const { register, handleSubmit, setValue } = useForm<{name: string}>()
   const resetForm = () => {
-    setShow(false);
-    setValue('name', '');
-    setExcelFile([]);
-  };
+    setShow(false)
+    setValue('name', '')
+    setExcelFile([])
+  }
   const submitForm = (name: string) => {
-    if (name === '' || excelFile.length === 0) return;
+    if (name === '' || excelFile.length === 0) return
     savePLOGroup(name, excelFile).then(() => {
-      resetForm();
-    });
+      resetForm()
+    })
   }
   return <div>
     <button onClick={() => setShow(true)}>Create a new PLO Group.</button>
@@ -172,18 +171,18 @@ function CreatePLOGroupForm() {
         </Modal.Footer>
       </form>
     </Modal>
-  </div>;
-};
+  </div>
+}
 
 const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
-  if (ploGroupID === '') return <p></p>;
-  const { removePLO, submitting, isOwner } = useContext(PLOContext);
-  const { data, loading, refetch } = useQuery<{plos: PLOModel[]}, {ploGroupID: string}>(GET_PLOS, { variables: { ploGroupID } });
+  if (ploGroupID === '') return <p></p>
+  const { removePLO, submitting, isOwner } = useContext(PLOContext)
+  const { data, loading, refetch } = useQuery<{plos: PLOModel[]}, {ploGroupID: string}>(GET_PLOS, { variables: { ploGroupID } })
   const deletePLO = (ploID: string) => {
-    if (!confirm('Are you sure?') || submitting) return;
-    removePLO(ploID).then(() => toast('Deleted successfully', {type: 'success', delay: 800, hideProgressBar: true})).finally(() => refetch());
+    if (!confirm('Are you sure?') || submitting) return
+    removePLO(ploID).then(() => toast('Deleted successfully', {type: 'success', delay: 800, hideProgressBar: true})).finally(() => refetch())
   }
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>Loading...</p>
   return <div>
     {isOwner && <div className="flex gap-x-2 items-center">
       <CreatePLOForm ploGroupID={ploGroupID} callback={refetch}/>
@@ -200,23 +199,23 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
         <span className="m-0">{plo.description}</span>
       </div>
     ))}
-  </div>;
-};
+  </div>
+}
 
 function CreatePLOForm({ ploGroupID, callback }: { ploGroupID: string, callback: () => any }) {
-  const { savePLO, submitting } = useContext(PLOContext);
-  const [show, setShow] = useState<boolean>(false);
-  const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<CreatePLOModel>();
+  const { savePLO, submitting } = useContext(PLOContext)
+  const [show, setShow] = useState<boolean>(false)
+  const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<CreatePLOModel>()
   const resetForm = () => {
-    reset({title: '', description: ''});
-    setShow(false);
-  };
+    reset({title: '', description: ''})
+    setShow(false)
+  }
   const submitForm = (form: CreatePLOModel) => {
     savePLO(ploGroupID, form).then(() => {
-      resetForm();
-      callback();
-    });
-  };
+      resetForm()
+      callback()
+    })
+  }
   return <div>
     <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm my-2">
       Create a new PLO <span className="text-xl text-green-800">+</span>
@@ -237,19 +236,19 @@ function CreatePLOForm({ ploGroupID, callback }: { ploGroupID: string, callback:
         </Modal.Footer>
       </form>
     </Modal>
-  </div>;
-};
+  </div>
+}
 
 function EditPLOGroupForm({ploGroupID, initName}: {ploGroupID: string, initName: string}) {
-  const { modifyPLOGroup, submitting } = useContext(PLOContext);
-  const [show, setShow] = useState<boolean>(false);
-  const {register, handleSubmit, reset} = useForm<{name: string}>({defaultValues: {name: initName}});
+  const { modifyPLOGroup, submitting } = useContext(PLOContext)
+  const [show, setShow] = useState<boolean>(false)
+  const {register, handleSubmit, reset} = useForm<{name: string}>({defaultValues: {name: initName}})
   const resetForm = () => {
-    setShow(false);
-  };
+    setShow(false)
+  }
   const submitForm = (name: string) => {
-    if (submitting) return;
-    modifyPLOGroup(ploGroupID, name).then(() => resetForm());
+    if (submitting) return
+    modifyPLOGroup(ploGroupID, name).then(() => resetForm())
   }
   return <>
     <span className="cursor-pointer underline text-blue-600 px-4" onClick={() => setShow(true)}>edit</span>
@@ -267,23 +266,23 @@ function EditPLOGroupForm({ploGroupID, initName}: {ploGroupID: string, initName:
         </Modal.Footer>
       </form>
     </Modal>
-  </>;
+  </>
 }
 
 function EditPLOForm({ploID, initTitle, initDesc, callback}: {ploID: string, initTitle: string, initDesc: string, callback: () => any}) {
-  const { modifyPLO, submitting } = useContext(PLOContext);
-  const [show, setShow] = useState<boolean>(false);
-  const {register, handleSubmit, formState: {errors, touchedFields}} = useForm<CreatePLOModel>({defaultValues: {title: initTitle, description: initDesc}});
+  const { modifyPLO, submitting } = useContext(PLOContext)
+  const [show, setShow] = useState<boolean>(false)
+  const {register, handleSubmit, formState: {errors, touchedFields}} = useForm<CreatePLOModel>({defaultValues: {title: initTitle, description: initDesc}})
   const resetForm = () => {
-    setShow(false);
-  };
+    setShow(false)
+  }
   const submitForm = ({title, description}: CreatePLOModel) => {
-    if (submitting) return;
+    if (submitting) return
     modifyPLO(ploID, title, description).then(() => {
-      resetForm();
-      callback();
-    });
-  };
+      resetForm()
+      callback()
+    })
+  }
   return <>
     <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
     <Modal show={show} onHide={resetForm}>
@@ -302,54 +301,55 @@ function EditPLOForm({ploID, initTitle, initDesc, callback}: {ploID: string, ini
         </Modal.Footer>
       </form>
     </Modal>
-  </>;
+  </>
 }
 
 function AppendPLOsForm({ploGroupID, callback}: {ploGroupID: string, callback: () => any}) {
-  const { submitting, appendPLOs } = useContext(PLOContext);
-  const ref = useRef<HTMLInputElement>();
+  const { submitting, appendPLOs } = useContext(PLOContext)
+  const ref = useRef<HTMLInputElement>()
   const excelJSON = (file) => {
-    let reader = new FileReader();
+    let reader = new FileReader()
     reader.onload = function(e) {
-      let data = e.target.result;
-      let workbook = xlsx.read(data, {type: 'binary'});
-      appendPLOs(ploGroupID, xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])).then(() => toast('Uploaded successfully', {type: 'success'})).finally(() => callback());
+      let data = e.target.result
+      let workbook = xlsx.read(data, {type: 'binary'})
+      appendPLOs(ploGroupID, xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])).then(() => toast('Uploaded successfully', {type: 'success'})).finally(() => callback())
     }
-    reader.onerror = console.log;
-    reader.readAsBinaryString(file);
-  };
+    reader.onerror = console.log
+    reader.readAsBinaryString(file)
+  }
   return <>
     <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => submitting?null:ref.current.click()}>upload PLOs</span>
     <input type="file" className="hidden" ref={ref} onChange={e => excelJSON(e.target.files[0])}/>
-  </>;
+  </>
 }
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getServerSideProps: GetServerSideProps<{programID: string, ploGroups: PLOGroupModel[]}> = async (context) => {
-  const { id: programID } = context.params as Params;
+  const { id: programID } = context.params as Params
+  const client = initializeApollo()
   const { data } = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
     query: GET_PLOGROUPS,
     variables: {
-      programID
-    }
-  });
-  return {
+      programID,
+    },
+  })
+  return addApolloState(client, {
     props: {
       programID,
       ploGroups: data.ploGroups,
     },
-  };
-};
+  })
+}
 
 const GET_PLOGROUPS = gql`
   query PLOGroups($programID: ID!) {
     ploGroups(programID: $programID) {
       id
       name
-}}`;
+}}`
 const GET_PLOS = gql`
   query PLOs($ploGroupID: ID!) {
     plos(ploGroupID: $ploGroupID) {
@@ -357,18 +357,18 @@ const GET_PLOS = gql`
       title
       description
       ploGroupID
-}}`;
+}}`
 const CREATE_PLOGROUP = gql`
   mutation CreatePLOGroup($programID: ID!, $name: String!, $input: [CreatePLOsInput!]!) {
     createPLOGroup(programID: $programID, name: $name, input: $input) {
       id
       name
-}}`;
+}}`
 const ADD_PLOS = gql`
   mutation AddPLOs($ploGroupID: ID!, $input: [CreatePLOInput!]!) {
     addPLOs(ploGroupID: $ploGroupID, input: $input) {
       id
-}}`;
+}}`
 const CREATE_PLO = gql`
   mutation CreatePLO($ploGroupID: ID!, $input: CreatePLOInput!) {
     createPLO(ploGroupID: $ploGroupID, input: $input) {
@@ -376,24 +376,24 @@ const CREATE_PLO = gql`
       title
       description
       ploGroupID
-}}`;
+}}`
 const DELETE_PLOGROUP = gql`
   mutation DeletePLOGroup($id: ID!) {
     deletePLOGroup(id: $id) {
       id
-}}`;
+}}`
 const DELETE_PLO = gql`
 mutation DeletePLO($id: ID!) {
   deletePLO(id: $id) {
     id
-}}`;
+}}`
 const EDIT_PLOGROUP = gql`
   mutation EditPLOGroup($id: ID!, $name: String!) {
     editPLOGroup(id: $id, name: $name) {
       id  
-}}`;
+}}`
 const EDIT_PLO = gql`
   mutation EditPLO($id: ID!, $title: String!, $description: String!) {
     editPLO(id: $id, title: $title, description: $description) {
       id
-}}`;
+}}`

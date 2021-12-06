@@ -1,4 +1,4 @@
-import { useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStudent } from 'apps/web/utils/dashboard-helper';
+import { CustomStudent, DashboardFlat, DashboardPLOSummary, useDashboardFlat, useDashboardPLOSummary, useDashboardResult, useStudent } from 'apps/web/utils/dashboard-helper';
 import Head from 'next/head';
 import Link from 'next/link';
 import router, { useRouter } from 'next/router';
@@ -8,6 +8,7 @@ import styled from 'styled-components';
 import ClientOnly from '../ClientOnly';
 import { AllStudentChart } from './chart';
 import { ExportOutcome2 } from './export';
+import { DashboardResult } from '../../utils/dashboard-helper'
 
 // path => /course/[id]/dashboards/table
 export default function Index() {
@@ -40,10 +41,9 @@ interface loData {
   name: string
 }
 
-export function ScoreTablePLO() {
-  const courseID = router.query.id as string;
-  const [dashboardFlat] = useDashboardFlat(courseID);
-  const [dashboardPLO] = useDashboardPLOSummary(courseID);
+export function ScoreTablePLO({courseID, dashboardFlat, dashboardPLOSummary: dashboardPLO}: {courseID: string, dashboardFlat: DashboardFlat, dashboardPLOSummary: DashboardPLOSummary}) {
+  // const [dashboardFlat] = useDashboardFlat(courseID);
+  // const [dashboardPLO] = useDashboardPLOSummary(courseID);
   const [tableHead, setHead] = useState<string[]>([])
   const [tableData, setData] = useState<studentResult[]>([]);
  
@@ -271,10 +271,9 @@ export function ScoreTablePLO() {
   )
 }
 
-export function ScoreTable() {
-  const courseID = router.query.id as string;
-  const [students] = useStudent(courseID);
-  const [dashboardQuiz] = useDashboardResult(courseID);
+export function ScoreTable({courseID, students, dashboardResults: dashboardQuiz}: {courseID: string, students: CustomStudent[], dashboardResults: DashboardResult[]}) {
+  // const [students] = useStudent(courseID);
+  // const [dashboardQuiz] = useDashboardResult(courseID);
   const [tableData, setData] = useState<studentResult[]>([]);
   const [tableHead, setHead] = useState<string[]>(['Student ID', 'Student Name']); 
 

@@ -1,58 +1,52 @@
-import { gql, useQuery } from '@apollo/client';
-import { CourseSubMenu, KnownCourseMainMenu } from 'apps/web/components/Menu';
-import client from '../../../../apollo-client';
-import { GetStaticPaths, GetStaticProps } from 'next';
-import Head from 'next/head';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { ParsedUrlQuery } from 'querystring';
-import { useState } from 'react';
-import styled from 'styled-components';
-import ClientOnly from '../../../../components/ClientOnly';
-import ProgramNameLink from '../../../../components/ProgramAnchor';
-import { ScoreTable, ScoreTablePLO } from '../../../../components/dashboards/table';
-import { CourseStaticPaths } from 'apps/web/utils/staticpaths';
+import { gql, useQuery } from '@apollo/client'
+import { CourseSubMenu, KnownCourseMainMenu } from 'apps/web/components/Menu'
+import { GetStaticPaths, GetStaticProps } from 'next'
+import Head from 'next/head'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { ParsedUrlQuery } from 'querystring'
+import { useState } from 'react'
+import styled from 'styled-components'
+import ProgramNameLink from '../../../../components/ProgramAnchor'
+import { ScoreTable, ScoreTablePLO } from '../../../../components/dashboards/table'
+import { CourseStaticPaths } from 'apps/web/utils/staticpaths'
+import { getStudentProp, getDashboardResultProp, CustomStudent, DashboardResult, GQLPLOSummaryResponse, GQLFlatResponse, getDashboardFlatRawProp, getDashboardPLOSummaryRawProp, parseDashboardFlat, parseDashboardPLOSummary } from '../../../../utils/dashboard-helper'
+import { initializeApollo, addApolloState } from '../../../../utils/apollo-client'
 
 // path => /course/[id]/dashboards
-export default ({course}: {course: CourseModel}) => {
-  return (<div>
+export default function Page({course, students, rawDashboardFlat, dashboardResults, rawDashboardPLOSummary}: PageProps) {
+  const router = useRouter()
+  const courseID = router.query.id as string
+  const [state, setState] = useState<'Quiz' | 'Outcome'>('Quiz')
+  return <div>
     <Head>
       <title>Dashboard</title>
     </Head>
-    <ClientOnly> 
-      <IndexPage course={course}/>
-    </ClientOnly>
-  </div>);
-};
-
-function IndexPage({course}: {course: CourseModel}) {
-  const router = useRouter();
-  const courseID = router.query.id as string;
-  const [state, setState] = useState("Quiz");
-  return <div>
-    <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
-    {/* <NavHistory courseID = {courseID}/> */}
-    <CourseSubMenu courseID={course.id} selected={'dashboards'}/>
-    <ButtonTab>
-      <button onClick={() => setState("Quiz")} style={{marginRight: 5}}
-      className="border border-blue-500 rounded-md border-2">
-        {state === "Quiz" && <b>Quiz Score</b> || <span>Quiz Score</span>}
-      </button>
-      <button onClick={() => setState("Outcome")}
-      className="border border-blue-500 rounded-md border-2">
-        {state === "Outcome" && <b>Outcome Score</b> || <span>Outcome Score</span>}
-      </button>
-    </ButtonTab>
-    {state === "Quiz" && <ScoreTable/>}
-    {state === "Outcome" && <ScoreTablePLO/>}
-  </div>;
-};
+    <div>
+      <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
+      {/* <NavHistory courseID = {courseID}/> */}
+      <CourseSubMenu courseID={course.id} selected={'dashboards'}/>
+      <ButtonTab>
+        <button onClick={() => setState("Quiz")} style={{marginRight: 5}}
+        className="border border-blue-500 rounded-md border-2">
+          {state === "Quiz" && <b>Quiz Score</b> || <span>Quiz Score</span>}
+        </button>
+        <button onClick={() => setState("Outcome")}
+        className="border border-blue-500 rounded-md border-2">
+          {state === "Outcome" && <b>Outcome Score</b> || <span>Outcome Score</span>}
+        </button>
+      </ButtonTab>
+      {state === "Quiz" && <ScoreTable courseID={course.id} students={students} dashboardResults={dashboardResults}/>}
+      {state === "Outcome" && <ScoreTablePLO courseID={course.id} dashboardFlat={parseDashboardFlat(rawDashboardFlat)} dashboardPLOSummary={parseDashboardPLOSummary(rawDashboardPLOSummary)}/>}
+    </div>
+  </div>
+}
 
 // supply
 interface CourseModel {
-  id: string;
-  name: string;
-  programID: string;
+  id: string
+  name: string
+  programID: string
 }
 
 function NavHistory({courseID}: {courseID: string}) {
@@ -63,8 +57,8 @@ function NavHistory({courseID}: {courseID: string}) {
         name
         programID
     }}
-  `, {variables: {courseID}});
-  if (loading) return <p></p>;
+  `, {variables: {courseID}})
+  if (loading) return <p></p>
   return (<p>
     <Link href="/">Home</Link>
     {' '}&#12297;{' '}
@@ -74,38 +68,57 @@ function NavHistory({courseID}: {courseID: string}) {
     {' '}&#12297;{' '}
     <Link href={`/course/${data.course.id}`}>{data.course.name}</Link>
     
-  </p>);
+  </p>)
 }
 
 const ButtonTab = styled.div`
-  display: inline-block;
-`;
+  display: inline-block
+`
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
-export const getStaticProps: GetStaticProps<{course: CourseModel}> = async (context) => {
-  const { id: courseID } = context.params as Params;
+interface PageProps {
+  course: CourseModel
+  students: CustomStudent[]
+  rawDashboardFlat: GQLFlatResponse
+  dashboardResults: DashboardResult[]
+  rawDashboardPLOSummary: GQLPLOSummaryResponse[]
+}
+
+export const getStaticProps: GetStaticProps<PageProps> = async (context) => {
+  const { id: courseID } = context.params as Params
+  const client = initializeApollo();
   const GET_COURSE = gql`
     query CourseDescription($courseID: ID!) {
       course(courseID: $courseID) {
         id
         name
         programID
-  }}`;
-  const {data: {course}} = await client.query<{course: CourseModel}, {courseID: string}>({
-    query: GET_COURSE,
-    variables: {
-      courseID
-    }
-  });
-  return {
+  }}`
+  const data = await Promise.all([
+    client.query<{course: CourseModel}, {courseID: string}>({
+      query: GET_COURSE,
+      variables: {
+        courseID
+      }
+    }),
+    getStudentProp(client, courseID),
+    getDashboardFlatRawProp(client, courseID),
+    getDashboardResultProp(client, courseID),
+    getDashboardPLOSummaryRawProp(client, courseID),
+  ])
+  return addApolloState(client, {
     props: {
-      course,
+      course: data[0].data.course,
+      students: data[1].result,
+      rawDashboardFlat: data[2].result,
+      dashboardResults: data[3].result,
+      rawDashboardPLOSummary: data[4].result,
     },
     revalidate: 60,
-  };
+  })
 }
 
-export const getStaticPaths: GetStaticPaths = CourseStaticPaths;
+export const getStaticPaths: GetStaticPaths = CourseStaticPaths

@@ -1,36 +1,36 @@
-import { useEffect } from 'react';
-import Head from 'next/head';
-import client from '../../../apollo-client';
-import { gql, useMutation } from '@apollo/client';
-import { GetStaticPaths, GetStaticProps } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/router';
-import { ProgramStaticPaths } from '../../../utils/staticpaths';
-import { ProgramMainMenu } from '../../../components/Menu';
-import { useSession } from 'next-auth/react';
+import { useEffect } from 'react'
+import Head from 'next/head'
+import { gql, useMutation } from '@apollo/client'
+import { GetStaticPaths, GetStaticProps } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/router'
+import { ProgramStaticPaths } from '../../../utils/staticpaths'
+import { ProgramMainMenu } from '../../../components/Menu'
+import { useSession } from 'next-auth/react'
+import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
 
 interface PLOGroupModel {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 interface CreateCourseModel {
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-};
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+}
 
 interface CreateCourseResponse {
-  id: string;
-  name: string;
-  description: string;
-  semester: number;
-  year: number;
-  ploGroupID: string;
-};
+  id: string
+  name: string
+  description: string
+  semester: number
+  year: number
+  ploGroupID: string
+}
 
 const CREATE_COURSE = gql`
   mutation CreateCourse($programID: ID!, $teacherID: ID!, $input: CreateCourseInput!) {
@@ -41,13 +41,13 @@ const CREATE_COURSE = gql`
       semester
       year
       ploGroupID
-}}`;
+}}`
 
 export default function Page({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) {
-  const {data: session, status} = useSession();
-  const [createCourse, { loading: submitting } ] = useMutation<{createCourse: CreateCourseResponse}, {programID: string, teacherID: string, input: CreateCourseModel}>(CREATE_COURSE);
-  const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<CreateCourseModel>();
-  const router = useRouter();
+  const {data: session, status} = useSession()
+  const [createCourse, { loading: submitting } ] = useMutation<{createCourse: CreateCourseResponse}, {programID: string, teacherID: string, input: CreateCourseModel}>(CREATE_COURSE)
+  const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<CreateCourseModel>()
+  const router = useRouter()
   const submitForm = (form: CreateCourseModel) => {
     if (form.name !== '' && form.ploGroupID !== '') {
       createCourse({
@@ -57,15 +57,15 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
           input: form
         }
       }).then((res) => res.data.createCourse).then((course) => {
-        reset({name: ''});
-        router.push(`/course/${course.id}`);
-      });
+        reset({name: ''})
+        router.push(`/course/${course.id}`)
+      })
     }
-  };
+  }
   useEffect(() => {
-    if (status === 'loading') return;
-    if (session && (+session.roleLevel !== 1 && +session.roleLevel !== 3)) router.replace(`/program/${programID}/courses`);
-  }, [session, status]);
+    if (status === 'loading') return
+    if (session && (+session.roleLevel !== 1 && +session.roleLevel !== 3)) router.replace(`/program/${programID}/courses`)
+  }, [session, status])
   return <div>
     <Head>
       <title>Create a course</title>
@@ -117,11 +117,11 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
         <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
       </form>
     </div>
-  </div>;
-};
+  </div>
+}
 
 interface Params extends ParsedUrlQuery {
-  id: string;
+  id: string
 }
 
 export const getStaticProps: GetStaticProps<{programID: string, ploGroups: PLOGroupModel[]}> = async (context) => {
@@ -130,19 +130,20 @@ export const getStaticProps: GetStaticProps<{programID: string, ploGroups: PLOGr
       ploGroups(programID: $programID) {
         id
         name
-  }}`;
-  const { id: programID } = context.params as Params;
+  }}`
+  const { id: programID } = context.params as Params
+  const client = initializeApollo()
   const { data } = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
     query: GET_PLOGROUPS,
     variables: { programID }
-  });
-  return {
+  })
+  return addApolloState(client, {
     props: {
       programID,
       ploGroups: data.ploGroups
     },
     revalidate: 10,
-  };
-};
+  })
+}
 
-export const getStaticPaths: GetStaticPaths = ProgramStaticPaths;
+export const getStaticPaths: GetStaticPaths = ProgramStaticPaths

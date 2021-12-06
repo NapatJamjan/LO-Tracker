@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { signIn, useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import router from 'next/router';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 interface UserLoginForm {
   username: string;
@@ -37,7 +37,6 @@ export default function Page() {
     }).catch(_ => toast(`Error: User not found`, { type: 'error' })).finally(() => setSubmitting(false));
   }
   return <div className="flex justify-center" style={{paddingTop: '30vh'}}>
-    <ToastContainer/>
     {!(status === 'loading' || session) && <form onSubmit={handleSubmit(submitForm)} className="flex flex-column items-center gap-y-4">
       <div>
         <span>Username</span><br/>

@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { ToastContainer } from 'react-toastify';
 
 export default function SiteLayout({children}) {
   const {data: session, status} = useSession();
+  console.log(status);
   const router =  useRouter();
   useEffect(() => {
     if (router.isReady && status !== 'loading') {
@@ -24,10 +26,11 @@ export default function SiteLayout({children}) {
     </nav>
     <main
       style={{
-        maxWidth: 1080,
+        maxWidth: 1270,
         padding: `0.5rem 1.0875rem 1.45rem`
       }}
       className="mx-auto flex-grow w-screen">
+      <ToastContainer/>
       {children}
     </main>
     <footer className="mx-auto py-3">Footer</footer>
