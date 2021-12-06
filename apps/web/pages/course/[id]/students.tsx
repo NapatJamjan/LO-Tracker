@@ -30,6 +30,8 @@ export default ({course, students}: {course: CourseModel, students: StudentModel
     </Head>
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'students'}/>
+    <div className="mt-5 p-3 bg-white rounded-md inline-block">
+    <p className="text-lg mb-3">List of students in this course</p>
     <table className="table-auto mt-4">
       <thead>
         <tr className="bg-gray-100">
@@ -53,6 +55,7 @@ export default ({course, students}: {course: CourseModel, students: StudentModel
         }
       </tbody>
     </table>
+    </div>
   </div>)
 }
 

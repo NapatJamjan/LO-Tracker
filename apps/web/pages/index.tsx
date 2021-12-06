@@ -11,8 +11,7 @@ export default function Index() {
     <Head>
       <title>Home</title>
     </Head>
-    {/* <h1 onClick={notify} className="cursor-pointer mb-2">Welcome 🦄</h1>
-    {/* Full Logo contain white bg since making transparent will broke, if bg color were to change, use lite instead */}
+    <div className="bg-white p-5 mt-5 rounded-md text-center">
     <div style={{ display: "inline-flex" }}>
       <img src={'kmutt1.jpg'} width={600} />
       <div style={{margin: "auto", marginLeft: 100, textAlign: "center" }}>
@@ -42,9 +41,10 @@ export default function Index() {
       </div>
     </div> <br/><br/>
     <p className="text-lg">LO Tracker</p>
-    <p>A Capstone project about tracking learning outcome of each and all students in your course, where not only teacher or
-      program chair can access, but student too, can see their own outcome score here.
+    <p>A Capstone project about tracking learning outcome of each and all students in your course,<br/>
+      where not only teacher or program chair can access, but student too, can see their own outcome score here.
     </p>
+    </div>
   </div>);
 };
 

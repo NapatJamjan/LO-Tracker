@@ -8,8 +8,8 @@ import { IndividualPLO, IndividualQuiz } from '../../../../../components/dashboa
 import { initializeApollo, addApolloState } from '../../../../../utils/apollo-client'
 
 // path => /course/[id]/dashboards/[studentID]
-export default function Index() {
-  return (<div>
+export default function Page() {
+  return (<div className="bg-white shadow-md rounded-md p-2">
     <Head>
       <title>Dashboard</title>
     </Head>

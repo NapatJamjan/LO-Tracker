@@ -26,6 +26,7 @@ export default function Page({course, students, rawDashboardFlat, dashboardResul
       <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
       {/* <NavHistory courseID = {courseID}/> */}
       <CourseSubMenu courseID={course.id} selected={'dashboards'}/>
+      <div className="bg-white rounded-md p-3 w-100 shadow-md overflow-x-auto">
       <ButtonTab>
         <button onClick={() => setState("Quiz")} style={{marginRight: 5}}
         className="border border-blue-500 rounded-md border-2">
@@ -38,6 +39,7 @@ export default function Page({course, students, rawDashboardFlat, dashboardResul
       </ButtonTab>
       {state === "Quiz" && <ScoreTable courseID={course.id} students={students} dashboardResults={dashboardResults}/>}
       {state === "Outcome" && <ScoreTablePLO courseID={course.id} dashboardFlat={parseDashboardFlat(rawDashboardFlat)} dashboardPLOSummary={parseDashboardPLOSummary(rawDashboardPLOSummary)}/>}
+      </div>
     </div>
   </div>
 }

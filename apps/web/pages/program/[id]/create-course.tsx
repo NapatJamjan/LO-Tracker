@@ -71,8 +71,9 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
       <title>Create a course</title>
     </Head>
     <ProgramMainMenu programID={programID} />
-    <div>
-      <form onSubmit={handleSubmit((form) => submitting || status === 'loading'? null: submitForm(form))}>
+    <div className="flex flex-col items-center gap-y-3">
+      <p className="text-lg">Create a new course</p>
+      <form className="bg-white shadow-md rounded-md p-3" onSubmit={handleSubmit((form) => submitting || status === 'loading'? null: submitForm(form))}>
         <span>Course name:</span>
         <br />
         <input {...register('name', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/>
@@ -105,6 +106,7 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
         <br />
 
         <span>PLO Group:</span>
+        <br />
         <select {...register('ploGroupID')} className="border-4 rounded-md p-1 mx-2 text-sm" defaultValue="">
           <option disabled value="">--Select PLO Group--</option>
           {[...ploGroups].sort((p1, p2) => p1.name.localeCompare(p2.name)).map((plo) => (
@@ -114,7 +116,9 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
           ))}
         </select>
         <br />
-        <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        <div className="text-right mt-3">
+          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+        </div>
       </form>
     </div>
   </div>

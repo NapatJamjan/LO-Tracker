@@ -128,9 +128,9 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
       <CreateManyLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
     </div>}
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
-      <div className="flex flex-column space-y-2">
+      <div className="flex flex-column space-y-2 overflow-y-auto" style={{maxHeight: '700px'}}>
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
-        <div key={lo.id} className="rounded shadow-lg p-3">
+        <div key={lo.id} className="shadow-lg p-3 bg-white rounded-md">
           <span className="text-lg">{lo.title}</span> &nbsp
           {isOwner && <>
             <EditLOForm loID={lo.id} title={lo.title} callback={() => router.replace(router.asPath)}/>
@@ -165,7 +165,7 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
       </div>
       <div>
         {selectedLOID !== '' && 
-        <div className="flex flex-column divide-y-4 space-y-2">
+        <div className="flex flex-column divide-y-4 space-y-2 bg-white rounded-md p-3 shadow-md">
           {isOwner && <CreateLOLink loID={selectedLOID} ploGroupID={ploGroupID} callback={() => router.replace(router.asPath)}/>}
           <div className="pt-3">
             <span>Linked PLOs: </span><br/>
@@ -173,10 +173,10 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
             {[...los.find((lo) => lo.id == selectedLOID).ploLinks]
               .sort((p1, p2) => p1.title.localeCompare(p2.title))
               .map((plo) => <li key={plo.id}>
-                <span>{plo.title}</span>&nbsp
+                <span>{plo.title}</span>&nbsp;
                 {isOwner && <span className="underline cursor-pointer text-red-600" onClick={() => deleteLinkedPLO(plo.id)}>delete</span>}
                 <br/>
-                <span>{plo.description}</span>&nbsp
+                <span>{plo.description}</span>&nbsp;
               </li>)
             }
             {los[los.findIndex((lo) => lo.id == selectedLOID)].ploLinks.length === 0 && <span>No linked PLOs</span>}

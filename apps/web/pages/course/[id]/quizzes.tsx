@@ -170,7 +170,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
         </div>
         <div>
           {selectedQuestionID !== '' && 
-          <div className="flex flex-column divide-y-4 gap-y-3">
+          <div className="flex flex-column divide-y-4 gap-y-3 p-3 bg-white rounded-md shadow-md">
             {isOwner && <CreateQuestionLinkForm los={[...los]} questionID={selectedQuestionID} callback={() => router.replace(router.asPath)}/>}
             <LinkedLOContainer quizzes={quizzes}/>  
           </div>}
@@ -367,7 +367,7 @@ const CreateQuestionLinkForm: React.FC<{los: LOModel[], questionID: string, call
   }
   return <form onSubmit={handleSubmit((form) => submitForm(form))}>
     <span>Select LO:</span><br/>
-    <select {...register('loID')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue="" onChange={e => {setSelectedLOID(e.target.value);setValue('level', 0)}}>
+    <select {...register('loID')} style={{width: '250px'}} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue="" onChange={e => {setSelectedLOID(e.target.value);setValue('level', 0)}}>
       <option disabled value="">--Select LO--</option>
       {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
         <option value={lo.id} key={lo.id}>
@@ -377,7 +377,7 @@ const CreateQuestionLinkForm: React.FC<{los: LOModel[], questionID: string, call
     </select><br/>
     {selectedLOID !== '' && <div>
       <span>Select Level:</span><br/>
-      <select {...register('level')} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue={0}>
+      <select {...register('level')} style={{width: '250px'}} className="border-4 rounded-md p-1 mx-2 text-sm w-2/4" defaultValue={0}>
         <option disabled value={0}>--Select Level--</option>
         {los[los.findIndex((lo) => lo.id == selectedLOID)] && los[los.findIndex((lo) => lo.id == selectedLOID)].levels.map((level) => (
           <option value={level.level} key={level.description}>

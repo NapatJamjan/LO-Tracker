@@ -56,7 +56,8 @@ export default function SettingsPage({program}: {program: ProgramModel}) {
     </Head>
     <KnownProgramMainMenu programID={program.id} programName={program.name}/>
     <ProgramSubMenu programID={program.id} selected={'settings'} showSetting={true}/>
-    <p className="mt-4 mb-2 underline">Program Settings</p>
+    <div className="mt-2 bg-white rounded-md px-3 py-2">
+    <p className="text-lg mb-2 underline">Program Settings</p>
     <form onSubmit={handleSubmit(saveProgram)}>
     <div className="grid grid-cols-2 gap-4">
       <div>Program Name</div>
@@ -68,6 +69,7 @@ export default function SettingsPage({program}: {program: ProgramModel}) {
       <input type="submit" value="save" className="mt-3 py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
     </div>
     </form>
+    </div>
   </div>
 }
 

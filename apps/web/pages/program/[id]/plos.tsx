@@ -106,11 +106,11 @@ export function PLOs() {
     <div className="grid grid-cols-2 gap-x gap-x-6 mt-2">
       <div className="flex flex-column space-y-2">
         {[...ploGroups].sort((p1, p2) => p1.name.localeCompare(p2.name)).map((ploGroup) => (
-          <div key={ploGroup.id} className="rounded shadow-lg p-3">
+          <div key={ploGroup.id} className="bg-white rounded-md shadow-lg p-3">
             <div className="flex justify-between items-center">
               <span className="font-bold">{ploGroup.name}</span>
             </div>
-            <span className="underline cursor-pointer text-blue-300" onClick={() => setSelectedPLOGroupID(ploGroup.id)}>Inspect</span>
+            <span className={`underline cursor-pointer ${ploGroup.id === selectedPLOGroupID?'text-red-700':'text-blue-300'}`} onClick={() => setSelectedPLOGroupID(ploGroup.id)}>Inspect</span>
           </div>
         ))}
       </div>
@@ -189,7 +189,7 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
       <AppendPLOsForm ploGroupID={ploGroupID} callback={refetch}/>
     </div>}
     {[...data.plos].sort((p1, p2) => p1.title.localeCompare(p2.title)).map((plo) => (
-      <div key={plo.id} className="flex flex-column rounded shadow-lg p-3 mb-3 -space-y-4">
+      <div key={plo.id} className="flex flex-column bg-white rounded-md shadow-lg p-3 mb-3 -space-y-4">
         <p className="text-xl text-bold">
           <span>{plo.title}</span>
           {isOwner && <>

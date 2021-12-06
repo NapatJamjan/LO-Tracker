@@ -64,7 +64,7 @@ function Programs({programs}: {programs: ProgramModel[]}) {
 }
 
 function Program({program}: {program: ProgramModel}) {
-  return <div className="rounded shadow-lg p-3 divide-y-2 mt-3 flex flex-column space-y-2">
+  return <div className="bg-white rounded-md shadow-lg p-3 divide-y-2 mt-3 flex flex-column space-y-2">
     <span className="font-semibold text-2xl">
       <Link href={`/program/${program.id}/courses`}>
         {program.name}
@@ -157,7 +157,7 @@ const UploadStudents: React.FC = () => {
   const [show, setShow] = useState(false)
   return (<div>
     <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm" style={{marginRight: 10}}>
-      Upload new students <span className="text-xl text-blue-800">+</span>
+      Upload new students (only available in dev mode) <span className="text-xl text-blue-800">+</span>
     </button>
     <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w">
       <Modal.Header>

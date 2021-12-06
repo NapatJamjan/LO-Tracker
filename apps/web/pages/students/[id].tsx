@@ -44,7 +44,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
   const noPermission = !session.isTeacher && String(session.id) !== student.id
   if (noPermission) return <p className="text-center">No permission</p>
 
-  return <div>
+  return <div className="bg-white p-3 rounded-md shadow-md">
     <Head>
       <title>{student.name}'s Dashboard</title>
     </Head>

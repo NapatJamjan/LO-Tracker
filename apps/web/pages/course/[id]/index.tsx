@@ -23,7 +23,7 @@ export default ({course}: {course: CourseModel}) => {
     </Head>
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'main'}/>
-    <p className="mt-5">
+    <p className="bg-white rounded-md p-3 mt-5">
       <span className="text-2xl">Course Description</span><br/>
       <span>{course.description}</span>
     </p>

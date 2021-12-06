@@ -21,7 +21,9 @@ export default function Page({programID, students}: {programID: string, students
     </Head>
     <ProgramMainMenu programID={programID} />
     <ProgramSubMenu programID={programID} selected={'dashboards'}/>
-    <table className="table-auto mt-4">
+    <div className="mt-5 p-3 bg-white rounded-md inline-block">
+    <p className="text-lg mb-3">List of students in this program</p>
+    <table className="table-auto">
       <thead>
         <tr className="bg-gray-100">
           <td className="text-center">Student ID</td>
@@ -44,6 +46,7 @@ export default function Page({programID, students}: {programID: string, students
         }
       </tbody>
     </table>
+    </div>
   </div>
 }
 

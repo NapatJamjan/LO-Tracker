@@ -22,7 +22,7 @@ interface CourseModel {
 
 const FilterContext = createContext<{filter: string, changeFilter: (string) => any, mine: boolean, setMine: (boolean) => any}>({filter: '', changeFilter: (s) => {}, mine: false, setMine: (v) => {}})
 
-export default ({programID, courses}: {programID: string, courses: CourseModel[]}) => {
+export default function Page({programID, courses}: {programID: string, courses: CourseModel[]}) {
   const {data: session, status} = useSession()
   const [filter, setFilter] = useState<string>('')
   const [mine, setMine] = useState<boolean>(false)
@@ -98,7 +98,7 @@ function CourseSection({courses, semester, year}: {courses: CourseModel[], semes
 }
 
 function Course({course}: {course: CourseModel}) {
-  return <li className="rounded shadow-lg p-3">
+  return <li className="bg-white rounded-md shadow-lg p-3">
     <Link href={`/course/${course.id}`}>
       {course.name}
     </Link>

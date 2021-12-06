@@ -78,7 +78,8 @@ export default function Page({course, ploGroups}: {course: CourseModel, ploGroup
     </Head>
     <KnownCourseMainMenu programID={course.programID} courseID={course.id} courseName={course.name}/>
     <CourseSubMenu courseID={course.id} selected={'settings'}/>
-    <p className="mt-4 mb-2 underline">Course Settings</p>
+    <div className="mt-2 bg-white rounded-md p-3">
+    <p className="text-lg mt-4 mb-2 underline">Course Settings</p>
     <form onSubmit={handleSubmit(saveCourse)}>
     <div className="grid grid-cols-2 gap-4">
       <div>Name</div>
@@ -114,6 +115,7 @@ export default function Page({course, ploGroups}: {course: CourseModel, ploGroup
     </div>
     </form>
     <p className="cursor-pointer text-red-400" onClick={removeCourse}>Delete this course</p>
+    </div>
   </div>
 }
 
