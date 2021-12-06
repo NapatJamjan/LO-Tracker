@@ -360,18 +360,18 @@ interface studentResult {
 }
 
 const BackButton = styled.button`
-  float: left
-  margin-top: 10px
-  padding: 5px
-  margin-right: 15px
-  font: 18px
+  float: left;
+  margin-top: 10px;
+  padding: 5px;
+  margin-right: 15px;
+  font: 18px;
 `
 
 const TableScrollDiv = styled.div`
-  overflow-x: auto
-  overflow-y: hidden
-  transform: rotateX(180deg)
+  overflow-x: auto;
+  overflow-y: hidden;
+  transform: rotateX(180deg);
 `
 const TableScrollable = styled(Table)`
-  transform: rotateX(180deg)
+  transform: rotateX(180deg);
 `
