@@ -228,10 +228,8 @@ export function ScoreTablePLO({courseID, dashboardFlat, dashboardPLOSummary: das
       setHead(studentLOHead.slice());  setData(studentLOScore.slice());
     }
   }, [dataType])
-  return (
-    <div>
-      <ExportOutcome2 datas={tableData} head={tableHead}/>
-      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
+  return (<div className="flex">
+      <div style={{minWidth: "52.5%", width: "52.5%", marginRight: "2%"}}>
       <br/>
       <div style={{display: "inline"}}>
         <select value={dataType} onChange={handleDataType} className="border rounded-md border-2 ">
@@ -267,6 +265,11 @@ export function ScoreTablePLO({courseID, dashboardFlat, dashboardPLOSummary: das
           </tbody>
         </TableScrollable>
       </TableScrollDiv>
+      </div>
+      <div style={{maxWidth: "46.5%"}}>
+      <ExportOutcome2 datas={tableData} head={tableHead}/>
+      <AllStudentChart data={tableData} chartType={chartType} scoreType="Outcome" tableHead={tableHead.slice(2)}/>
+      </div>
     </div>
   )
 }
@@ -315,8 +318,8 @@ export function ScoreTable({courseID, students, dashboardResults: dashboardQuiz}
   const [chartType, setChartType] = useState("avg");
   function handleChartType(e: any){ setChartType(e.target.value) }
 
-  return <div>
-    <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
+  return <div className="flex">
+    <div style={{minWidth: "52.5%", width: "52.5%", marginRight: "2%"}}>
     <br/>
       <div style={{display: "inline"}}>
         <span style={{marginRight: 5}}>Graph Data Type</span>
@@ -346,6 +349,10 @@ export function ScoreTable({courseID, students, dashboardResults: dashboardQuiz}
         </tbody>
       </TableScrollable>
     </TableScrollDiv>
+    </div>
+    <div style={{maxWidth: "46.5%"}}>
+      <AllStudentChart data={tableData} chartType={chartType} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
+    </div>
   </div>
 }
 
@@ -357,7 +364,7 @@ const LinkedCol = styled(Link)`
 export const TableScrollDiv = styled.div`
   overflow-x: auto;
   overflow-y: hidden;
-  width: 60%;
+  max-width: 100%;
   transform: rotateX(180deg);
 `
 export const TableScrollable = styled(Table)`

@@ -22,7 +22,7 @@ export function ChartBarPLO(props: { data: studentResult, scoreType: string, tab
 
   //Charting
   let dimensions = {
-    w: 800, h: 380,
+    w: 600, h: 380,
     margin: { top: 50, bottom: 50, left: 50, right: 50 }
   }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right

@@ -282,46 +282,51 @@ export function IndividualPLO(props: { studentID: string }) {
     }
   }, [compareID])
 
-  return (
-    <div >
-      <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
-      <br/>
-      <div style={{display:"inline-block"}}>
-        <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
-          <option value="PLO">PLO</option>
-          <option value="LO">LO</option>
-        </select>
-        <span>Compare to</span>
-        <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
-        <option value="---">---</option>
-        {allData.map(std => (
-          <option value={std.studentID}>{std.studentID}</option>
-        ))}
-        </select>
-      </div>
-      <br/>
-      <TableScrollDiv>
-        <TableScrollable striped bordered className="table" style={{ margin: 0 }} >
-          <thead>
-            <tr>
-              {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.length === 0 && <tr><td className="text-center">---</td><td>No Data</td></tr>}
-            {tableData.map(data => (
-              <tr>
-                <td>{data.studentID}</td>
-                <td>{data.studentName}</td>
-                {data.scores.map(scores => ( // map score of this student's id 
-                  <td>{scores}</td>
-                ))}
-              </tr>
+  return (<div className="flex">
+    <div style={{ minWidth: "52.5%", width: "52.5%", marginRight: "2%" }}>
+      <br />
+      <div>
+        <div style={{ display: "inline-block" }}>
+          <select value={dataType} onChange={handleType} className="border rounded-md border-2 ">
+            <option value="PLO">PLO</option>
+            <option value="LO">LO</option>
+          </select>
+          <span>Compare to</span>
+          <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
+            <option value="---">---</option>
+            {allData.map(std => (
+              <option value={std.studentID}>{std.studentID}</option>
             ))}
-          </tbody>
-        </TableScrollable>
-      </TableScrollDiv>
+          </select>
+        </div>
+        <br />
+        <TableScrollDiv>
+          <TableScrollable striped bordered className="table" style={{ margin: 0 }} >
+            <thead>
+              <tr>
+                {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableData.length === 0 && <tr><td className="text-center">---</td><td>No Data</td></tr>}
+              {tableData.map(data => (
+                <tr>
+                  <td>{data.studentID}</td>
+                  <td>{data.studentName}</td>
+                  {data.scores.map(scores => ( // map score of this student's id 
+                    <td>{scores}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </TableScrollable>
+        </TableScrollDiv>
+      </div>
       <ChartPie stdData={tableData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
+      </div>
+      <div style={{maxWidth: "46.5%"}}>
+        <ChartBarCompare stdData={tableData} data={allData} scoreType="Outcome" tableHead={tableHead.slice(2)} />
+      </div>
     </div>
   )
 }
@@ -393,8 +398,10 @@ export function IndividualQuiz (props: { studentID: string }) {
     }
   }, [compareID])
 
-  return <div > 
-    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz" tableHead={tableHead.slice(2)}/><br/>
+  return <div className="flex">
+    <div style={{ minWidth: "52.5%", width: "52.5%", marginRight: "2%" }}>
+    <br/>
+    <div>
     <span>Compare to</span>
       <select value={compareID} onChange={handleCompare} className="border rounded-md border-2 ">
         <option value="---">---</option>
@@ -404,7 +411,7 @@ export function IndividualQuiz (props: { studentID: string }) {
         </select>
       <br/>
     <TableScrollDiv>
-      <TableScrollable striped bordered hover className="table" style={{ margin: 0 }}>
+      <TableScrollable striped bordered className="table" style={{ margin: 0 }}>
         <thead>
           <tr>
             {tableHead.map((head, i) => (<th>{head}{i > 1 && <span> (%)</span>}</th>))}
@@ -424,6 +431,11 @@ export function IndividualQuiz (props: { studentID: string }) {
         </tbody>
       </TableScrollable>
     </TableScrollDiv>
+    </div>
     <ChartPie stdData={tableData} scoreType="Quiz" tableHead={tableHead.slice(2)} />
+    </div>
+    <div style={{maxWidth: "46.5%"}}>
+    <ChartBarCompare stdData={tableData} data={totalData} scoreType="Quiz" tableHead={tableHead.slice(2)}/>
+    </div>
   </div>
 }

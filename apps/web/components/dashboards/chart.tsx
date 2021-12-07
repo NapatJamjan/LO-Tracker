@@ -37,7 +37,7 @@ function AverageChart(props: { data: studentResult[], scoreType: string, tableHe
   const [chartType, setChartType] = useState("bar");
   function handleChartType(e: any){ setChartType(e.target.value) }
   return(
-    <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+    <div style={{ width: "65%", height: "60%", marginTop: "0.5%"}}>
       <div style={{ display: "inline" }}>
         <span style={{ marginRight: 5 }}>Graph Type</span>
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
@@ -59,7 +59,7 @@ function AllChart(props: { data: studentResult[], scoreType: string, tableHead: 
   const [chartType, setChartType] = useState("bar");
   function handleChartType(e: any){ setChartType(e.target.value) }
   return(
-    <div style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}>
+    <div style={{width: "100%", height: "60%", marginTop: "0.5%"}}>
       <div style={{ display: "inline" }}>
         <span style={{ marginRight: 5 }}>Graph Type</span>
         <select value={chartType} onChange={handleChartType} className="border rounded-md border-2 ">
@@ -70,13 +70,19 @@ function AllChart(props: { data: studentResult[], scoreType: string, tableHead: 
         </select>
       </div>
       {chartType === "bar" && <ChartBarAll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
-      {chartType === "bar2" && <ChartBarAllScroll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
+      {chartType === "bar2" && <div style={{}}>
+      <ChartBarAllScroll data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>
+      </div>}
       {chartType === "barVerti" && <ChartBarAllVertical data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
       {chartType === "dens" && <ChartDensity data={props.data} scoreType={props.scoreType} tableHead={props.tableHead}/>}
     </div>
   )
 }
 
+let dimensions = {
+  w: 550, h: 400,
+  margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+}
 
 export function ChartBarAverage(props: { data: studentResult[], scoreType: string, tableHead: string[] }) {
   const ref = useRef();
@@ -106,10 +112,6 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
   }
 
   //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
-  }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
 
@@ -188,7 +190,7 @@ export function ChartBarAverage(props: { data: studentResult[], scoreType: strin
       
       function mMoveEvent(e: any, d: any) {
         tooltip.style('display', 'block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 +'px')
       }
 
       function mOutEvent() {
@@ -240,10 +242,6 @@ export function ChartLineAverage(props: { data: studentResult[], scoreType: stri
   }
 
   //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
-  }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
 
@@ -333,7 +331,7 @@ export function ChartLineAverage(props: { data: studentResult[], scoreType: stri
       
       function mMoveEvent(e: any, d: any) {
         tooltip.style('display', 'block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 +'px')
       }
 
       function mOutEvent() {
@@ -378,10 +376,6 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string, ta
   } 
   allScore = allScoreTemp.slice();
   //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
-  }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
 
@@ -487,7 +481,7 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string, ta
       }
       function mMoveMain(e: any, d: any) {
         tooltipMain.style('display','block')
-        .style('top', e.layerY-45 +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY-45 +'px').style('left', e.pageX+20 +'px')
       }
       function mOverEvent(e: any, d: any) { //event, data
         d3.select(this).style('opacity', 1)
@@ -506,7 +500,7 @@ export function ChartBarAll(props: { data:studentResult[], scoreType: string, ta
 
       function mMoveEvent(e: any, d: any) {
         tooltip.style('display','block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 +'px')
       }
       function mOutEvent() {
         d3.select(this).style('opacity', 0.8)
@@ -567,8 +561,8 @@ export function ChartPieAverage(props: { data: studentResult[], scoreType: strin
 
   //Charting
   let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
+    w: 550, h: 400,
+    margin:{ top: 50, bottom: 50, left: 10, right: 50 }
   }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
@@ -667,7 +661,7 @@ export function ChartPieAverage(props: { data: studentResult[], scoreType: strin
       
       function mMoveEvent(e: any, d: any) {
         tooltip.style('display','block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 +'px')
       }
 
       function mOutEvent() {
@@ -710,10 +704,6 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
   } 
   allScore = allScoreTemp.slice();
   //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50, right: 50 }
-  }
   //boxW now in useEffect
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
   useEffect(() => {
@@ -721,9 +711,6 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
       d3.selectAll("svg > *").remove();
       const svgElement = d3.select(ref.current)
       let dataset = allScore;
-      // dataset.push({name:"61130500999",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
-      // dataset.push({name:"61130501000",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
-      // dataset.push({name:"61130501001",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
       //chart area
       let boxW = dataset.length * 50 - dimensions.margin.left - dimensions.margin.right
       svgElement.attr('width', dimensions.w).attr('height', dimensions.h)
@@ -745,11 +732,7 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
       box.append("g").transition()
         .attr("transform", "translate(0," + boxH + ")")
         .call(d3.axisBottom(xScale).tickValues(xScale.domain().filter(function(d,i){ 
-          // if(allScore.length >= 15){
-          //   return !(i % 4)
-          // }else{
             return !(i % 2)
-          // }
           
       })))
         .selectAll("text").style("text-anchor", "middle")
@@ -818,9 +801,9 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
           .html( `<b>${d.name}</b> <br/> `)
       }
       function mMoveMain(e: any, d: any) {
-        let scrolls = document.getElementById("chartDiv").scrollLeft; // check scroll length
+        // let scrolls = document.getElementById("chartDiv").scrollLeft; // check scroll length for layerXY
         tooltipMain.style('display', 'block')
-        .style('top', e.layerY-45 +'px').style('left', e.layerX+20-scrolls +'px')
+        .style('top', e.pageY-45 +'px').style('left', e.pageX+20 +'px')
       }
       function mOverEvent(e: any, d: any) { //event, data
         d3.select(this).style('opacity', 1)
@@ -838,9 +821,9 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
       }
 
       function mMoveEvent(e: any, d: any) {
-        let scrolls = document.getElementById("chartDiv").scrollLeft; 
+        // let scrolls = document.getElementById("chartDiv").scrollLeft; 
         tooltip.style('display', 'block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20-scrolls + 'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 + 'px')
       }
       function mOutEvent() {
         d3.select(this).style('opacity', 0.8)
@@ -853,7 +836,7 @@ export function ChartBarAllScroll(props: { data: studentResult[], scoreType: str
   }, [allScore])
 
   return <div /*style={{position: "absolute", right: "1%", width: "40%", height: "60%", marginTop: "0.5%"}}*/>
-    <div style={{"overflow":"scroll", "overflowY": "hidden"}} id="chartDiv">
+    <div style={{ "overflow": "scroll", "overflowY": "hidden" }} id="chartDiv">
       <svg ref={ref} style={{"width": datas.length * 50}} >
       </svg>
       <Tooltip id='tooltip'>
@@ -889,19 +872,15 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
   allScore = allScoreTemp.slice();
   //Charting
   let dimensions = {
-    w: 600, h: 400,
+    w: 550, h: 400,
     margin:{ top: 50, bottom: 50, left: 90, right: 50 }
   }
   
-
   useEffect(() => {
     if (allScore.length != 0) {
       d3.selectAll("svg > *").remove();
       const svgElement = d3.select(ref.current)
       let dataset = allScore;
-      // dataset.push({name:"61130500999",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
-      // dataset.push({name:"61130501000",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
-      // dataset.push({name:"61130501001",PLO1:15,PLO2:20,PLO3:25,PLO4:30});
       //chart area
       let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
       let boxH = dataset.length * 60 - dimensions.margin.bottom - dimensions.margin.top
@@ -915,7 +894,6 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
         .attr('transform', `translate(${dimensions.margin.left}, ${dimensions.margin.top})`)
 
       //scale
-      // var groups = d3.map(dataset, function(d){return(d.studentName)}).keys()
       var groups = allScore.map(d => d.name);
       var subgroups = subgroupTemp.slice();
       const yScale = d3.scaleBand()
@@ -993,7 +971,7 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
       }
       function mMoveMain(e: any, d: any) {
         tooltipMain.style('display','block')
-        .style('top', e.layerY-45 +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY-45 +'px').style('left', e.pageX+20 +'px')
       }
       function mOverEvent(e: any, d: any) { //event, data
         d3.select(this).style('opacity', 1)
@@ -1012,7 +990,7 @@ export function ChartBarAllVertical(props: { data:studentResult[], scoreType: st
 
       function mMoveEvent(e: any, d: any) {
         tooltip.style('display','block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 +'px')
       }
       function mOutEvent() {
         d3.select(this).style('opacity', 0.8)
@@ -1093,10 +1071,6 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
   newData = data.slice();
 
   //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50, right: 50 }
-  }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
 
@@ -1282,10 +1256,6 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
   stdScore = scoreTemp.slice(checkStart-1);
 
   //Charting
-  let dimensions = {
-    w: 600, h: 400,
-    margin:{ top: 50, bottom: 50, left: 50,right: 50 }
-  }
   let boxW = dimensions.w - dimensions.margin.left - dimensions.margin.right
   let boxH = dimensions.h - dimensions.margin.bottom - dimensions.margin.top
 
@@ -1390,7 +1360,7 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
             ${d} student${d > 1 ? "s" : ""} got this score `
           )
         tooltip.style('display', 'block')
-        .style('top', e.layerY +'px').style('left', e.layerX+20 +'px')
+        .style('top', e.pageY +'px').style('left', e.pageX+20 +'px')
         d3.select('svg').selectAll('.temp')
           .attr('x1', d3.pointer(e)[0]).attr('y1', 0)
           .attr('x2', d3.pointer(e)[0]).attr('y2', boxH)

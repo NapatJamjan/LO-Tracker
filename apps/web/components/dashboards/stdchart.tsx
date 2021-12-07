@@ -74,7 +74,7 @@ export function ChartBarCompare(props: { data: studentResult[], stdData: student
 
   useEffect(() => {
     if (avgScore.length != 0) {
-      d3.selectAll("svg > *").remove();
+      d3.selectAll("#svg1 > *").remove();
       const svgElement = d3.select(ref.current)
       let dataset = avgScore;
       //chart area
@@ -169,7 +169,7 @@ export function ChartBarCompare(props: { data: studentResult[], stdData: student
       }
       function mMoveMain(e: any, d: any) {
         tooltipMain.style('display', 'block')
-          .style('top', e.layerY - 45 + 'px').style('left', e.layerX + 20 + 'px')
+          .style('top', e.pageY - 45 + 'px').style('left', e.pageX + 20 + 'px')
       }
 
       function mOverEvent(e: any, d: any) { //event, data
@@ -192,22 +192,22 @@ export function ChartBarCompare(props: { data: studentResult[], stdData: student
 
       function mMoveEvent(e: any, d: any) {
         tooltip.style('display', 'block')
-          .style('top', e.layerY + 'px').style('left', e.layerX + 20 + 'px')
+          .style('top', e.pageY + 'px').style('left', e.pageX + 20 + 'px')
       }
 
       function mOutEvent() {
         d3.select(this).style('opacity', 0.8)
         d3.select(this).style('stroke-width', 0)
-        d3.select('svg').selectAll('.temp').remove()
+        d3.select('#svg1').selectAll('.temp').remove()
         tooltip.style('display', 'none')
         tooltipMain.style('display', 'none')
       }
     }
   }, [avgScore])
 
-  return (<div style={{ position: "absolute", right: "1%", width: "40%", height: "50%", marginTop: "0.5%" }}>
+  return (<div style={{ width: "65%", height: "50%", marginTop: "0.5%" }}>
     <div>
-      <svg ref={ref}>
+      <svg ref={ref} id="svg1">
       </svg>
       <Tooltip id='tooltip'>
         <div className='name'></div>
@@ -255,7 +255,7 @@ export function ChartPie(props: { stdData: studentResult[], scoreType: string, t
 
   useEffect(() => {
     if (dataScore.length != 0) {
-      d3.selectAll("svg2 > *").remove();
+      d3.selectAll("#svg2 > *").remove();
       const svgElement = d3.select(ref.current)
       let dataset = dataScore;
       //chart area

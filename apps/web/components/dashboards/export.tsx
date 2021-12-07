@@ -41,7 +41,6 @@ interface studentResult {
 }
 
 export const ExportOutcome2: React.FC<{datas: studentResult[], head: string[]}> = ({datas, head}) => {
-  const courseID = router.query.id as string;
   const [show, setShow] = useState(false);
   const { register, handleSubmit, setValue } = useForm<{fileName: string, fileType: string}>();
   
@@ -53,7 +52,7 @@ export const ExportOutcome2: React.FC<{datas: studentResult[], head: string[]}> 
   }, [show]);
 
   return(
-    <div style={{display: "inline", position: "absolute", right: 50, top: 150}}>
+    <div style={{display: "inline", float:"right"}}>
       <button onClick={() => setShow(true)} className="underline ">Export Outcome</button>
       <Modal show={show} onHide={() => setShow(false)} dialogClassName="modal-90w"> 
         <form onSubmit={handleSubmit((data) => {

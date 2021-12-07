@@ -73,23 +73,23 @@ function IndexPage() {
 }
 
 const MainDiv = styled.div`
-  margin: 1.5%
-  text-align: start
+  margin: 1.5%;
+  text-align: start;
 `
 
 const BackButton = styled.button`
-  float: left
-  margin-top: 20px
-  padding: 5px
-  margin-right: 15px
+  float: left;
+  margin-top: 20px;
+  padding: 5px;
+  margin-right: 15px;
 `
 
 const DashboardDiv = styled.div`
-    text-align: left
-    margin-left : 1%
-    margin-right: 1%
+    text-align: left;
+    margin-left : 1%;
+    margin-right: 1%;
 `
   
 const ButtonTab = styled.div`
-    display: inline-block
+    display: inline-block;
 `
