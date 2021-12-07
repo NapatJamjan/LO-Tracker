@@ -141,6 +141,25 @@ type ComplexityRoot struct {
 		Plos func(childComplexity int) int
 	}
 
+	DashboardPLOGroup struct {
+		Name     func(childComplexity int) int
+		Plos     func(childComplexity int) int
+		Students func(childComplexity int) int
+	}
+
+	DashboardPLOGroupDetail struct {
+		Description func(childComplexity int) int
+		Stats       func(childComplexity int) int
+		Title       func(childComplexity int) int
+	}
+
+	DashboardPLOGroupDetailStats struct {
+		Max    func(childComplexity int) int
+		Mean   func(childComplexity int) int
+		Median func(childComplexity int) int
+		Min    func(childComplexity int) int
+	}
+
 	DashboardPLOSummary struct {
 		LoID  func(childComplexity int) int
 		PloID func(childComplexity int) int
@@ -259,22 +278,23 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Course            func(childComplexity int, courseID string) int
-		Courses           func(childComplexity int, programID string) int
-		FlatSummary       func(childComplexity int, courseID string) int
-		IndividualSummary func(childComplexity int, studentID string) int
-		Los               func(childComplexity int, courseID string) int
-		PloGroups         func(childComplexity int, programID string) int
-		PloSummary        func(childComplexity int, courseID string) int
-		Plos              func(childComplexity int, ploGroupID string) int
-		Program           func(childComplexity int, programID string) int
-		Programs          func(childComplexity int) int
-		QuizResults       func(childComplexity int, courseID string) int
-		Quizzes           func(childComplexity int, courseID string) int
-		Student           func(childComplexity int, studentID string) int
-		Students          func(childComplexity int) int
-		StudentsInCourse  func(childComplexity int, courseID string) int
-		StudentsInProgram func(childComplexity int, programID string) int
+		Course                    func(childComplexity int, courseID string) int
+		Courses                   func(childComplexity int, programID string) int
+		FlatSummary               func(childComplexity int, courseID string) int
+		IndividualPLOGroupSummary func(childComplexity int, ploGroupID string) int
+		IndividualSummary         func(childComplexity int, studentID string) int
+		Los                       func(childComplexity int, courseID string) int
+		PloGroups                 func(childComplexity int, programID string) int
+		PloSummary                func(childComplexity int, courseID string) int
+		Plos                      func(childComplexity int, ploGroupID string) int
+		Program                   func(childComplexity int, programID string) int
+		Programs                  func(childComplexity int) int
+		QuizResults               func(childComplexity int, courseID string) int
+		Quizzes                   func(childComplexity int, courseID string) int
+		Student                   func(childComplexity int, studentID string) int
+		Students                  func(childComplexity int) int
+		StudentsInCourse          func(childComplexity int, courseID string) int
+		StudentsInProgram         func(childComplexity int, programID string) int
 	}
 
 	Question struct {
@@ -361,6 +381,7 @@ type QueryResolver interface {
 	PloSummary(ctx context.Context, courseID string) ([]*model.DashboardPLOSummary, error)
 	FlatSummary(ctx context.Context, courseID string) (*model.DashboardFlat, error)
 	IndividualSummary(ctx context.Context, studentID string) (*model.DashboardIndividual, error)
+	IndividualPLOGroupSummary(ctx context.Context, ploGroupID string) (*model.DashboardPLOGroup, error)
 	Programs(ctx context.Context) ([]*model.Program, error)
 	Program(ctx context.Context, programID string) (*model.Program, error)
 	PloGroups(ctx context.Context, programID string) ([]*model.PLOGroup, error)
@@ -728,6 +749,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DashboardIndividualPLOGroup.Plos(childComplexity), true
+
+	case "DashboardPLOGroup.name":
+		if e.complexity.DashboardPLOGroup.Name == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroup.Name(childComplexity), true
+
+	case "DashboardPLOGroup.plos":
+		if e.complexity.DashboardPLOGroup.Plos == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroup.Plos(childComplexity), true
+
+	case "DashboardPLOGroup.students":
+		if e.complexity.DashboardPLOGroup.Students == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroup.Students(childComplexity), true
+
+	case "DashboardPLOGroupDetail.description":
+		if e.complexity.DashboardPLOGroupDetail.Description == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetail.Description(childComplexity), true
+
+	case "DashboardPLOGroupDetail.stats":
+		if e.complexity.DashboardPLOGroupDetail.Stats == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetail.Stats(childComplexity), true
+
+	case "DashboardPLOGroupDetail.title":
+		if e.complexity.DashboardPLOGroupDetail.Title == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetail.Title(childComplexity), true
+
+	case "DashboardPLOGroupDetailStats.max":
+		if e.complexity.DashboardPLOGroupDetailStats.Max == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetailStats.Max(childComplexity), true
+
+	case "DashboardPLOGroupDetailStats.mean":
+		if e.complexity.DashboardPLOGroupDetailStats.Mean == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetailStats.Mean(childComplexity), true
+
+	case "DashboardPLOGroupDetailStats.median":
+		if e.complexity.DashboardPLOGroupDetailStats.Median == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetailStats.Median(childComplexity), true
+
+	case "DashboardPLOGroupDetailStats.min":
+		if e.complexity.DashboardPLOGroupDetailStats.Min == nil {
+			break
+		}
+
+		return e.complexity.DashboardPLOGroupDetailStats.Min(childComplexity), true
 
 	case "DashboardPLOSummary.loID":
 		if e.complexity.DashboardPLOSummary.LoID == nil {
@@ -1341,6 +1432,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.FlatSummary(childComplexity, args["courseID"].(string)), true
 
+	case "Query.individualPLOGroupSummary":
+		if e.complexity.Query.IndividualPLOGroupSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_individualPLOGroupSummary_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.IndividualPLOGroupSummary(childComplexity, args["ploGroupID"].(string)), true
+
 	case "Query.individualSummary":
 		if e.complexity.Query.IndividualSummary == nil {
 			break
@@ -1892,11 +1995,31 @@ type DashboardIndividualCourseQuiz {
   los: [String!]!
 }
 
+type DashboardPLOGroup {
+  name: String!
+  plos: [DashboardPLOGroupDetail!]!
+  students: [User!]!
+}
+
+type DashboardPLOGroupDetail {
+  title: String!
+  description: String!
+  stats: DashboardPLOGroupDetailStats!
+}
+
+type DashboardPLOGroupDetailStats {
+  min: Float!
+  max: Float!
+  mean: Float!
+  median: Float!
+}
+
 extend type Query {
   quizResults(courseID: ID!): [DashboardResult!]!
   ploSummary(courseID: ID!): [DashboardPLOSummary!]!
   flatSummary(courseID: ID!): DashboardFlat!
   individualSummary(studentID: ID!): DashboardIndividual!
+  individualPLOGroupSummary(ploGroupID: ID!): DashboardPLOGroup!
 }
 `, BuiltIn: false},
 	{Name: "apps/api/graph/schema.program.graphqls", Input: `type Program {
@@ -2749,6 +2872,21 @@ func (ec *executionContext) field_Query_flatSummary_args(ctx context.Context, ra
 		}
 	}
 	args["courseID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_individualPLOGroupSummary_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["ploGroupID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ploGroupID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ploGroupID"] = arg0
 	return args, nil
 }
 
@@ -4668,6 +4806,356 @@ func (ec *executionContext) _DashboardIndividualPLOGroup_plos(ctx context.Contex
 	res := resTmp.([]*model.DashboardIndividualPlo)
 	fc.Result = res
 	return ec.marshalNDashboardIndividualPLO2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardIndividualPloᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroup_name(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroup) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroup_plos(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroup) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Plos, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DashboardPLOGroupDetail)
+	fc.Result = res
+	return ec.marshalNDashboardPLOGroupDetail2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroupDetailᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroup_students(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroup) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Students, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetail_title(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetail) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetail",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetail_description(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetail) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetail",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetail_stats(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetail) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetail",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Stats, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DashboardPLOGroupDetailStats)
+	fc.Result = res
+	return ec.marshalNDashboardPLOGroupDetailStats2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroupDetailStats(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetailStats_min(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetailStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetailStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetailStats_max(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetailStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetailStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetailStats_mean(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetailStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetailStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Mean, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DashboardPLOGroupDetailStats_median(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOGroupDetailStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DashboardPLOGroupDetailStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Median, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _DashboardPLOSummary_ploID(ctx context.Context, field graphql.CollectedField, obj *model.DashboardPLOSummary) (ret graphql.Marshaler) {
@@ -7398,6 +7886,48 @@ func (ec *executionContext) _Query_individualSummary(ctx context.Context, field 
 	res := resTmp.(*model.DashboardIndividual)
 	fc.Result = res
 	return ec.marshalNDashboardIndividual2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardIndividual(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_individualPLOGroupSummary(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_individualPLOGroupSummary_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().IndividualPLOGroupSummary(rctx, args["ploGroupID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DashboardPLOGroup)
+	fc.Result = res
+	return ec.marshalNDashboardPLOGroup2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_programs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10738,6 +11268,122 @@ func (ec *executionContext) _DashboardIndividualPLOGroup(ctx context.Context, se
 	return out
 }
 
+var dashboardPLOGroupImplementors = []string{"DashboardPLOGroup"}
+
+func (ec *executionContext) _DashboardPLOGroup(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardPLOGroup) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardPLOGroupImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardPLOGroup")
+		case "name":
+			out.Values[i] = ec._DashboardPLOGroup_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "plos":
+			out.Values[i] = ec._DashboardPLOGroup_plos(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "students":
+			out.Values[i] = ec._DashboardPLOGroup_students(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var dashboardPLOGroupDetailImplementors = []string{"DashboardPLOGroupDetail"}
+
+func (ec *executionContext) _DashboardPLOGroupDetail(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardPLOGroupDetail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardPLOGroupDetailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardPLOGroupDetail")
+		case "title":
+			out.Values[i] = ec._DashboardPLOGroupDetail_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "description":
+			out.Values[i] = ec._DashboardPLOGroupDetail_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "stats":
+			out.Values[i] = ec._DashboardPLOGroupDetail_stats(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var dashboardPLOGroupDetailStatsImplementors = []string{"DashboardPLOGroupDetailStats"}
+
+func (ec *executionContext) _DashboardPLOGroupDetailStats(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardPLOGroupDetailStats) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardPLOGroupDetailStatsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardPLOGroupDetailStats")
+		case "min":
+			out.Values[i] = ec._DashboardPLOGroupDetailStats_min(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "max":
+			out.Values[i] = ec._DashboardPLOGroupDetailStats_max(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "mean":
+			out.Values[i] = ec._DashboardPLOGroupDetailStats_mean(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "median":
+			out.Values[i] = ec._DashboardPLOGroupDetailStats_median(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var dashboardPLOSummaryImplementors = []string{"DashboardPLOSummary"}
 
 func (ec *executionContext) _DashboardPLOSummary(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardPLOSummary) graphql.Marshaler {
@@ -11575,6 +12221,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_individualSummary(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "individualPLOGroupSummary":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_individualPLOGroupSummary(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -13130,6 +13790,84 @@ func (ec *executionContext) marshalNDashboardIndividualPLOGroup2ᚖloᚑtracker�
 		return graphql.Null
 	}
 	return ec._DashboardIndividualPLOGroup(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardPLOGroup2loᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroup(ctx context.Context, sel ast.SelectionSet, v model.DashboardPLOGroup) graphql.Marshaler {
+	return ec._DashboardPLOGroup(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDashboardPLOGroup2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroup(ctx context.Context, sel ast.SelectionSet, v *model.DashboardPLOGroup) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardPLOGroup(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardPLOGroupDetail2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroupDetailᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardPLOGroupDetail) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDashboardPLOGroupDetail2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroupDetail(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardPLOGroupDetail2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroupDetail(ctx context.Context, sel ast.SelectionSet, v *model.DashboardPLOGroupDetail) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardPLOGroupDetail(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardPLOGroupDetailStats2ᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOGroupDetailStats(ctx context.Context, sel ast.SelectionSet, v *model.DashboardPLOGroupDetailStats) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardPLOGroupDetailStats(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDashboardPLOSummary2ᚕᚖloᚑtrackerᚋappsᚋapiᚋgraphᚋmodelᚐDashboardPLOSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardPLOSummary) graphql.Marshaler {

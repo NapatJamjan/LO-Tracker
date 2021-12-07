@@ -3,15 +3,15 @@ import React, { createContext, useContext, useRef } from 'react'
 import { gql, useMutation, useQuery } from '@apollo/client'
 import { GetServerSideProps } from 'next'
 import { ParsedUrlQuery } from 'querystring'
-import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
+import { ProgramMainMenu, ProgramSubMenu } from '../../../../components/Menu'
 import { Modal } from 'react-bootstrap'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import xlsx from 'xlsx'
-import { useRouter } from 'next/router'
+import router, { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
-import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { initializeApollo, addApolloState } from '../../../../utils/apollo-client'
 
 interface CreatePLOGroupResponse {
   id: string
@@ -90,11 +90,11 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
     </Head>
     <ProgramMainMenu programID={programID} callback={(program) => setTeacherID(program.teacherID)}/>
     <ProgramSubMenu programID={programID} selected={'plos'} showSetting={isOwner}/>
-    <PLOs/>
+    <PLOs programID={programID}/>
   </PLOContext.Provider>
 }
 
-export function PLOs() {
+export function PLOs({programID}: {programID: string}) {
   const { ploGroups, removePLOGroup, isOwner, submitting } = useContext(PLOContext)
   const [selectedPLOGroupID, setSelectedPLOGroupID] = useState<string>('')
   const deletePLOGroup = () => {
@@ -110,7 +110,8 @@ export function PLOs() {
             <div className="flex justify-between items-center">
               <span className="font-bold">{ploGroup.name}</span>
             </div>
-            <span className={`underline cursor-pointer ${ploGroup.id === selectedPLOGroupID?'text-red-700':'text-blue-300'}`} onClick={() => setSelectedPLOGroupID(ploGroup.id)}>Inspect</span>
+            <span className={`underline cursor-pointer ${ploGroup.id === selectedPLOGroupID?'text-red-700':'text-blue-300'}`} onClick={() => setSelectedPLOGroupID(ploGroup.id)}>inspect</span>
+            <span className="ml-2 underline cursor-pointer text-blue-300" onClick={() => router.push({pathname: '/program/[id]/plos/[ploGroupID]', query: {id: programID, ploGroupID: ploGroup.id}})}>dashboard</span>
           </div>
         ))}
       </div>

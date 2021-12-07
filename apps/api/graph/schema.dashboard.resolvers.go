@@ -7,6 +7,7 @@ import (
 	"context"
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph/model"
+	"sort"
 	"strconv"
 )
 
@@ -377,5 +378,117 @@ func (r *queryResolver) IndividualSummary(ctx context.Context, studentID string)
 	return &model.DashboardIndividual{
 		PloGroups: ploGroups,
 		Courses:   courses,
+	}, nil
+}
+
+func (r *queryResolver) IndividualPLOGroupSummary(ctx context.Context, ploGroupID string) (*model.DashboardPLOGroup, error) {
+	ploGroup, err := r.Client.PLOgroup.FindUnique(
+		db.PLOgroup.ID.Equals(ploGroupID),
+	).Exec(ctx)
+	if err != nil {
+		return &model.DashboardPLOGroup{}, err
+	}
+	allQuestionResults, err := r.Client.QuestionResult.FindMany(
+		db.QuestionResult.Question.Where(
+			db.Question.Quiz.Where(
+				db.Quiz.Course.Where(
+					db.Course.PloGroup.Where(
+						db.PLOgroup.ID.Equals(ploGroupID),
+					),
+				),
+			),
+		),
+	).With(
+		db.QuestionResult.Question.Fetch().With(
+			db.Question.Quiz.Fetch().With(
+				db.Quiz.Course.Fetch(),
+			),
+			db.Question.Links.Fetch().With(
+				db.QuestionLink.LoLevel.Fetch().With(
+					db.LOlevel.Lo.Fetch().With(
+						db.LO.Links.Fetch().With(
+							db.LOlink.Plo.Fetch(),
+						),
+					),
+				),
+			),
+		),
+		db.QuestionResult.Student.Fetch().With(
+			db.Student.User.Fetch(),
+		),
+	).Exec(ctx)
+	if err != nil {
+		return &model.DashboardPLOGroup{}, err
+	}
+	type StudentRecord struct {
+		percentage float64
+		count      float64
+	}
+	students := map[string]*model.User{}
+	ploRecords := map[string]map[string]*StudentRecord{}
+	plos := map[string]*model.DashboardPLOGroupDetail{}
+	for _, questionResult := range allQuestionResults {
+		studentID := questionResult.Student().User().ID
+		if _, ok := students[studentID]; !ok {
+			students[studentID] = &model.User{
+				ID:      studentID,
+				Email:   questionResult.Student().User().Email,
+				Name:    questionResult.Student().User().Name,
+				Surname: questionResult.Student().User().Surname,
+			}
+		}
+		thisPercent := float64(questionResult.Score) / float64(questionResult.Question().MaxScore)
+		for _, qlink := range questionResult.Question().Links() {
+			for _, llink := range qlink.LoLevel().Lo().Links() {
+				ploID := llink.Plo().ID
+				ploTitle := llink.Plo().Title
+				ploDescription := llink.Plo().Description
+				if _, ok := plos[ploID]; !ok {
+					plos[ploID] = &model.DashboardPLOGroupDetail{
+						Title:       ploTitle,
+						Description: ploDescription,
+						Stats:       &model.DashboardPLOGroupDetailStats{},
+					}
+				}
+				if _, ok := ploRecords[ploID]; !ok {
+					ploRecords[ploID] = map[string]*StudentRecord{}
+				}
+				if _, ok := ploRecords[ploID][studentID]; !ok {
+					ploRecords[ploID][studentID] = &StudentRecord{
+						percentage: 0,
+						count:      0,
+					}
+				}
+				studentRecord := ploRecords[ploID][studentID]
+				studentRecord.percentage = (studentRecord.percentage*studentRecord.count + thisPercent) / (studentRecord.count + 1)
+				studentRecord.count += 1
+				ploRecords[ploID][studentID] = studentRecord
+			}
+		}
+	}
+	st := []*model.User{}
+	for _, student := range students {
+		st = append(st, student)
+	}
+	pl := []*model.DashboardPLOGroupDetail{}
+	for ploID, plo := range plos {
+		var sum float64
+		allStudentRecord := []float64{}
+		for _, student := range ploRecords[ploID] {
+			sum += student.percentage
+			allStudentRecord = append(allStudentRecord, student.percentage)
+		}
+		sort.Float64s(allStudentRecord)
+		size := len(allStudentRecord)
+		plo.Stats.Min = allStudentRecord[0]
+		plo.Stats.Max = allStudentRecord[size-1]
+		plo.Stats.Mean = sum / float64(size)
+		plo.Stats.Median = (allStudentRecord[size/2] + allStudentRecord[(size-1)/2]) / 2
+		pl = append(pl, plo)
+	}
+	return &model.DashboardPLOGroup{
+		Name:     ploGroup.Name,
+		Plos:     pl,
+		Students: st,
 	}, nil
 }

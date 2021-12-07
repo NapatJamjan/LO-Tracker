@@ -79,9 +79,29 @@ type DashboardIndividualCourseQuiz {
   los: [String!]!
 }
 
+type DashboardPLOGroup {
+  name: String!
+  plos: [DashboardPLOGroupDetail!]!
+  students: [User!]!
+}
+
+type DashboardPLOGroupDetail {
+  title: String!
+  description: String!
+  stats: DashboardPLOGroupDetailStats!
+}
+
+type DashboardPLOGroupDetailStats {
+  min: Float!
+  max: Float!
+  mean: Float!
+  median: Float!
+}
+
 extend type Query {
   quizResults(courseID: ID!): [DashboardResult!]!
   ploSummary(courseID: ID!): [DashboardPLOSummary!]!
   flatSummary(courseID: ID!): DashboardFlat!
   individualSummary(studentID: ID!): DashboardIndividual!
+  individualPLOGroupSummary(ploGroupID: ID!): DashboardPLOGroup!
 }

@@ -172,6 +172,25 @@ type DashboardIndividualPLOGroup struct {
 	Plos []*DashboardIndividualPlo `json:"plos"`
 }
 
+type DashboardPLOGroup struct {
+	Name     string                     `json:"name"`
+	Plos     []*DashboardPLOGroupDetail `json:"plos"`
+	Students []*User                    `json:"students"`
+}
+
+type DashboardPLOGroupDetail struct {
+	Title       string                        `json:"title"`
+	Description string                        `json:"description"`
+	Stats       *DashboardPLOGroupDetailStats `json:"stats"`
+}
+
+type DashboardPLOGroupDetailStats struct {
+	Min    float64 `json:"min"`
+	Max    float64 `json:"max"`
+	Mean   float64 `json:"mean"`
+	Median float64 `json:"median"`
+}
+
 type DashboardPLOSummary struct {
 	PloID string   `json:"ploID"`
 	LoID  []string `json:"loID"`
