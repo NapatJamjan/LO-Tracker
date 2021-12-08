@@ -50,7 +50,7 @@ function FilterTextField() {
 function FilterOwner() {
   const {mine, setMine} = useContext(FilterContext)
   return <div onClick={() => setMine(!mine)} className="cursor-pointer">
-    <input type="checkbox" defaultChecked={mine} className="border-4 rounded-md mr-2"/>
+    <input type="checkbox" checked={mine} className="border-4 rounded-md mr-2"/>
     <span>Show only my courses</span>
   </div>
 }
