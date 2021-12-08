@@ -74,7 +74,7 @@ function NavHistory({courseID}: {courseID: string}) {
 }
 
 const ButtonTab = styled.div`
-  display: inline-block
+  display: inline-block;
 `
 
 interface Params extends ParsedUrlQuery {
