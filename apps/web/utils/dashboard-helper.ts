@@ -258,7 +258,6 @@ export function useDashboardPLOSummary(courseID: string): [DashboardPLOSummary, 
     setDashboard(new Map(plos.entries()))
     setLoaded(true)
   }, [loading])
-  console.log('from helper: ', [dashboard, loaded])
   return [dashboard, loaded]
 }
 export async function getDashboardPLOSummaryRawProp(client: ApolloClient<NormalizedCacheObject>, courseID: string): Promise<{result: GQLPLOSummaryResponse[], error: ApolloError}> {

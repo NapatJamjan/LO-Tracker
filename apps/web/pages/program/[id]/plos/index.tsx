@@ -10,8 +10,9 @@ import { useForm } from 'react-hook-form'
 import xlsx from 'xlsx'
 import router, { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
-import { useSession } from 'next-auth/react'
+import { getSession } from 'next-auth/react'
 import { initializeApollo, addApolloState } from '../../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface CreatePLOGroupResponse {
   id: string
@@ -66,7 +67,7 @@ const PLOContext = createContext<{
 
 export default function Page({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) {
   const router = useRouter()
-  const {data: session, status} = useSession()
+  const { isSignedIn, isSameUser } = useContext(AuthContext)
   const [teacherID, setTeacherID] = useState<string>('')
   const [createPLOGroup, { loading: submitPLOGroup }] = useMutation<{createPLOGroup: CreatePLOGroupResponse}, {programID: string, name: string, input: CreatePLOModel[]}>(CREATE_PLOGROUP)
   const [deletePLOGroup, { loading: withdrawPLOGroup}] = useMutation<{deletePLOGroup: {id: string}}, {id: string}>(DELETE_PLOGROUP)
@@ -82,7 +83,7 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
   const removePLOGroup = (id: string) => deletePLOGroup({variables: {id}}).finally(() => router.replace(router.asPath))
   const removePLO = (id: string) => deletePLO({variables: {id}})
   const appendPLOs = (id: string, plos: CreatePLOModel[]) => addPLOs({variables: {ploGroupID: id, input: plos}})
-  const isOwner = status === 'loading'?false:(session?(session.id===teacherID):false)
+  const isOwner = isSignedIn && isSameUser(teacherID)
   const submitting = submitPLOGroup || submitPLO || writePLOGroup || writePLO || withdrawPLOGroup || withdrawPLO || insertPLOs
   return <PLOContext.Provider value={{ploGroups, savePLOGroup, savePLO, modifyPLOGroup, modifyPLO, removePLOGroup, removePLO, appendPLOs, submitting, isOwner}}>
     <Head>
@@ -330,7 +331,13 @@ interface Params extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<{programID: string, ploGroups: PLOGroupModel[]}> = async (context) => {
   const { id: programID } = context.params as Params
-  const client = initializeApollo()
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      notFound: true
+    }
+  }
+  const client = initializeApollo(session.user.accessToken)
   const { data } = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
     query: GET_PLOGROUPS,
     variables: {

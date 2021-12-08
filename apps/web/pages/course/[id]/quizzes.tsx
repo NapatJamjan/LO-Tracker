@@ -1,6 +1,6 @@
 import Head from 'next/head'
-import { useEffect, useState, Key, createContext, useContext } from 'react'
-import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client'
+import { useState, Key, createContext, useContext } from 'react'
+import { gql, useMutation } from '@apollo/client'
 import { GetServerSideProps } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import { Modal } from 'react-bootstrap'
@@ -9,8 +9,9 @@ import xlsx from 'xlsx'
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu'
 import { useRouter } from 'next/router'
 import Collapse, { Panel } from 'rc-collapse'
-import { useSession } from 'next-auth/react'
+import { getSession } from 'next-auth/react'
 import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface CourseModel {
   id: string
@@ -135,7 +136,7 @@ const QuizContext = createContext<{
 
 export default function Page({course, quizzes, los}: {course: CourseModel, quizzes: QuizModel[], los: LOModel[]}) {
   const router = useRouter()
-  const {data: session, status} = useSession()
+  const { isSignedIn, isSameUser } = useContext(AuthContext)
   const [teacherID, setTeacherID] = useState<string>('')
   const [selectedQuestionID, setSelectedQuestionID] = useState<string>('')
   const [deleteQuiz, { loading: Qdeleting}] = useMutation<{deleteQuiz: {id: string}}, {id: string}>(DELETE_QUIZ)
@@ -155,7 +156,7 @@ export default function Page({course, quizzes, los}: {course: CourseModel, quizz
     return deleteQuestionLink({variables: {input}}).finally(() => router.replace(router.asPath))
   }
   const changeQuizName = (id: string, name: string) => editQuiz({variables: {id, name}}).finally(() => router.replace(router.asPath))
-  const isOwner = status !== 'loading' && session && session.id === course.teacherID
+  const isOwner = isSignedIn && isSameUser(course.teacherID)
   return <div>
     <Head>
       <title>Manage quizzes</title>
@@ -237,7 +238,7 @@ function EditQuizForm({quizID, quizName}: {quizID: string, quizName: string}) {
           <input type="text" {...register('name')} placeholder="quiz name" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
         </Modal.Body>
         <Modal.Footer>
-          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+          <input type="submit" value="save" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
         </Modal.Footer>
       </form>
     </Modal>
@@ -260,7 +261,7 @@ function LinkedLOContainer({quizzes}: {quizzes: QuizModel[]}) {
     <ul>
     {[...questionLinks].sort((l1, l2) => l1.description.localeCompare(l2.description)).map((lo) => (
       <li key={`${lo.loID}-${lo.level}`}>
-        {lo.description}&nbsp
+        {lo.description}&nbsp;
         {isOwner && <span className="cursor-pointer text-red-600" onClick={() => deleteQuestionLink(lo.loID, lo.level)}>&#9747;</span>}
       </li>
     ))}
@@ -396,7 +397,13 @@ interface Params extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<{course: CourseModel, quizzes: QuizModel[], los: LOModel[]}> = async (context) => {
   const { id: courseID } = context.params as Params
-  const client = initializeApollo()
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      notFound: true
+    }
+  }
+  const client = initializeApollo(session.user.accessToken)
   const data = await Promise.all([
     client.query<{course: CourseModel}, {courseID: string}>({
       query: GET_COURSE,

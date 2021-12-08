@@ -1,14 +1,13 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, createContext, useContext } from 'react'
-import client from '../../../apollo-client'
 import { gql } from '@apollo/client'
 import { GetStaticProps, GetStaticPaths } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import { ProgramStaticPaths } from '../../../utils/staticpaths'
 import { ProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
-import { useSession } from 'next-auth/react'
 import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface CourseModel {
   id: string
@@ -23,13 +22,9 @@ interface CourseModel {
 const FilterContext = createContext<{filter: string, changeFilter: (string) => any, mine: boolean, setMine: (boolean) => any}>({filter: '', changeFilter: (s) => {}, mine: false, setMine: (v) => {}})
 
 export default function Page({programID, courses}: {programID: string, courses: CourseModel[]}) {
-  const {data: session, status} = useSession()
+  const { isSignedIn, roleLevel } = useContext(AuthContext)
   const [filter, setFilter] = useState<string>('')
   const [mine, setMine] = useState<boolean>(false)
-  let teacherID = ''
-  if (session) {
-    teacherID = String(session.id)
-  }
   return <FilterContext.Provider value={{filter, changeFilter: payload => setFilter(payload), mine, setMine}}>
     <Head>
       <title>Courses</title>
@@ -38,12 +33,12 @@ export default function Page({programID, courses}: {programID: string, courses: 
     <ProgramSubMenu programID={programID} selected={'courses'}/>
     <div className="flex justify-between items-end mt-4 mb-3">
       <FilterTextField/>
-      {status !== 'loading' && session && (+session.roleLevel === 1 || +session.roleLevel === 3)?<Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
+      {isSignedIn && (roleLevel === 1 || roleLevel === 3)?<Link href={`/program/${programID}/create-course`}><button className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm">
         Create a new course <span className="text-xl text-green-800">+</span>
       </button></Link>:<p></p>}
     </div>
     <FilterOwner/>
-    <Courses courses={courses} teacherID={teacherID}/>
+    <Courses courses={courses}/>
   </FilterContext.Provider>
 }
 
@@ -60,11 +55,12 @@ function FilterOwner() {
   </div>
 }
 
-function Courses({courses, teacherID}: {courses: CourseModel[], teacherID: string}) {
+function Courses({courses}: {courses: CourseModel[]}) {
   const { filter, mine } = useContext(FilterContext)
+  const { isSameUser } = useContext(AuthContext)
   let courseGroups = new Map<string, CourseModel[]>()
   for (let i = 0; i < courses.length; ++i) {
-    if (mine && courses[i].teacherID !== teacherID) continue
+    if (mine && !isSameUser(courses[i].teacherID)) continue
     if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue
     let groupName: string = `${courses[i].semester},${courses[i].year}`
     courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}])
@@ -111,7 +107,7 @@ interface PageParams extends ParsedUrlQuery {
 
 export const getStaticProps: GetStaticProps<{programID: string, courses: CourseModel[]}> = async (context) => {
   const { id: programID } = context.params as PageParams
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
     query: GET_COURSES, variables: { programID }
   })

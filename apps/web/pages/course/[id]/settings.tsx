@@ -1,13 +1,14 @@
 import Head from 'next/head'
-import { useEffect } from 'react'
+import { useEffect, useContext } from 'react'
 import { gql, useMutation } from '@apollo/client'
 import { GetServerSideProps } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+import { getSession } from 'next-auth/react'
 import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface CourseModel {
   id: string
@@ -35,7 +36,7 @@ interface CreateCourseModel {
 
 export default function Page({course, ploGroups}: {course: CourseModel, ploGroups: PLOGroupModel[]}) {
   const router = useRouter()
-  const {data: session, status} = useSession()
+  const {isSignedIn, isSameUser} = useContext(AuthContext)
   const { register, handleSubmit } = useForm<CreateCourseModel>({
     defaultValues: {
       name: course.name,
@@ -69,9 +70,8 @@ export default function Page({course, ploGroups}: {course: CourseModel, ploGroup
     })
   }
   useEffect(() => {
-    if (status === 'loading') return
-    if (session && session.id !== course.teacherID) router.replace(`/course/${course.id}`)
-  }, [session, status])
+    if (isSignedIn && !isSameUser(course.teacherID)) router.replace(`/course/${course.id}`)
+  }, [isSignedIn])
   return <div>
     <Head>
       <title>Course Settings</title>
@@ -125,7 +125,13 @@ interface Params extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<{course: CourseModel, ploGroups: PLOGroupModel[]}> = async (context) => {
   const { id: courseID } = context.params as Params
-  const client = initializeApollo()
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      notFound: true
+    }
+  }
+  const client = initializeApollo(session.user.accessToken)
   const {data: fetchCourse} = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {

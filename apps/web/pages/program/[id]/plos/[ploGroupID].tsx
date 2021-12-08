@@ -4,6 +4,7 @@ import { GetServerSideProps, GetStaticProps } from 'next'
 import Head from 'next/head'
 import { ParsedUrlQuery } from 'querystring'
 import { initializeApollo, addApolloState } from '../../../../utils/apollo-client'
+import { getSession } from 'next-auth/react'
 
 export default function Page({programID, ploGroupDashboard}: {programID: string, ploGroupDashboard: DashboardPLOGroup}) {
   return <div>
@@ -25,7 +26,13 @@ interface PageParams extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<{programID: string, ploGroupDashboard: DashboardPLOGroup}> = async (context) => {
   const { id: programID, ploGroupID } = context.params as PageParams
-  const client = initializeApollo()
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      notFound: true
+    }
+  }
+  const client = initializeApollo(session.user.accessToken)
   const { data } = await client.query<{individualPLOGroupSummary: DashboardPLOGroup}, {ploGroupID: string}>({
     query: gql`
       query individualPLOGroupSummary($ploGroupID: ID!) {

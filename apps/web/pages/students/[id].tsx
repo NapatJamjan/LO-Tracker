@@ -6,12 +6,12 @@ import { gql } from '@apollo/client'
 import { initializeApollo, addApolloState } from '../../utils/apollo-client'
 import router from 'next/router'
 import { OverlayTrigger, Table, Tooltip, Collapse} from 'react-bootstrap'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useContext } from 'react'
 import { ChartBarPLO, ChartBarLO } from '../../components/dashboards/plochart'
-import { useSession } from 'next-auth/react'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 export default function Page({student, dashboard}: {student: StudentModel, dashboard: IndividualDashboard}) {
-  const {data: session, status} = useSession()
+  const { isSignedIn, isTeacher, isSameUser } = useContext(AuthContext)
   const [ploDataType, setPLOType] = useState("loading")
   function handleType(e: any) { setPLOType(e.target.value) }
   const [chartData, setChart] = useState<studentResult>({studentID: student.id, studentName: student.name, scores: []})
@@ -40,8 +40,8 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
     
   }, [ploDataType])
 
-  if (status === 'loading') return null
-  const noPermission = !session.isTeacher && String(session.id) !== student.id
+  if (!isSignedIn) return null
+  const noPermission = !isTeacher && !isSameUser(student.id)
   if (noPermission) return <p className="text-center">No permission</p>
 
   return <div className="bg-white p-3 rounded-md shadow-md">
@@ -56,7 +56,7 @@ export default function Page({student, dashboard}: {student: StudentModel, dashb
       </div>
       <div>
       <BackButton onClick={() => {
-        if(session.isTeacher) router.back()
+        if(isTeacher) router.back()
         else router.replace('/')
         }} className="text-xl">
         &#12296;Back
@@ -233,7 +233,7 @@ interface PageParams extends ParsedUrlQuery {
 
 export const getStaticProps: GetStaticProps<{student: StudentModel, dashboard: IndividualDashboard}> = async (context) => {
   const { id: studentID } = context.params as PageParams
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const data = await Promise.all([
     client.query<{student: StudentModel}, {studentID: string}>({
       query: GET_STUDENT,
@@ -259,7 +259,7 @@ export const getStaticPaths: GetStaticPaths = async (context) => {
       students {
         id
   }}`
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{students: StudentModel[]}>({
     query: GET_STUDENTS,
   })

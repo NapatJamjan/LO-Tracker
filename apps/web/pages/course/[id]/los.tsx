@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useState, useRef } from 'react'
+import { useState, useRef, useContext } from 'react'
 import { gql, useMutation, useQuery } from '@apollo/client'
 import { GetServerSideProps } from 'next'
 import { ParsedUrlQuery } from 'querystring'
@@ -7,10 +7,11 @@ import { Modal } from 'react-bootstrap'
 import { useForm } from 'react-hook-form'
 import { CourseSubMenu, KnownCourseMainMenu } from '../../../components/Menu'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+import { getSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 import xlsx from 'xlsx'
 import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface CourseModel {
   id: string
@@ -86,7 +87,7 @@ export default function Page({course, los}: {course: CourseModel, los: LOModel[]
 }
 
 function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupID: string, los: LOModel[], teacherID: string}) {
-  const {data: session, status} = useSession()
+  const { isSignedIn, isSameUser } = useContext(AuthContext)
   const router = useRouter()
   const [deleteLO, {loading: LOdeleting}] = useMutation<{deleteLO: {id: string}}, {id: string}>(DELETE_LO)
   const [deleteLOLevel, {loading: LOLeveldeleting}] = useMutation<{deleteLOLevel: {id: string}}, {id: string, level: number}>(DELETE_LOLEVEL)
@@ -121,7 +122,7 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
       }
     }).then(() => router.replace(router.asPath))
   }
-  const isOwner = status !== 'loading' && session && session.id === teacherID
+  const isOwner = isSignedIn && isSameUser(teacherID)
   return <>
     {isOwner && <div className="flex gap-x-2 items-center">
       <CreateLOForm courseID={courseID} callback={() => router.replace(router.asPath)}/>
@@ -455,7 +456,13 @@ interface Params extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<{course: CourseModel, los: LOModel[]}> = async (context) => {
   const { id: courseID } = context.params as Params
-  const client = initializeApollo()
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      notFound: true
+    }
+  }
+  const client = initializeApollo(session.user.accessToken)
   const data = await Promise.all([
     client.query<{course: CourseModel}, {courseID: string}>({
       query: GET_COURSE,

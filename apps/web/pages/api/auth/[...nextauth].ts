@@ -69,12 +69,19 @@ export default NextAuth({
       return token;
     },
     async session({session, token}) {
-      session.user.name = token.username as string;
-      session.user.email = token.email as string;
-      session.isTeacher = token.isTeacher as boolean;
-      session.roleLevel = token.roleLevel as number;
-      session.id = token.id as string;
-      session.error = null;
+      session = {
+        user: {
+          id: token.id as string,
+          email: token.email as string,
+          name: token.username as string,
+          accessToken: token.accessToken as string,
+          teacher: (token.isTeacher as boolean)?{
+            roleLevel: token.roleLevel as number,
+          }:null,
+        },
+        error: null,
+        expires: '',
+      }
       console.log(session);
       return session;
     }

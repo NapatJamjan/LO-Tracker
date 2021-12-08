@@ -56,7 +56,7 @@ interface Params extends ParsedUrlQuery {
 
 export const getStaticProps: GetStaticProps<{programID: string, students: StudentModel[]}> = async (context) => {
   const { id: programID } = context.params as Params
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const {data: {studentsInProgram}} = await client.query<{studentsInProgram: StudentModel[]}, {programID: string}>({
     query: GET_STUDENTS_IN_PROGRAM,
     variables: {programID}

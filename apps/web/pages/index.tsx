@@ -1,13 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { signOut, useSession } from 'next-auth/react';
-import { toast } from 'react-toastify';
+import { signOut } from 'next-auth/react';
+import { AuthContext } from '../utils/auth-wrapper';
 
 export default function Index() {
-  const {data: session, status} = useSession();
-  const notify = () => toast('Hello World');
-  return (<div>
+  const {isSignedIn, isTeacher} = useContext(AuthContext);
+  return <div>
     <Head>
       <title>Home</title>
     </Head>
@@ -16,28 +15,24 @@ export default function Index() {
       <img src={'kmutt1.jpg'} width={600} />
       <div style={{margin: "auto", marginLeft: 100, textAlign: "center" }}>
       <img src={'LogoFull.png'} width={250} height={150}/>
-        {status !== 'loading' && session && <>
-          
+        {isSignedIn && <>
           <p className="text-xl">Welcome back</p><br/>
-          {!!session.isTeacher && <Link href="/programs">
+          {isTeacher && <Link href="/programs">
             <h4 className="px-4 py-2 rounded bg-blue-200 hover:bg-blue-400 cursor-pointer text-lg"> Go to programs page👩‍🏫 </h4>
           </Link>}
-          {!session.isTeacher && <Link href="/me">
+          {!isTeacher && <Link href="/me">
             <h4 className="px-4 py-2 rounded bg-blue-200 hover:bg-blue-400 cursor-pointer text-lg"> Check my dashboard‍🎓 </h4>
           </Link>}
         </>}
         <div className="my-3"></div>
-        {status !== 'loading' && <>
-          {!session && <div>
-            
+        {
+          isSignedIn
+          ?<p className="px-2 py-2 rounded bg-red-200 hover:bg-red-300 cursor-pointer text-lg" onClick={() => signOut()}>Logout</p>
+          :<div>
             <p className="text-xl">Welcome!</p><br/>
             <Link href="/login"><p className="px-8 py-2 rounded bg-blue-200 hover:bg-blue-400 cursor-pointer text-lg">Login</p></Link>
           </div>
-          }
-          {session && 
-            <p className="px-2 py-2 rounded bg-red-200 hover:bg-red-300 cursor-pointer text-lg" onClick={() => signOut()}>Logout</p>
-          }
-        </>}
+        }
       </div>
     </div> <br/><br/>
     <p className="text-lg">LO Tracker</p>
@@ -45,12 +40,5 @@ export default function Index() {
       where not only teacher or program chair can access, but student too, can see their own outcome score here.
     </p>
     </div>
-  </div>);
-};
-
-interface StudentExcel {
-  id: string;
-  email: string;
-  name: string;
-  surname: string;
+  </div>
 }

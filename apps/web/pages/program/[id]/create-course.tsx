@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useContext } from 'react'
 import Head from 'next/head'
 import { gql, useMutation } from '@apollo/client'
 import { GetStaticPaths, GetStaticProps } from 'next'
@@ -7,8 +7,8 @@ import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/router'
 import { ProgramStaticPaths } from '../../../utils/staticpaths'
 import { ProgramMainMenu } from '../../../components/Menu'
-import { useSession } from 'next-auth/react'
 import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface PLOGroupModel {
   id: string
@@ -33,8 +33,8 @@ interface CreateCourseResponse {
 }
 
 const CREATE_COURSE = gql`
-  mutation CreateCourse($programID: ID!, $teacherID: ID!, $input: CreateCourseInput!) {
-    createCourse(programID: $programID, teacherID: $teacherID, input: $input) {
+  mutation CreateCourse($programID: ID!, $input: CreateCourseInput!) {
+    createCourse(programID: $programID, input: $input) {
       id
       name
       description
@@ -44,8 +44,8 @@ const CREATE_COURSE = gql`
 }}`
 
 export default function Page({programID, ploGroups}: {programID: string, ploGroups: PLOGroupModel[]}) {
-  const {data: session, status} = useSession()
-  const [createCourse, { loading: submitting } ] = useMutation<{createCourse: CreateCourseResponse}, {programID: string, teacherID: string, input: CreateCourseModel}>(CREATE_COURSE)
+  const {isSignedIn, roleLevel} = useContext(AuthContext)
+  const [createCourse, { loading: submitting } ] = useMutation<{createCourse: CreateCourseResponse}, {programID: string, input: CreateCourseModel}>(CREATE_COURSE)
   const { register, handleSubmit, reset, formState: {errors, touchedFields} } = useForm<CreateCourseModel>()
   const router = useRouter()
   const submitForm = (form: CreateCourseModel) => {
@@ -53,7 +53,6 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
       createCourse({
         variables: {
           programID,
-          teacherID: String(session.id),
           input: form
         }
       }).then((res) => res.data.createCourse).then((course) => {
@@ -63,9 +62,9 @@ export default function Page({programID, ploGroups}: {programID: string, ploGrou
     }
   }
   useEffect(() => {
-    if (status === 'loading') return
-    if (session && (+session.roleLevel !== 1 && +session.roleLevel !== 3)) router.replace(`/program/${programID}/courses`)
-  }, [session, status])
+    if (!isSignedIn) return
+    if (roleLevel !== 1 && roleLevel !== 3) router.replace(`/program/${programID}/courses`)
+  }, [isSignedIn])
   return <div>
     <Head>
       <title>Create a course</title>
@@ -136,7 +135,7 @@ export const getStaticProps: GetStaticProps<{programID: string, ploGroups: PLOGr
         name
   }}`
   const { id: programID } = context.params as Params
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{ploGroups: PLOGroupModel[]}, {programID: string}>({
     query: GET_PLOGROUPS,
     variables: { programID }

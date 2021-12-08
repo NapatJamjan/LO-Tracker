@@ -44,7 +44,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel}> = async (cont
         description
         programID
   }}`
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {

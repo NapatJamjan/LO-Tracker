@@ -1,10 +1,11 @@
 import { useForm } from 'react-hook-form'
-import { signIn, useSession } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { signIn } from 'next-auth/react'
+import { useState, useEffect, useContext } from 'react'
 import router from 'next/router'
 import { toast } from 'react-toastify'
 import Image from 'next/image'
 import Logo from '../public/LogoFull.png'
+import { AuthContext } from '../utils/auth-wrapper'
 
 interface UserLoginForm {
   username: string
@@ -14,23 +15,23 @@ interface UserLoginForm {
 export default function Page() {
   const [submitting, setSubmitting] = useState<boolean>(false)
   const { register, handleSubmit } = useForm<UserLoginForm>()
-  const {data: session, status} = useSession()
+  const { isSignedIn, isTeacher } = useContext(AuthContext)
   useEffect(() => {
-    if (status === 'loading' || !session) return
-    if (!!session.isTeacher) {
+    if (!isSignedIn) return
+    if (isTeacher) {
       router.push('/programs')
     } else {
       router.push('/me')
     }
-  }, [session, status])
+  }, [isSignedIn])
   const submitForm = (form: UserLoginForm) => {
     if (form.username === '') {
       toast('Please complete the form', { type: 'info' })
       return
     }
-    if (submitting || session) return
+    if (submitting || isSignedIn) return
     setSubmitting(true)
-    signIn("credentials", {
+    signIn('credentials', {
       redirect: false,
       ...form
     }).then(res => {
@@ -39,7 +40,7 @@ export default function Page() {
     }).catch(_ => toast(`Error: User not found`, { type: 'error' })).finally(() => setSubmitting(false))
   }
   return <div className="flex justify-center" style={{paddingTop: '10vh'}}>
-    {!(status === 'loading' || session) && <form onSubmit={handleSubmit(submitForm)} className="flex flex-column items-center gap-y-4 bg-white rounded-md shadow-md p-3">
+    {!isSignedIn && <form onSubmit={handleSubmit(submitForm)} className="flex flex-column items-center gap-y-4 bg-white rounded-md shadow-md p-3">
       <Image src={Logo} height="200"/>
       <div>
         <span>Username</span><br/>
@@ -49,7 +50,7 @@ export default function Page() {
         <span>Password</span><br/>
         <input style={{width: '250px'}} type="password" {...register('password', {required: true})} className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
       </div>
-      <input type="submit" value="sign in" className={`py-1 px-3 bg-gray-900 hover:bg-gray-600 text-white rounded-lg ${(submitting || session)?'disabled:opacity-50':''}`}/>
+      <input type="submit" value="sign in" className={`py-1 px-3 bg-gray-900 hover:bg-gray-600 text-white rounded-lg ${(submitting || isSignedIn)?'disabled:opacity-50':''}`}/>
     </form>}
   </div>;
 }

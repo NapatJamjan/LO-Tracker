@@ -1,15 +1,14 @@
-import React, { useState, Dispatch, SetStateAction } from 'react'
+import React, { useState, Dispatch, SetStateAction, useContext } from 'react'
 import { useForm } from 'react-hook-form'
 import { Modal } from 'react-bootstrap'
 import Head from 'next/head'
 import Link from 'next/link'
 import { gql, useMutation } from '@apollo/client'
-import ClientOnly from '../components/ClientOnly'
 import { GetStaticProps } from 'next'
-import client from '../apollo-client'
 import { useRouter } from 'next/router'
 import xlsx from 'xlsx'
-import { useSession } from 'next-auth/react'
+import { initializeApollo } from '../utils/apollo-client'
+import { AuthContext } from '../utils/auth-wrapper'
 
 interface ProgramModel {
   id: string
@@ -37,7 +36,7 @@ interface StudentExcel {
 
 
 export default function Page({programs}: {programs: ProgramModel[]}) {
-  const {data: session, status} = useSession()
+  const { roleLevel } = useContext(AuthContext)
   return <div>
     <Head>
       <title>Program</title>
@@ -48,10 +47,8 @@ export default function Page({programs}: {programs: ProgramModel[]}) {
       <span>Programs</span>
     </p>
     <div className="flex flex-row-reverse pt-2 pb-1">
-      <ClientOnly>
-        {status !== 'loading' && session && !!session.isTeacher && +session.roleLevel > 1 && <CreateProgramButton />}
-        <UploadStudents />
-      </ClientOnly>
+      {roleLevel > 1 && <CreateProgramButton />}
+      <UploadStudents />
     </div>
     <Programs programs={[...programs]}/>
   </div>
@@ -86,27 +83,26 @@ function CreateProgramButton() {
 }
 
 function CreateProgramModal({show, setShow}: {show: boolean, setShow: Dispatch<SetStateAction<boolean>>}) {
-  const {data: session, status} = useSession()
   const router = useRouter()
   const { register, handleSubmit, reset, formState: { errors, touchedFields } } = useForm<CreateProgramModel>()
   const resetForm = () => {
     reset({ name: '', description: '' }); setShow(false)
   }
   const CREATE_PROGRAM = gql`
-    mutation CreateProgram($teacherID: ID!, $input: CreateProgramInput!) {
-      createProgram(teacherID: $teacherID, input: $input) {
+    mutation CreateProgram($input: CreateProgramInput!) {
+      createProgram(input: $input) {
         id
         name
         description
   }}`
-  const [createProgram, { loading: submitting } ] = useMutation<{createProgram: CreateProgramRepsonse}, {teacherID: string, input: CreateProgramModel}>(CREATE_PROGRAM)
+  const [createProgram, { loading: submitting } ] = useMutation<{createProgram: CreateProgramRepsonse}, {input: CreateProgramModel}>(CREATE_PROGRAM)
   const submitForm = (form: CreateProgramModel) => createProgram({ 
-    variables: {teacherID: String(session.id), input: form} 
+    variables: {input: form} 
   }).then((res) => {
     resetForm(); router.push(`/program/${res.data.createProgram.id}/courses`)
   })
   return <Modal show={show} onHide={() => resetForm()}>
-    <form onSubmit={handleSubmit((form) => submitting || status === 'loading' ? null: submitForm(form))}>
+    <form onSubmit={handleSubmit((form) => submitting? null: submitForm(form))}>
       <Modal.Header>
         <Modal.Title className="font-bold">Create a new program</Modal.Title>
       </Modal.Header>
@@ -180,6 +176,7 @@ export const getStaticProps: GetStaticProps<{programs: ProgramModel[]}> = async 
         name
         description
   }}`
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{programs: ProgramModel[]}>({
     query: GET_PROGRAMS
   })

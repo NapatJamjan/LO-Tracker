@@ -2,16 +2,14 @@ import { AppProps } from 'next/app'
 import 'react-toastify/dist/ReactToastify.css'
 import 'rc-collapse/assets/index.css'
 import './styles.css'
-import { ApolloProvider } from '@apollo/client'
-import { useApollo } from '../utils/apollo-client'
 import { SessionProvider } from 'next-auth/react'
 import SiteLayout from '../components/SiteLayout'
 import { PageTransition } from 'next-page-transitions'
+import { AuthWrapper } from '../utils/auth-wrapper'
 
 function MyApp({ Component, pageProps: {session, ...pageProps}, router }: AppProps) {
-  const client = useApollo(pageProps);
-  return <ApolloProvider client={client}>
-    <SessionProvider session={session} refetchInterval={10 * 60}>
+  return <SessionProvider session={session} refetchInterval={10 * 60}>
+    <AuthWrapper pageProps={pageProps}>
       <SiteLayout>
         <PageTransition
           timeout={160}
@@ -42,8 +40,8 @@ function MyApp({ Component, pageProps: {session, ...pageProps}, router }: AppPro
           }
         `}</style>
       </SiteLayout>
-    </SessionProvider>
-  </ApolloProvider>;
+    </AuthWrapper>
+  </SessionProvider>
 }
 
-export default MyApp;
+export default MyApp

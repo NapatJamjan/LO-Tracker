@@ -20,7 +20,7 @@ func createAccessToken(accessUUID, userID string, exp int64) (accessToken string
 		"authorized":  true,
 		"access_uuid": accessUUID,
 		"user_id":     userID,
-		"exp":         exp,
+		"exp":         0,
 	}).SignedString([]byte(viper.GetString("ACCESS_SECRET")))
 	return
 }

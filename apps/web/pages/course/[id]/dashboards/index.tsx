@@ -91,7 +91,7 @@ interface PageProps {
 
 export const getStaticProps: GetStaticProps<PageProps> = async (context) => {
   const { id: courseID } = context.params as Params
-  const client = initializeApollo();
+  const client = initializeApollo(process.env.SSG_SECRET);
   const GET_COURSE = gql`
     query CourseDescription($courseID: ID!) {
       course(courseID: $courseID) {

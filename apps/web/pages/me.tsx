@@ -15,7 +15,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     }
   }
-  if (!!session.isTeacher) {
+  if (!!session.user.teacher) {
     return {
       redirect: {
         destination: '/',
@@ -25,7 +25,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
   return {
     redirect: {
-      destination: `/students/${session.id}`,
+      destination: `/students/${session.user.id}`,
       permanent: false,
     },
   }

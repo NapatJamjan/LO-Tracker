@@ -72,7 +72,7 @@ export const getStaticProps: GetStaticProps<{course: CourseModel, students: Stud
         name
         programID
   }}`
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const {data: {course}} = await client.query<{course: CourseModel}, {courseID: string}>({
     query: GET_COURSE,
     variables: {

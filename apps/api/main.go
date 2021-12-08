@@ -11,7 +11,6 @@ import (
 	"lo-tracker/apps/api/graph/generated"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -55,15 +54,13 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.Use(cors.Default())
-	r.GET("/", func() gin.HandlerFunc {
-		return func(c *gin.Context) {
-			playground.Handler("GraphQL playground", "/query").ServeHTTP(c.Writer, c.Request)
-		}
-	}())
-
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:4200"}
+	config.AllowCredentials = true
+	config.AllowHeaders = append(config.AllowHeaders, "Authorization")
+	r.Use(cors.New(config))
 	auth.SetAuthRouter(r.Group("/auth"), client, rdb, ctx)
-	r.POST("/query" /**auth.GetMiddleware(rdb, ctx),*/, func(c *gin.Context) {
+	r.POST("/query", auth.GetMiddleware(rdb, ctx), func(c *gin.Context) {
 		handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}})).ServeHTTP(c.Writer, c.Request)
 	})
 	r.Run(":8080")

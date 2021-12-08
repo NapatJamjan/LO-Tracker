@@ -22,7 +22,7 @@ export const CourseStaticPaths: GetStaticPaths = async (context) => {
         year
         ploGroupID
   }}`
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{courses: CourseModel[]}, {programID: string}>({
     query: GET_COURSES,
     variables: { programID: '' }
@@ -49,7 +49,7 @@ export const ProgramStaticPaths: GetStaticPaths = async (context) => {
         name
         description
   }}`
-  const client = initializeApollo()
+  const client = initializeApollo(process.env.SSG_SECRET)
   const { data } = await client.query<{programs: ProgramModel[]}>({
     query: GET_PROGRAMS
   })

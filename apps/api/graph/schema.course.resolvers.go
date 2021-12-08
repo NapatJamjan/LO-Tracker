@@ -5,12 +5,17 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph/generated"
 	"lo-tracker/apps/api/graph/model"
 )
 
-func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, teacherID string, input model.CreateCourseInput) (*model.Course, error) {
+func (r *mutationResolver) CreateCourse(ctx context.Context, programID string, input model.CreateCourseInput) (*model.Course, error) {
+	teacherID, ok := ctx.Value("user_id").(string)
+	if !ok || teacherID == "" {
+		return &model.Course{}, errors.New("user not found")
+	}
 	createdCourse, err := r.Client.Course.CreateOne(
 		db.Course.Name.Set(input.Name),
 		db.Course.Description.Set(input.Description),

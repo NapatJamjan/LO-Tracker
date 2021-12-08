@@ -5,13 +5,18 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"lo-tracker/apps/api/db"
 	"lo-tracker/apps/api/graph/model"
 
 	"github.com/prisma/prisma-client-go/runtime/transaction"
 )
 
-func (r *mutationResolver) CreateProgram(ctx context.Context, teacherID string, input model.CreateProgramInput) (*model.Program, error) {
+func (r *mutationResolver) CreateProgram(ctx context.Context, input model.CreateProgramInput) (*model.Program, error) {
+	teacherID, ok := ctx.Value("user_id").(string)
+	if !ok || teacherID == "" {
+		return &model.Program{}, errors.New("user not found")
+	}
 	createdProgram, err := r.Client.Program.CreateOne(
 		db.Program.Name.Set(input.Name),
 		db.Program.Description.Set(input.Description),

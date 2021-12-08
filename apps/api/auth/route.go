@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"lo-tracker/apps/api/db"
 	"net/http"
 	"time"
@@ -17,25 +18,33 @@ func GetMiddleware(rdb *redis.Client, ctx context.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var claims jwt.MapClaims
 		if accessToken, err := extractToken(c.Request.Header); err != nil {
+			fmt.Println("1")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		} else if t, err := verifyToken(accessToken, viper.GetString("ACCESS_SECRET")); err != nil || !isValid(t) {
+			fmt.Println(err)
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		} else {
 			claims = t.Claims.(jwt.MapClaims)
 		}
-		accessUUID, ok := claims["access_uuid"].(string)
-		if !ok {
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
+		id := ""
+		if rdb != nil {
+			accessUUID, ok := claims["access_uuid"].(string)
+			if !ok {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+			userID, err := rdb.Get(ctx, accessUUID).Result()
+			if err != nil || userID != claims["user_id"].(string) {
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			id = userID
+		} else {
+			id = claims["user_id"].(string)
 		}
-		userID, err := rdb.Get(ctx, accessUUID).Result()
-		if err != nil || userID != claims["user_id"].(string) {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		c.Set("user_id", userID)
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "user_id", id))
 		c.Next()
 	}
 }

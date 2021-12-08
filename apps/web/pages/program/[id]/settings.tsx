@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useEffect } from 'react'
+import { useEffect, useContext } from 'react'
 import { gql, useMutation } from '@apollo/client'
 import { GetServerSideProps } from 'next'
 import { ParsedUrlQuery } from 'querystring'
@@ -7,8 +7,9 @@ import { KnownProgramMainMenu, ProgramSubMenu } from '../../../components/Menu'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
-import { useSession } from 'next-auth/react'
+import { getSession } from 'next-auth/react'
 import { initializeApollo, addApolloState } from '../../../utils/apollo-client'
+import { AuthContext } from 'apps/web/utils/auth-wrapper'
 
 interface ProgramModel {
   id: string
@@ -24,7 +25,7 @@ interface EditProgramModel {
 
 export default function SettingsPage({program}: {program: ProgramModel}) {
   const router = useRouter()
-  const {data: session, status} = useSession()
+  const { isSignedIn, isSameUser } = useContext(AuthContext)
   const [editProgram, { loading: submitting }] = useMutation<{editProgram: {id: string}}, {id: string, input: EditProgramModel}>(EDIT_PROGRAM)
   const { register, handleSubmit } = useForm<EditProgramModel>({
     defaultValues: {
@@ -47,9 +48,8 @@ export default function SettingsPage({program}: {program: ProgramModel}) {
     .finally(() => router.replace(router.asPath))
   }
   useEffect(() => {
-    if (status === 'loading') return
-    if (session && session.id !== program.teacherID) router.replace(`/program/${program.id}/courses`)
-  }, [session, status])
+    if (isSignedIn && !isSameUser(program.teacherID)) router.replace(`/program/${program.id}/courses`)
+  }, [isSignedIn])
   return <div>
     <Head>
       <title>Program Settings</title>
@@ -79,7 +79,13 @@ interface Params extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<{program: ProgramModel}> = async (context) => {
   const { id: programID } = context.params as Params
-  const client = initializeApollo()
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      notFound: true
+    }
+  }
+  const client = initializeApollo(session.user.accessToken)
   const { data } = await client.query<{program: ProgramModel}, {programID: string}>({
     query: GET_PROGRAM,
     variables: {

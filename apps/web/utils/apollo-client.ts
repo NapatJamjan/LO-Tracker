@@ -8,24 +8,30 @@ import isEqual from 'lodash/isEqual'
 export const APOLLO_STATE_PROP_NAME = '__APOLLO_STATE__'
 
 let apolloClient: ApolloClient<NormalizedCacheObject>
+let accessToken = ''
 
-const httpLink = createHttpLink({
-  uri: process.env.GRAPHQL_URL,
-  credentials: 'same-origin',
-})
+function getHttpLink() {
+  return createHttpLink({
+    uri: process.env.GRAPHQL_URL,
+    credentials: 'include',
+  })
+}
 
-const authLink = setContext((_, { headers }) => {
-  return {
-    headers: {
-      ...headers,
+function getAuthLink(token: string = '') {
+  return setContext((_, { headers }) => {
+    return {
+      headers: {
+        ...headers,
+        authorization: !!token?`Bearer ${token}`:'',
+      }
     }
-  }
-})
+  })
+}
 
-function createApolloClient() {
+function createApolloClient(token: string = '') {
   return new ApolloClient({
     ssrMode: typeof window === 'undefined',
-    link: from([authLink, httpLink]),
+    link: from([getAuthLink(token), getHttpLink()]),
     cache: new InMemoryCache({
       typePolicies: {
         Query: {
@@ -43,9 +49,11 @@ function createApolloClient() {
   })
 }
 
-export function initializeApollo(initialState: NormalizedCacheObject = null) {
-  const _apolloClient = apolloClient ?? createApolloClient()
-  if (initialState) {
+let count = 0
+
+export function initializeApollo(token: string = '', initialState: NormalizedCacheObject = null) {
+  const _apolloClient = token===''?null:createApolloClient(token)
+  if (initialState && token !== '') {
     const existingCache = _apolloClient.extract()
     // Merge the existing cache into data passed from getStaticProps/getServerSideProps
     const data = merge(initialState, existingCache, {
@@ -60,8 +68,8 @@ export function initializeApollo(initialState: NormalizedCacheObject = null) {
     _apolloClient.cache.restore(data)
   }
   if (typeof window === 'undefined') return _apolloClient
-  if (!apolloClient) apolloClient = _apolloClient
-  return _apolloClient
+  if (!!_apolloClient) apolloClient = _apolloClient
+  return apolloClient
 }
 
 export function addApolloState(client: ApolloClient<NormalizedCacheObject>, pageMetadatas) {
@@ -71,8 +79,8 @@ export function addApolloState(client: ApolloClient<NormalizedCacheObject>, page
   return pageMetadatas
 }
 
-export function useApollo(pageProps) {
+export function useApollo(pageProps, token: string) {
   const state: NormalizedCacheObject = pageProps[APOLLO_STATE_PROP_NAME]
-  const store = useMemo(() => initializeApollo(state), [state])
+  const store = initializeApollo(token, state)
   return store
 }
