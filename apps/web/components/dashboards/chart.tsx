@@ -1190,7 +1190,6 @@ export function ChartDistribute(props: { data: studentResult[], scoreType: strin
         .text("Probability Density");
 
       function mousemove(e: any) {
-        console.log("h", bisectX(dataset, xScale.invert(d3.pointer(e)[0]), 1))
         const x0 = xScale.invert(d3.pointer(e)[0]), // use d3.pointer(e) instead
           i = bisectX(dataset, x0, 1),
           d0 = dataset[i - 1],
@@ -1315,7 +1314,7 @@ export function ChartDensity(props: { data: studentResult[], scoreType: string, 
         box.append("text")
           .attr('x', 0)
           .attr('y', boxH + 45)
-          .style('font-size', 10)
+          .style('font-size', 9)
           .text(`No student got score less than or equal to ${checkStart}`)
       }
         

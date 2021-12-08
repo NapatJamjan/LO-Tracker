@@ -5,18 +5,83 @@ import Head from 'next/head'
 import { ParsedUrlQuery } from 'querystring'
 import { initializeApollo, addApolloState } from '../../../../utils/apollo-client'
 import { getSession } from 'next-auth/react'
+import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap'
+import router from 'next/router'
+import { ChartBarPLOAll } from 'apps/web/components/dashboards/plochart'
 
 export default function Page({programID, ploGroupDashboard}: {programID: string, ploGroupDashboard: DashboardPLOGroup}) {
-  return <div>
-    <Head>
-      <title>PLO Group Dashboard</title>
-    </Head>
-    <ProgramMainMenu programID={programID} />
-    <ProgramSubMenu programID={programID} selected={'plos'}/>
-    <div>
-      {JSON.stringify(ploGroupDashboard)}
+  const plos = ploGroupDashboard;
+  console.log(plos)
+  function toPercentage(n: number){
+    return parseInt((n * 100).toFixed(0))
+  }
+  return <div className="bg-white p-3 rounded-md shadow-md">
+  <Head>
+    <title>PLO Group Dashboard</title>
+  </Head>
+  <ProgramMainMenu programID={programID} />
+  <ProgramSubMenu programID={programID} selected={'plos'} />
+  
+  <div className="flex">
+    <div style={{ minWidth: "50%", marginRight: "2%" }}>
+      <button onClick={() => { router.back() }} className="text-lg mr-4">&#12296;Back</button>
+      <span>PLO Group : {plos.name}</span>
+      <br/>
+      <p className="ml-2 text-sm">(Click on student to go to their program dashboard)</p>
+      {plos.students.length == 0 && <p>No Student Data</p> ||
+      <Table>
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Student Email</th>
+            <th>Student Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {plos.students.sort((a, b) => a.id.localeCompare(b.id)).map((d, i) => (
+            <tr className="cursor-pointer hover:text-blue-600" onClick={() => router.push(`/students/${d.id}`)}>
+              <td>{d.id}</td>
+              <td>{d.email}</td>
+              <td>{d.name} {d.surname}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>}
     </div>
+    {plos.plos.length == 0 && <p>No PLO Data</p> ||
+    <div>
+      <br/><br/>
+      <ChartBarPLOAll data={plos.plos} scoreType="Program Learning Outcome" />
+      <Table striped bordered>
+        <thead>
+          <tr>
+            <th>PLO Title</th>
+            <th>Min(%)</th>
+            <th>Max(%)</th>
+            <th>Mean(%)</th>
+            <th>Median(%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {plos.plos.sort((a, b) => a.title.localeCompare(b.title)).map((d, i) => (
+            <tr>
+              <OverlayTrigger
+                placement="right" overlay={
+                  <Tooltip id={`tooltip${i}`}>
+                    <p>{d.description}</p>
+                  </Tooltip>
+                }><td>{d.title}</td></OverlayTrigger>
+              <td>{toPercentage(d.stats.min)}</td>
+              <td>{toPercentage(d.stats.max)}</td>
+              <td>{toPercentage(d.stats.mean)}</td>
+              <td>{toPercentage(d.stats.median)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>}
   </div>
+</div>
 }
 
 interface PageParams extends ParsedUrlQuery {

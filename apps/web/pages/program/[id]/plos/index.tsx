@@ -111,8 +111,15 @@ export function PLOs({programID}: {programID: string}) {
             <div className="flex justify-between items-center">
               <span className="font-bold">{ploGroup.name}</span>
             </div>
-            <span className={`underline cursor-pointer ${ploGroup.id === selectedPLOGroupID?'text-red-700':'text-blue-300'}`} onClick={() => setSelectedPLOGroupID(ploGroup.id)}>inspect</span>
-            <span className="ml-2 underline cursor-pointer text-blue-300" onClick={() => router.push({pathname: '/program/[id]/plos/[ploGroupID]', query: {id: programID, ploGroupID: ploGroup.id}})}>dashboard</span>
+            <span className={`hover:underline cursor-pointer py-1 px-1 rounded 
+              ${ploGroup.id === selectedPLOGroupID?'bg-red-200':'bg-blue-200'} 
+              ${ploGroup.id === selectedPLOGroupID?'text-red-700':'text-blue-500'}`} 
+              onClick={() => setSelectedPLOGroupID(ploGroup.id)}>Inspect
+            </span>
+            <span className="ml-2 hover:underline py-1 px-1 rounded bg-blue-200 cursor-pointer text-blue-500 " 
+              onClick={() => router.push({pathname: '/program/[id]/plos/[ploGroupID]', query: {id: programID, ploGroupID: ploGroup.id}})}>
+              Go to Dashboard
+            </span>
           </div>
         ))}
       </div>
@@ -121,7 +128,7 @@ export function PLOs({programID}: {programID: string}) {
           <span>{ploGroups.find(g => g.id === selectedPLOGroupID)?.name}</span>
           {isOwner && <>
           <EditPLOGroupForm ploGroupID={selectedPLOGroupID} initName={ploGroups.find(g => g.id === selectedPLOGroupID)?.name}/>
-          <span className="cursor-pointer underline text-red-500" onClick={deletePLOGroup}>delete</span></>}
+          <span className="cursor-pointer text-red-500" onClick={deletePLOGroup}><span className="underline">delete</span> &#9747;</span></>}
         </p>}
         {selectedPLOGroupID !== '' && <PLOSub ploGroupID={selectedPLOGroupID}/>}
       </div>
@@ -156,7 +163,7 @@ function CreatePLOGroupForm() {
     })
   }
   return <div>
-    <button onClick={() => setShow(true)}>Create a new PLO Group.</button>
+    <button className="hover:underline" onClick={() => setShow(true)}>Create a new PLO Group.</button>
     <Modal show={show} onHide={() => setShow(false)}>
       <form onSubmit={handleSubmit((form) => submitting? null: submitForm(form.name))}>
         <Modal.Header>
@@ -196,7 +203,7 @@ const PLOSub: React.FC<{ ploGroupID: string }> = ({ ploGroupID }) => {
           <span>{plo.title}</span>
           {isOwner && <>
           <EditPLOForm ploID={plo.id} initTitle={plo.title} initDesc={plo.description} callback={refetch}/>
-          <span className="text-sm cursor-pointer underline text-red-500" onClick={() => deletePLO(plo.id)}>delete</span></>}
+          <span className="text-sm cursor-pointer text-red-500" onClick={() => deletePLO(plo.id)}><span className="underline">delete</span> &#9747;</span></>}
         </p>
         <span className="m-0">{plo.description}</span>
       </div>
@@ -253,18 +260,18 @@ function EditPLOGroupForm({ploGroupID, initName}: {ploGroupID: string, initName:
     modifyPLOGroup(ploGroupID, name).then(() => resetForm())
   }
   return <>
-    <span className="cursor-pointer underline text-blue-600 px-4" onClick={() => setShow(true)}>edit</span>
+    <span className="cursor-pointer text-blue-600 px-4" onClick={() => setShow(true)}><span className="underline">edit</span> &#128393;</span>
     <Modal show={show} onHide={resetForm}>
       <form onSubmit={handleSubmit((form) => submitForm(form.name))}>
         <Modal.Header>
-          <Modal.Title>Update the PLO</Modal.Title>
+          <Modal.Title>Update the PLO Group</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <span>PLO group name:</span><br/>
           <input type="text" {...register('name')} placeholder="PLO group name" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
         </Modal.Body>
         <Modal.Footer>
-          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+          <input type="submit" value="save" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
         </Modal.Footer>
       </form>
     </Modal>
@@ -286,11 +293,11 @@ function EditPLOForm({ploID, initTitle, initDesc, callback}: {ploID: string, ini
     })
   }
   return <>
-    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
+    <span className="text-sm cursor-pointer text-blue-600 px-3" onClick={() => setShow(true)}><span className="underline">edit</span> &#128393;</span>
     <Modal show={show} onHide={resetForm}>
       <form onSubmit={handleSubmit(submitForm)}>
         <Modal.Header>
-          <Modal.Title>Create a new PLO</Modal.Title>
+          <Modal.Title>Update a PLO</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <input type="text" {...register('title', {required: true})} placeholder="type PLO's name" className="border-4 rounded-md p-1 mx-2 text-sm"/>
@@ -299,7 +306,7 @@ function EditPLOForm({ploID, initTitle, initDesc, callback}: {ploID: string, ini
           <textarea {...register('description')} placeholder="PLO's description" cols={40} rows={4} className="border-4 rounded-md p-1 mx-2 text-sm"></textarea>
         </Modal.Body>
         <Modal.Footer>
-          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+          <input type="submit" value="save" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
         </Modal.Footer>
       </form>
     </Modal>
@@ -320,7 +327,9 @@ function AppendPLOsForm({ploGroupID, callback}: {ploGroupID: string, callback: (
     reader.readAsBinaryString(file)
   }
   return <>
-    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => submitting?null:ref.current.click()}>upload PLOs</span>
+    <span className="text-sm cursor-pointer bg-blue-200 hover:bg-blue-300 py-1 px-2 rounded" onClick={() => submitting?null:ref.current.click()}>
+      Upload PLOs <span className="text-xl text-green-900">&#8595;</span>
+    </span>
     <input type="file" className="hidden" ref={ref} onChange={e => excelJSON(e.target.files[0])}/>
   </>
 }

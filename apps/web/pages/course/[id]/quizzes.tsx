@@ -322,12 +322,12 @@ function CreateQuizForm({courseID, callback}: {courseID: string, callback: () =>
     })
   }
   return <div>
-    <button onClick={() => setShow(true)}>Create a new quiz.</button>
+    <button className="hover:underline" onClick={() => setShow(true)}>Create a new quiz.</button>
     <Modal show={show} onHide={() => setShow(false)}>
       <form
         onSubmit={handleSubmit(({name}) => submitQuizExcel(name))}>
         <Modal.Header>
-          <Modal.Title>Create a new quiz</Modal.Title>
+          <Modal.Title >Create a new quiz</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <span>Quiz name:</span><br/>

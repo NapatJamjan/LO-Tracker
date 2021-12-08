@@ -132,7 +132,7 @@ function LO({courseID, ploGroupID, los, teacherID}: {courseID: string, ploGroupI
       <div className="flex flex-column space-y-2 overflow-y-auto" style={{maxHeight: '700px'}}>
         {los.sort((l1, l2) => l1.title.localeCompare(l2.title)).map((lo) => (
         <div key={lo.id} className="shadow-lg p-3 bg-white rounded-md">
-          <span className="text-lg">{lo.title}</span> &nbsp
+          <span className="text-lg">{lo.title}</span> &nbsp;
           {isOwner && <>
             <EditLOForm loID={lo.id} title={lo.title} callback={() => router.replace(router.asPath)}/>
             <span className="cursor-pointer text-red-600 bg-red-200 hover:bg-red-300 py-1 px-1 rounded" onClick={() => removeLO(lo.id)}>
@@ -233,8 +233,10 @@ function CreateManyLOForm({courseID, callback}: {courseID: string, callback: () 
     reader.onerror = console.log
     reader.readAsBinaryString(file)
   }
-  return <>
-    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => loading?null:ref.current.click()}>upload LOs</span>
+  return <> 
+    <span className="bg-blue-200 hover:bg-blue-300 py-1 px-2 rounded text-sm" onClick={() => loading?null:ref.current.click()}>
+      Upload LOs <span className="text-xl text-green-900">&#8595;</span>
+    </span>
     <input type="file" className="hidden" ref={ref} onChange={e => excelJSON(e.target.files[0])}/>
   </>
 
@@ -328,7 +330,7 @@ function CreateLOLevelForm({loID, initLevel, callback}: {loID: string, initLevel
   const [createLOLevel, {loading: submitting}] = useMutation<{createLOLevel: CreateLOLevelResponse}, {loID: string, input: CreateLOLevelModel}>(CREATE_LOLEVEL)
   const { register, handleSubmit, setValue } = useForm<CreateLOLevelModel>({
     defaultValues: {
-      level: 0,
+      level: 1,
       description: '',
     }
   })
@@ -390,7 +392,7 @@ function EditLOForm({loID, title, callback}: {loID: string, title: string, callb
     })
   }
   return <>
-    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
+    <span className="cursor-pointer text-blue-600 bg-blue-200 hover:bg-blue-300 py-1 px-1 rounded mr-2" onClick={() => setShow(true)}>edit &#128393;</span>
     <Modal show={show} onHide={resetForm}>
       <form onSubmit={handleSubmit((form) => loading?null:updateLO(form.title))}>
         <Modal.Header>
@@ -401,7 +403,7 @@ function EditLOForm({loID, title, callback}: {loID: string, title: string, callb
           <input type="text" {...register('title', {required: true})} placeholder="type LO title" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
         </Modal.Body>
         <Modal.Footer>
-          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+          <input type="submit" value="save" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
         </Modal.Footer>
       </form>
     </Modal>
@@ -430,7 +432,7 @@ function EditLOLevelForm({loID, level, description, callback}: {loID: string, le
     })
   }
   return <>
-    <span className="text-sm cursor-pointer underline text-blue-600 px-3" onClick={() => setShow(true)}>edit</span>
+    <span className="text-sm cursor-pointer text-blue-600 px-3" onClick={() => setShow(true)}><span className="underline">edit</span> &#128393;</span>
     <Modal show={show} onHide={resetForm}>
       <form onSubmit={handleSubmit((form) => loading?null:updateLOLevel(form.description))}>
         <Modal.Header>
@@ -443,7 +445,7 @@ function EditLOLevelForm({loID, level, description, callback}: {loID: string, le
           <input type="text" {...register('description', {required: true})} placeholder="type LO title" className="border-4 rounded-md p-1 mx-2 text-sm"/><br/>
         </Modal.Body>
         <Modal.Footer>
-          <input type="submit" value="create" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
+          <input type="submit" value="save" className="py-2 px-4 bg-green-300 hover:bg-green-500 rounded-lg"/>
         </Modal.Footer>
       </form>
     </Modal>

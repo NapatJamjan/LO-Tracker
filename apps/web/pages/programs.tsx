@@ -48,7 +48,7 @@ export default function Page({programs}: {programs: ProgramModel[]}) {
     </p>
     <div className="flex flex-row-reverse pt-2 pb-1">
       {roleLevel > 1 && <CreateProgramButton />}
-      <UploadStudents />
+      {roleLevel === 3 && <UploadStudents />}
     </div>
     <Programs programs={[...programs]}/>
   </div>
@@ -152,6 +152,7 @@ const UploadStudents: React.FC = () => {
   }
   const [show, setShow] = useState(false)
   return (<div>
+
     <button onClick={() => setShow(true)} className="bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded text-sm" style={{marginRight: 10}}>
       Upload new students (only available in dev mode) <span className="text-xl text-blue-800">+</span>
     </button>
