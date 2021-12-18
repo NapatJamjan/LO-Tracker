@@ -61,7 +61,7 @@ function Courses({courses}: {courses: CourseModel[]}) {
   let courseGroups = new Map<string, CourseModel[]>()
   for (let i = 0; i < courses.length; ++i) {
     if (mine && !isSameUser(courses[i].teacherID)) continue
-    if (courses[i].name.search(new RegExp(filter, 'i')) === -1) continue
+    if (courses[i].name.toLowerCase().indexOf(filter.toLowerCase()) === -1) continue
     let groupName: string = `${courses[i].semester},${courses[i].year}`
     courseGroups.set(groupName, [...(courseGroups.get(groupName) || []), {...courses[i]}])
   }
